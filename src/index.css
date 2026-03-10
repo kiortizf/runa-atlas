@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-void-black: #0a0a0f;
+  --color-deep-space: #0d0d14;
+  --color-starforge-gold: #d4a853;
+  --color-cosmic-purple: #2d1b4e;
+  
+  --color-nebula-blue: #1a2744;
+  --color-ember-orange: #c45c26;
+  --color-forge-red: #8b2635;
+  --color-constellation-silver: #c0c5ce;
+  
+  --color-aurora-teal: #2dd4bf;
+  --color-queer-pink: #ec4899;
+  --color-queer-purple: #a855f7;
+  --color-queer-blue: #3b82f6;
+  
+  --color-text-primary: #e8e8ed;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-border: #1f2937;
+  --color-surface: #111118;
+  --color-surface-elevated: #1a1a24;
+
+  --font-display: 'Cinzel', serif;
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Source Serif Pro', serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-void-black text-text-primary font-body antialiased selection:bg-cosmic-purple selection:text-white;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-text-primary;
+  }
+  
+  .font-display {
+    @apply font-display;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(212, 168, 83, 0.5);
+  }
+  .bg-glow-purple {
+    box-shadow: 0 0 20px rgba(45, 27, 78, 0.5);
+  }
+}

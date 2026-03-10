@@ -1,0 +1,410 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the platform, typically an author or member.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier of the user (Firebase Auth UID)."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "The user's profile picture URL."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["member", "author", "admin"],
+          "description": "The user's role on the platform."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the user was created."
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A blog or news post.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "authorId", "status", "createdAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A platform event like a Q&A session.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "link": { "type": "string", "format": "uri" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "date", "type", "createdAt"]
+    },
+    "Journey": {
+      "title": "Journey",
+      "description": "A serialized story.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "authorId": { "type": "string" },
+        "status": { "type": "string", "enum": ["ongoing", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "authorId", "status", "createdAt"]
+    },
+    "JourneyChapter": {
+      "title": "Journey Chapter",
+      "description": "A chapter in a serialized story.",
+      "type": "object",
+      "properties": {
+        "journeyId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["journeyId", "title", "content", "order", "createdAt"]
+    },
+    "AuthorProfile": {
+      "title": "Author Profile",
+      "description": "Public profile for an author.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "bio": { "type": "string" },
+        "website": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "bio", "createdAt"]
+    },
+    "Submission": {
+      "title": "Submission",
+      "description": "A manuscript submission.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "authorId": { "type": "string" },
+        "synopsis": { "type": "string" },
+        "manuscriptUrl": { "type": "string", "format": "uri" },
+        "status": { "type": "string", "enum": ["pending", "reviewing", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "authorId", "synopsis", "manuscriptUrl", "status", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message between users (e.g., author and admin).",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "receiverId", "content", "createdAt"]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "A book in the catalog.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the book."
+        },
+        "author": {
+          "type": "string",
+          "description": "The author of the book."
+        },
+        "cover": {
+          "type": "string",
+          "format": "uri",
+          "description": "The cover image URL."
+        },
+        "codemark": {
+          "type": "string",
+          "description": "The genre or category mark."
+        },
+        "synopsis": {
+          "type": "string",
+          "description": "The synopsis of the book."
+        },
+        "editionType": {
+          "type": "string",
+          "description": "The edition type (e.g., Standard, Signed)."
+        },
+        "format": {
+          "type": "string",
+          "description": "The format of the book (e.g., Paperback, Hardcover, Ebook)."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the book."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the book was created."
+        }
+      },
+      "required": ["title", "author", "cover", "codemark", "synopsis", "editionType", "format", "price", "createdAt"]
+    },
+    "Poll": {
+      "title": "Poll",
+      "description": "A voting campaign for the community.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of poll (e.g., Anthology Theme, Cover Design)."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the poll."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the poll."
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "votes": { "type": "number" }
+            }
+          },
+          "description": "The options to vote for."
+        },
+        "totalVotes": {
+          "type": "number",
+          "description": "The total number of votes cast."
+        },
+        "daysLeft": {
+          "type": "number",
+          "description": "The number of days left to vote."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["type", "title", "description", "options", "totalVotes", "daysLeft", "createdAt"]
+    },
+    "ReaderCircle": {
+      "title": "Reader Circle",
+      "description": "A beta reading group.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the reader circle."
+        },
+        "focus": {
+          "type": "string",
+          "description": "The genre or focus of the circle."
+        },
+        "members": {
+          "type": "number",
+          "description": "The number of active members."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the circle (e.g., Accepting Applications, Waitlist)."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the circle."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "focus", "members", "status", "description", "createdAt"]
+    },
+    "BookClubGuide": {
+      "title": "Book Club Guide",
+      "description": "A discussion guide for a book.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the guide."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the guide."
+        },
+        "fileUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL to download the guide."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "description", "fileUrl", "createdAt"]
+    },
+    "QASession": {
+      "title": "Q&A Session",
+      "description": "A live digital event with an author.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the session."
+        },
+        "author": {
+          "type": "string",
+          "description": "The author hosting the session."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time of the session."
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "The link to join the session."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "author", "date", "link", "createdAt"]
+    },
+    "Constellation": {
+      "title": "Constellation",
+      "description": "A thematic story universe.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "curator": { "type": "string" },
+        "booksCount": { "type": "number" },
+        "authorsCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Active", "Archived", "Planned"] },
+        "color": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "description", "curator", "booksCount", "authorsCount", "status", "color", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles."
+    },
+    "/posts/{postId}": {
+      "schema": {
+        "$ref": "#/entities/Post"
+      },
+      "description": "Stores blog and news posts."
+    },
+    "/events/{eventId}": {
+      "schema": {
+        "$ref": "#/entities/Event"
+      },
+      "description": "Stores platform events."
+    },
+    "/journeys/{journeyId}": {
+      "schema": {
+        "$ref": "#/entities/Journey"
+      },
+      "description": "Stores serialized stories."
+    },
+    "/journeys/{journeyId}/chapters/{chapterId}": {
+      "schema": {
+        "$ref": "#/entities/JourneyChapter"
+      },
+      "description": "Stores chapters for a serialized story."
+    },
+    "/authorProfiles/{profileId}": {
+      "schema": {
+        "$ref": "#/entities/AuthorProfile"
+      },
+      "description": "Stores public profiles for authors."
+    },
+    "/submissions/{submissionId}": {
+      "schema": {
+        "$ref": "#/entities/Submission"
+      },
+      "description": "Stores manuscript submissions."
+    },
+    "/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Stores messages between users."
+    },
+    "/books/{bookId}": {
+      "schema": {
+        "$ref": "#/entities/Book"
+      },
+      "description": "Stores books in the catalog."
+    },
+    "/polls/{pollId}": {
+      "schema": {
+        "$ref": "#/entities/Poll"
+      },
+      "description": "Stores voting campaigns."
+    },
+    "/readerCircles/{circleId}": {
+      "schema": {
+        "$ref": "#/entities/ReaderCircle"
+      },
+      "description": "Stores beta reading groups."
+    },
+    "/bookClubGuides/{guideId}": {
+      "schema": {
+        "$ref": "#/entities/BookClubGuide"
+      },
+      "description": "Stores book club guides."
+    },
+    "/qaSessions/{sessionId}": {
+      "schema": {
+        "$ref": "#/entities/QASession"
+      },
+      "description": "Stores author Q&A sessions."
+    },
+    "/constellations/{constellationId}": {
+      "schema": {
+        "$ref": "#/entities/Constellation"
+      },
+      "description": "Stores thematic story universes."
+    }
+  }
+}

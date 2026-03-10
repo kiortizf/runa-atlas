@@ -1,0 +1,489 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // This security rules file assumes the following data structures:
+    //
+    // Collection: users
+    // Document ID: {userId} (matches Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required, immutable) - The user's UID
+    //   - email: string (required, immutable) - The user's email
+    //   - displayName: string (optional) - The user's display name
+    //   - photoURL: string (optional) - The user's profile picture URL
+    //   - role: string (required, immutable for non-admins) - The user's role (member, author, admin)
+    //   - createdAt: timestamp (required, immutable) - Creation timestamp
+    //
+    // Collection: posts
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - content: string (required)
+    //   - authorId: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: events
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - description: string (required)
+    //   - date: timestamp (required)
+    //   - link: string (required, url)
+    //   - type: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: journeys
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - description: string (required)
+    //   - authorId: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: journeys/{journeyId}/chapters
+    // Document ID: auto-generated
+    // Fields:
+    //   - journeyId: string (required)
+    //   - title: string (required)
+    //   - content: string (required)
+    //   - order: number (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: authorProfiles
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required)
+    //   - bio: string (required)
+    //   - website: string (optional, url)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: submissions
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - authorId: string (required)
+    //   - synopsis: string (required)
+    //   - manuscriptUrl: string (required, url)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: messages
+    // Document ID: auto-generated
+    // Fields:
+    //   - senderId: string (required)
+    //   - receiverId: string (required)
+    //   - content: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: books
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - author: string (required)
+    //   - cover: string (required, url)
+    //   - codemark: string (required)
+    //   - synopsis: string (required)
+    //   - editionType: string (required)
+    //   - price: number (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: polls
+    // Document ID: auto-generated
+    // Fields:
+    //   - type: string (required)
+    //   - title: string (required)
+    //   - description: string (required)
+    //   - options: list (required)
+    //   - totalVotes: number (required)
+    //   - daysLeft: number (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: readerCircles
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required)
+    //   - focus: string (required)
+    //   - members: number (required)
+    //   - status: string (required)
+    //   - description: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: bookClubGuides
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - description: string (required)
+    //   - fileUrl: string (required, url)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: qaSessions
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - author: string (required)
+    //   - date: timestamp (required)
+    //   - link: string (required, url)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "kiortizfl@gmail.com" && request.auth.token.email_verified == true)); // Default admin
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == resource.data.uid;
+    }
+
+    function isAuthor() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['author', 'admin']);
+    }
+
+    function isMember() {
+      return isAuthenticated();
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    
+    function isValidUrl(url) {
+      return url is string &&
+        (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 100 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && isValidUrl(data.photoURL) && data.photoURL.size() < 500)) &&
+             data.role in ['member', 'author', 'admin'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPost(data) {
+      return hasOnlyAllowedFields(['title', 'content', 'authorId', 'status', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+             data.authorId is string && data.authorId.size() > 0 && data.authorId.size() < 100 &&
+             data.status in ['draft', 'published'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidEvent(data) {
+      return hasOnlyAllowedFields(['title', 'description', 'date', 'link', 'type', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 2000 &&
+             data.date is timestamp &&
+             (!('link' in data) || data.link == '' || (data.link is string && isValidUrl(data.link) && data.link.size() < 500)) &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
+             (data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    function isValidJourney(data) {
+      return hasOnlyAllowedFields(['title', 'description', 'author', 'authorId', 'status', 'episodes', 'genre', 'constellation', 'lastUpdate', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 2000 &&
+             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
+             data.authorId is string && data.authorId.size() > 0 && data.authorId.size() < 100 &&
+             data.status in ['Active', 'Completed', 'Hiatus'] &&
+             data.episodes is number && data.episodes >= 0 &&
+             data.genre is string && data.genre.size() > 0 && data.genre.size() < 100 &&
+             data.constellation is string && data.constellation.size() > 0 && data.constellation.size() < 100 &&
+             (!('lastUpdate' in data) || data.lastUpdate is timestamp) &&
+             (data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    function isValidJourneyChapter(data) {
+      return hasOnlyAllowedFields(['journeyId', 'title', 'content', 'order', 'createdAt']) &&
+             data.journeyId is string && data.journeyId.size() > 0 && data.journeyId.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+             data.order is number && data.order >= 0 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidAuthorProfile(data) {
+      return hasOnlyAllowedFields(['userId', 'bio', 'website', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.bio is string && data.bio.size() > 0 && data.bio.size() < 2000 &&
+             (!('website' in data) || data.website == '' || (data.website is string && isValidUrl(data.website) && data.website.size() < 500)) &&
+             (data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    function isValidSubmission(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.authorId is string && data.authorId.size() > 0 && data.authorId.size() < 100 &&
+             data.synopsis is string && data.synopsis.size() > 0 && data.synopsis.size() < 5000 &&
+             data.manuscriptUrl is string && data.manuscriptUrl.size() > 0 && data.manuscriptUrl.size() < 500 &&
+             data.status in ['pending', 'reviewing', 'accepted', 'rejected'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidMessage(data) {
+      return hasOnlyAllowedFields(['senderId', 'receiverId', 'content', 'createdAt']) &&
+             data.senderId is string && data.senderId.size() > 0 && data.senderId.size() < 100 &&
+             data.receiverId is string && data.receiverId.size() > 0 && data.receiverId.size() < 100 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBook(data) {
+      return hasOnlyAllowedFields(['title', 'author', 'cover', 'codemark', 'synopsis', 'editionType', 'format', 'price', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
+             data.cover is string && isValidUrl(data.cover) && data.cover.size() < 500 &&
+             data.codemark is string && data.codemark.size() > 0 && data.codemark.size() < 100 &&
+             data.synopsis is string && data.synopsis.size() > 0 && data.synopsis.size() < 5000 &&
+             data.editionType is string && data.editionType.size() > 0 && data.editionType.size() < 50 &&
+             data.format is string && data.format.size() > 0 && data.format.size() < 50 &&
+             data.price is number && data.price >= 0 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPoll(data) {
+      return hasOnlyAllowedFields(['type', 'title', 'description', 'options', 'totalVotes', 'daysLeft', 'createdAt']) &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 1000 &&
+             data.options is list && data.options.size() > 0 && data.options.size() <= 10 &&
+             data.totalVotes is number && data.totalVotes >= 0 &&
+             data.daysLeft is number && data.daysLeft >= 0 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidReaderCircle(data) {
+      return hasOnlyAllowedFields(['name', 'focus', 'members', 'status', 'description', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.focus is string && data.focus.size() > 0 && data.focus.size() < 200 &&
+             data.members is number && data.members >= 0 &&
+             data.status is string && data.status.size() > 0 && data.status.size() < 100 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 2000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBookClubGuide(data) {
+      return hasOnlyAllowedFields(['title', 'description', 'fileUrl', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 1000 &&
+             data.fileUrl is string && isValidUrl(data.fileUrl) && data.fileUrl.size() < 500 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidQASession(data) {
+      return hasOnlyAllowedFields(['title', 'author', 'date', 'link', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
+             data.date is timestamp &&
+             data.link is string && isValidUrl(data.link) && data.link.size() < 500 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidConstellation(data) {
+      return hasOnlyAllowedFields(['name', 'description', 'curator', 'booksCount', 'authorsCount', 'status', 'color', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 2000 &&
+             data.curator is string && data.curator.size() > 0 && data.curator.size() < 100 &&
+             data.booksCount is number && data.booksCount >= 0 &&
+             data.authorsCount is number && data.authorsCount >= 0 &&
+             data.status in ['Active', 'Archived', 'Planned'] &&
+             data.color is string && data.color.size() > 0 && data.color.size() < 50 &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow create: if isAuthenticated() && 
+                    isOwner(userId) && 
+                    isValidUser(request.resource.data) && 
+                    uidUnchanged() &&
+                    (request.resource.data.role in ['member', 'author'] || isAdmin());
+                    
+      allow update: if isAuthenticated() && 
+                    isValidUser(request.resource.data) && 
+                    uidNotModified() &&
+                    areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) &&
+                    ((isOwner(userId) && areImmutableFieldsUnchanged(['role'])) || isAdmin());
+                    
+      allow delete: if isAdmin();
+    }
+
+    // Journey progress tracking for members
+    match /users/{userId}/journeyProgress/{journeyId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPost(request.resource.data);
+      allow update: if isAdmin() && isValidPost(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidEvent(request.resource.data);
+      allow update: if isAdmin() && isValidEvent(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /journeys/{journeyId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidJourney(request.resource.data);
+      allow update: if isAdmin() && isValidJourney(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /journeys/{journeyId}/chapters/{chapterId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidJourneyChapter(request.resource.data);
+      allow update: if isAdmin() && isValidJourneyChapter(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /authorProfiles/{profileId} {
+      allow read: if true;
+      allow create: if (isAdmin() || isOwner(request.resource.data.userId)) && isValidAuthorProfile(request.resource.data);
+      allow update: if (isAdmin() || isOwner(request.resource.data.userId)) && isValidAuthorProfile(request.resource.data) && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if isAdmin() || isOwner(resource.data.authorId);
+      allow create: if (isAuthor() || isAdmin()) && isOwner(request.resource.data.authorId) && isValidSubmission(request.resource.data);
+      allow update: if (isAdmin() && isValidSubmission(request.resource.data) && areImmutableFieldsUnchanged(['authorId', 'createdAt'])) ||
+                    (isOwner(request.resource.data.authorId) && isValidSubmission(request.resource.data) && areImmutableFieldsUnchanged(['authorId', 'status', 'createdAt']));
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      allow read: if isAdmin() || isOwner(resource.data.senderId) || isOwner(resource.data.receiverId);
+      allow create: if (isOwner(request.resource.data.senderId) || isAdmin()) && isValidMessage(request.resource.data);
+      allow update: if false; // Messages are immutable
+      allow delete: if isAdmin();
+    }
+
+    match /books/{bookId} {
+      allow read: if true; // Publicly readable catalog
+      
+      allow create: if isAdmin() && isValidBook(request.resource.data);
+      
+      allow update: if isAdmin() && 
+                    isValidBook(request.resource.data) &&
+                    areImmutableFieldsUnchanged(['createdAt']);
+                    
+      allow delete: if isAdmin();
+    }
+
+    match /polls/{pollId} {
+      allow read: if true;
+      
+      allow create: if isAdmin() && isValidPoll(request.resource.data);
+      
+      allow update: if (isAdmin() && isValidPoll(request.resource.data) && areImmutableFieldsUnchanged(['createdAt'])) ||
+                    (isAuthenticated() && isValidPoll(request.resource.data) && areImmutableFieldsUnchanged(['type', 'title', 'description', 'daysLeft', 'createdAt']));
+                    
+      allow delete: if isAdmin();
+    }
+
+    match /readerCircles/{circleId} {
+      allow read: if true;
+      
+      allow create: if isAdmin() && isValidReaderCircle(request.resource.data);
+      
+      allow update: if isAdmin() && isValidReaderCircle(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+                    
+      allow delete: if isAdmin();
+    }
+
+    // Reader circle membership applications
+    match /readerCircles/{circleId}/members/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isMember();
+      allow update: if isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /bookClubGuides/{guideId} {
+      allow read: if true;
+      
+      allow create: if isAdmin() && isValidBookClubGuide(request.resource.data);
+      
+      allow update: if isAdmin() && isValidBookClubGuide(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+                    
+      allow delete: if isAdmin();
+    }
+
+    match /qaSessions/{sessionId} {
+      allow read: if true;
+      
+      allow create: if isAdmin() && isValidQASession(request.resource.data);
+      
+      allow update: if isAdmin() && isValidQASession(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+                    
+      allow delete: if isAdmin();
+    }
+
+    match /constellations/{constellationId} {
+      allow read: if true;
+      
+      allow create: if isAdmin() && isValidConstellation(request.resource.data);
+      
+      allow update: if isAdmin() && isValidConstellation(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+                    
+      allow delete: if isAdmin();
+    }
+  }
+}
