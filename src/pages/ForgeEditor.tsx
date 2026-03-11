@@ -82,7 +82,7 @@ export default function ForgeEditor() {
     const { user } = useAuth();
     const {
         manuscripts, chapters, loading, saving, totalWords,
-        createManuscript, updateManuscript, addChapter,
+        createManuscript, updateManuscript, deleteManuscript, addChapter,
         saveChapter, updateChapter, deleteChapter, reorderChapters
     } = useManuscript(manuscriptId);
     const { logEpisodeSession } = useWritingSessions();
@@ -355,18 +355,16 @@ export default function ForgeEditor() {
 
     // ── DnD Chapter Reorder ──
     const binderChapters = useMemo(() => chapters.filter(ch => ch.type === 'chapter' || ch.type === 'scene'), [chapters]);
+    const binderNotes = useMemo(() => chapters.filter(ch => ch.type === 'notes' || ch.type === 'research'), [chapters]);
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
-        const oldIndex = binderChapters.findIndex(c => c.id === active.id);
-        const newIndex = binderChapters.findIndex(c => c.id === over.id);
+        const oldIndex = chapters.findIndex(c => c.id === active.id);
+        const newIndex = chapters.findIndex(c => c.id === over.id);
         if (oldIndex !== -1 && newIndex !== -1) {
-            // Map back to full chapters array indices
-            const fullOldIndex = chapters.findIndex(c => c.id === active.id);
-            const fullNewIndex = chapters.findIndex(c => c.id === (over.id as string));
-            reorderChapters(fullOldIndex, fullNewIndex);
+            reorderChapters(oldIndex, newIndex);
         }
-    }, [binderChapters, chapters, reorderChapters]);
+    }, [chapters, reorderChapters]);
 
     // ── Find & Replace ──
     const handleFind = useCallback(() => {
@@ -557,32 +555,36 @@ export default function ForgeEditor() {
 
     const handleCompileExport = useCallback(async () => {
         if (!activeManuscript || compileChapters.length === 0) return;
-        if (compileFormat === 'docx') {
-            const paragraphs: Paragraph[] = [];
-            paragraphs.push(new Paragraph({
-                children: [new TextRun({ text: activeManuscript.title, bold: true, size: 48 })],
-                heading: HeadingLevel.TITLE, spacing: { after: 400 },
-            }));
-            for (const ch of compileChapters) {
+        try {
+            if (compileFormat === 'docx') {
+                const paragraphs: Paragraph[] = [];
                 paragraphs.push(new Paragraph({
-                    children: [new TextRun({ text: ch.title, bold: true, size: 32 })],
-                    heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 },
+                    children: [new TextRun({ text: activeManuscript.title, bold: true, size: 48 })],
+                    heading: HeadingLevel.TITLE, spacing: { after: 400 },
                 }));
-                for (const line of (ch.plainText || '').split('\n')) {
-                    if (line.trim()) paragraphs.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, font: 'Georgia' })], spacing: { after: 120 } }));
+                for (const ch of compileChapters) {
+                    paragraphs.push(new Paragraph({
+                        children: [new TextRun({ text: ch.title, bold: true, size: 32 })],
+                        heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 },
+                    }));
+                    for (const line of (ch.plainText || '').split('\n')) {
+                        if (line.trim()) paragraphs.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, font: 'Georgia' })], spacing: { after: 120 } }));
+                    }
                 }
+                const compiledDoc = new Document({ sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: paragraphs }] });
+                const blob = await Packer.toBlob(compiledDoc);
+                saveAs(blob, `${activeManuscript.title} - Compiled.docx`);
+            } else if (compileFormat === 'md') {
+                let md = `# ${activeManuscript.title}\n\n`;
+                for (const ch of compileChapters) md += `## ${ch.title}\n\n${ch.plainText || ''}\n\n---\n\n`;
+                saveAs(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${activeManuscript.title} - Compiled.md`);
+            } else {
+                let txt = `${activeManuscript.title}\n${'='.repeat(activeManuscript.title.length)}\n\n`;
+                for (const ch of compileChapters) txt += `${ch.title}\n${'-'.repeat(ch.title.length)}\n\n${ch.plainText || ''}\n\n`;
+                saveAs(new Blob([txt], { type: 'text/plain;charset=utf-8' }), `${activeManuscript.title} - Compiled.txt`);
             }
-            const docFile = new Document({ sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: paragraphs }] });
-            const blob = await Packer.toBlob(docFile);
-            saveAs(blob, `${activeManuscript.title} — Compiled.docx`);
-        } else if (compileFormat === 'md') {
-            let md = `# ${activeManuscript.title}\n\n`;
-            for (const ch of compileChapters) md += `## ${ch.title}\n\n${ch.plainText || ''}\n\n---\n\n`;
-            saveAs(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${activeManuscript.title} — Compiled.md`);
-        } else {
-            let txt = `${activeManuscript.title}\n${'='.repeat(activeManuscript.title.length)}\n\n`;
-            for (const ch of compileChapters) txt += `${ch.title}\n${'-'.repeat(ch.title.length)}\n\n${ch.plainText || ''}\n\n`;
-            saveAs(new Blob([txt], { type: 'text/plain;charset=utf-8' }), `${activeManuscript.title} — Compiled.txt`);
+        } catch (err) {
+            console.error('Compile export error:', err);
         }
         setShowCompileModal(false);
     }, [activeManuscript, compileChapters, compileFormat]);
@@ -847,6 +849,59 @@ export default function ForgeEditor() {
                                         ))}
                                     </SortableContext>
                                 </DndContext>
+                                {/* Notes & Research */}
+                                {binderNotes.length > 0 && (
+                                    <div className="mt-2 border-t border-white/[0.06] pt-2">
+                                        <div className="px-3 mb-1 flex items-center justify-between">
+                                            <span className="text-[9px] text-text-secondary uppercase tracking-wider font-ui">Notes & Research</span>
+                                            <button onClick={async () => {
+                                                handleManualSave();
+                                                const newId = await addChapter('', 'notes');
+                                                if (newId) setActiveChapterId(newId);
+                                            }} className="p-0.5 rounded hover:bg-white/[0.08] text-text-secondary hover:text-starforge-gold" title="Add note">
+                                                <Plus className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                        {binderNotes.map(note => (
+                                            <div key={note.id}
+                                                className={`group flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-colors ${activeChapterId === note.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:bg-white/[0.04] hover:text-white'}`}
+                                                onClick={() => { handleManualSave(); setActiveChapterId(note.id); }}>
+                                                <StickyNote className="w-3.5 h-3.5 flex-none" />
+                                                {editingTitle === note.id ? (
+                                                    <input value={editTitleValue} onChange={e => setEditTitleValue(e.target.value)}
+                                                        className="flex-1 bg-transparent border-b border-starforge-gold/40 text-xs text-white focus:outline-none min-w-0"
+                                                        autoFocus
+                                                        onClick={e => e.stopPropagation()}
+                                                        onBlur={() => { updateChapter(note.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') { updateChapter(note.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }
+                                                            if (e.key === 'Escape') setEditingTitle(null);
+                                                        }} />
+                                                ) : (
+                                                    <span className="text-xs truncate flex-1" onDoubleClick={(e) => { e.stopPropagation(); setEditingTitle(note.id); setEditTitleValue(note.title); }}>
+                                                        {note.title}
+                                                    </span>
+                                                )}
+                                                <span className="text-[9px] opacity-60 flex-none">{note.wordCount || 0}</span>
+                                                <button onClick={(e) => { e.stopPropagation(); setEditingTitle(note.id); setEditTitleValue(note.title); }}
+                                                    className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-starforge-gold" title="Rename">
+                                                    <Edit2 className="w-3 h-3" />
+                                                </button>
+                                                <button onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (!confirm(`Delete "${note.title}"?`)) return;
+                                                    if (activeChapterId === note.id) {
+                                                        const remaining = chapters.filter(c => c.id !== note.id);
+                                                        setActiveChapterId(remaining.length > 0 ? remaining[0].id : null);
+                                                    }
+                                                    await deleteChapter(note.id);
+                                                }} className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-red-400" title="Delete">
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             {/* Binder Footer */}
                             <div className="p-3 border-t border-white/[0.06] text-[10px] text-text-secondary">
@@ -1861,9 +1916,11 @@ function SortableChapterItem({ chapter, isActive, liveWordCount, sparklinePct, i
     return (
         <div ref={setNodeRef} style={style}
             className={`group flex flex-col gap-0.5 px-3 py-2 cursor-pointer transition-colors ${isActive ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:bg-white/[0.04] hover:text-white'}`}
-            onClick={onSelect}>
+            onClick={() => { if (!isDragging && !isEditing) onSelect(); }}>
             <div className="flex items-center gap-2">
-                <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+                <div {...attributes} {...listeners}
+                    className="cursor-grab active:cursor-grabbing"
+                    onClick={e => e.stopPropagation()}>
                     <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-40 flex-none" />
                 </div>
                 {chapter.type === 'chapter' ? <FileText className="w-3.5 h-3.5 flex-none" /> :
@@ -1873,13 +1930,22 @@ function SortableChapterItem({ chapter, isActive, liveWordCount, sparklinePct, i
                         className="flex-1 bg-transparent border-b border-starforge-gold/40 text-xs text-white focus:outline-none min-w-0"
                         autoFocus
                         onClick={e => e.stopPropagation()}
-                        onBlur={() => onRename(editValue)}
+                        onBlur={() => {
+                            const trimmed = editValue.trim();
+                            if (trimmed) onRename(trimmed);
+                            else onCancelRename();
+                        }}
                         onKeyDown={e => {
-                            if (e.key === 'Enter') onRename(editValue);
+                            if (e.key === 'Enter') {
+                                const trimmed = editValue.trim();
+                                if (trimmed) onRename(trimmed);
+                                else onCancelRename();
+                            }
                             if (e.key === 'Escape') onCancelRename();
                         }} />
                 ) : (
-                    <span className="text-xs truncate flex-1" onDoubleClick={onStartRename}>
+                    <span className="text-xs truncate flex-1"
+                        onDoubleClick={e => { e.stopPropagation(); onStartRename(); }}>
                         {chapter.title}
                     </span>
                 )}
