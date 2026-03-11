@@ -10,9 +10,9 @@ import { useRef, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import betaQueueImg from '../assets/features/beta-queue.png';
-import betaFeedbackImg from '../assets/features/beta-feedback.png';
-import betaStatsImg from '../assets/features/beta-stats.png';
+import betaQueueImg from '../assets/features/beta-queue.webp';
+import betaFeedbackImg from '../assets/features/beta-feedback.webp';
+import betaStatsImg from '../assets/features/beta-stats.webp';
 
 // ═══════════════════════════════════════════
 // FOR BETA READERS — SaaS-style feature showcase

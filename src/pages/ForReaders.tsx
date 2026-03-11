@@ -12,21 +12,21 @@ import { db } from '../firebase';
 import { usePageSEO } from '../hooks/usePageSEO';
 
 // Feature screenshots
-import runeweaveImg from '../assets/features/runeweave-starmap.png';
-import readerAppImg from '../assets/features/reader-app.png';
-import journeysImg from '../assets/features/journeys-serial.png';
-import forgeVotingImg from '../assets/features/forge-voting.png';
-import authorConnectImg from '../assets/features/author-connect.png';
-import communityImg from '../assets/features/community-circles.png';
-import eventsImg from '../assets/features/events-calendar.png';
-import libraryImg from '../assets/features/library-shelf.png';
-import spoilerShieldImg from '../assets/features/spoiler-shield.png';
-import readingWrappedImg from '../assets/features/reading-wrapped.png';
-import moodMatcherImg from '../assets/features/mood-matcher.png';
-import passageCollectionsImg from '../assets/features/passage-collections.png';
-import bookDnaImg from '../assets/features/book-dna.png';
-import readerCompatibilityImg from '../assets/features/reader-compatibility.png';
-import contentCompassImg from '../assets/features/content-compass.png';
+import runeweaveImg from '../assets/features/runeweave-starmap.webp';
+import readerAppImg from '../assets/features/reader-app.webp';
+import journeysImg from '../assets/features/journeys-serial.webp';
+import forgeVotingImg from '../assets/features/forge-voting.webp';
+import authorConnectImg from '../assets/features/author-connect.webp';
+import communityImg from '../assets/features/community-circles.webp';
+import eventsImg from '../assets/features/events-calendar.webp';
+import libraryImg from '../assets/features/library-shelf.webp';
+import spoilerShieldImg from '../assets/features/spoiler-shield.webp';
+import readingWrappedImg from '../assets/features/reading-wrapped.webp';
+import moodMatcherImg from '../assets/features/mood-matcher.webp';
+import passageCollectionsImg from '../assets/features/passage-collections.webp';
+import bookDnaImg from '../assets/features/book-dna.webp';
+import readerCompatibilityImg from '../assets/features/reader-compatibility.webp';
+import contentCompassImg from '../assets/features/content-compass.webp';
 
 // ═══════════════════════════════════════════
 // FOR READERS — SaaS-style feature showcase

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, setDoc, onSnapshot, deleteDoc, collection, query, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, deleteDoc, addDoc, collection, query, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -153,7 +153,6 @@ export function useComments(manuscriptId?: string, chapterId?: string) {
         body: string
     ) => {
         if (!user || !manuscriptId || !chapterId) return;
-        const { addDoc } = await import('firebase/firestore');
         await addDoc(collection(db, `manuscripts/${manuscriptId}/comments`), {
             uid: user.uid,
             authorName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
@@ -261,7 +260,6 @@ export function useSuggestions(manuscriptId?: string, chapterId?: string) {
         to: number
     ) => {
         if (!user || !manuscriptId || !chapterId) return;
-        const { addDoc } = await import('firebase/firestore');
         await addDoc(collection(db, `manuscripts/${manuscriptId}/suggestions`), {
             uid: user.uid,
             authorName: user.displayName || user.email?.split('@')[0] || 'Anonymous',

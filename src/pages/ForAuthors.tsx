@@ -13,24 +13,24 @@ import { db } from '../firebase';
 import { usePageSEO } from '../hooks/usePageSEO';
 
 // Feature screenshots
-import forgeEditorImg from '../assets/features/forge-editor.png';
-import creatorStudioImg from '../assets/features/creator-studio.png';
-import communityImg from '../assets/features/community.png';
-import runeweaveImg from '../assets/features/runeweave-voting.png';
-import readerCirclesImg from '../assets/features/reader-circles.png';
-import writingAnalyticsImg from '../assets/features/writing-analytics.png';
-import betaReaderImg from '../assets/features/beta-reader-hub.png';
-import manuscriptIntelImg from '../assets/features/manuscript-intelligence.png';
-import audienceInsightsImg from '../assets/features/audience-insights.png';
-import revenueReachImg from '../assets/features/revenue-reach.png';
-import collaborationImg from '../assets/features/collaboration.png';
-import writingGoalsImg from '../assets/features/writing-goals.png';
-import launchPlannerImg from '../assets/features/launch-planner.png';
-import arcManagerImg from '../assets/features/arc-manager.png';
-import submissionTrackerImg from '../assets/features/submission-tracker.png';
-import royaltyCalculatorImg from '../assets/features/royalty-calculator.png';
-import authorProfileImg from '../assets/features/author-profile.png';
-import onboardingWizardImg from '../assets/features/onboarding-wizard.png';
+import forgeEditorImg from '../assets/features/forge-editor.webp';
+import creatorStudioImg from '../assets/features/creator-studio.webp';
+import communityImg from '../assets/features/community.webp';
+import runeweaveImg from '../assets/features/runeweave-voting.webp';
+import readerCirclesImg from '../assets/features/reader-circles.webp';
+import writingAnalyticsImg from '../assets/features/writing-analytics.webp';
+import betaReaderImg from '../assets/features/beta-reader-hub.webp';
+import manuscriptIntelImg from '../assets/features/manuscript-intelligence.webp';
+import audienceInsightsImg from '../assets/features/audience-insights.webp';
+import revenueReachImg from '../assets/features/revenue-reach.webp';
+import collaborationImg from '../assets/features/collaboration.webp';
+import writingGoalsImg from '../assets/features/writing-goals.webp';
+import launchPlannerImg from '../assets/features/launch-planner.webp';
+import arcManagerImg from '../assets/features/arc-manager.webp';
+import submissionTrackerImg from '../assets/features/submission-tracker.webp';
+import royaltyCalculatorImg from '../assets/features/royalty-calculator.webp';
+import authorProfileImg from '../assets/features/author-profile.webp';
+import onboardingWizardImg from '../assets/features/onboarding-wizard.webp';
 
 // ═══════════════════════════════════════════
 // FOR AUTHORS — SaaS-style feature showcase
