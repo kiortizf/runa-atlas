@@ -65,6 +65,8 @@ export default function ForgeEditor() {
     const [editTitleValue, setEditTitleValue] = useState('');
     const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments'>('notes');
     const [notesValue, setNotesValue] = useState('');
+    const notesDirtyRef = useRef(false);
+    const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [suggestionMode, setSuggestionMode] = useState(false);
     const [newCommentText, setNewCommentText] = useState('');
     const [showCommentPopover, setShowCommentPopover] = useState(false);
@@ -111,7 +113,6 @@ export default function ForgeEditor() {
     useEffect(() => {
         if (!editor) return;
         if (!activeChapter || !activeChapterId) {
-            // No chapter selected — clear editor
             editor.commands.setContent('');
             lastSavedContent.current = '';
             prevWordCount.current = 0;
@@ -122,18 +123,18 @@ export default function ForgeEditor() {
         prevChapterIdRef.current = activeChapterId;
 
         if (chapterChanged) {
-            // Always set content on chapter switch, even if empty
             const contentToLoad = activeChapter.content || '';
             editor.commands.setContent(contentToLoad);
             lastSavedContent.current = contentToLoad;
             prevWordCount.current = activeChapter.wordCount || 0;
+            // Only reset notes on chapter switch, not on content changes
+            setNotesValue(activeChapter.notes || '');
+            notesDirtyRef.current = false;
         } else if (activeChapter.content && activeChapter.content !== lastSavedContent.current) {
-            // Same chapter but content updated externally (e.g. real-time collab)
             editor.commands.setContent(activeChapter.content);
             lastSavedContent.current = activeChapter.content;
             prevWordCount.current = activeChapter.wordCount || 0;
         }
-        setNotesValue(activeChapter.notes || '');
     }, [editor, activeChapterId, activeChapter?.content]);
 
     // Select first chapter when manuscript loads
@@ -214,7 +215,26 @@ export default function ForgeEditor() {
     const handleSaveNotes = useCallback(async () => {
         if (!activeChapterId) return;
         await updateChapter(activeChapterId, { notes: notesValue } as Partial<Chapter>);
+        notesDirtyRef.current = false;
     }, [activeChapterId, notesValue, updateChapter]);
+
+    // Auto-save notes after 2s of inactivity
+    const handleNotesChange = useCallback((value: string) => {
+        setNotesValue(value);
+        notesDirtyRef.current = true;
+        if (notesTimerRef.current) clearTimeout(notesTimerRef.current);
+        notesTimerRef.current = setTimeout(() => {
+            if (activeChapterId && notesDirtyRef.current) {
+                updateChapter(activeChapterId, { notes: value } as Partial<Chapter>);
+                notesDirtyRef.current = false;
+            }
+        }, 2000);
+    }, [activeChapterId, updateChapter]);
+
+    // Cleanup notes timer
+    useEffect(() => {
+        return () => { if (notesTimerRef.current) clearTimeout(notesTimerRef.current); };
+    }, []);
 
     // ── Manuscript List View (no manuscript selected) ──
     if (!manuscriptId) {
@@ -289,7 +309,8 @@ export default function ForgeEditor() {
     }
 
     // ── Editor View ──
-    const wordCount = editor?.storage.characterCount?.words?.() || 0;
+    const liveWordCount = editor?.storage.characterCount?.words?.() || 0;
+    const wordCount = liveWordCount;
     const charCount = editor?.storage.characterCount?.characters?.() || 0;
 
     return (
@@ -358,53 +379,55 @@ export default function ForgeEditor() {
                             className="flex-none bg-deep-space/40 border-r border-white/[0.06] flex flex-col overflow-hidden">
                             <div className="p-3 border-b border-white/[0.06] flex items-center justify-between">
                                 <span className="text-[10px] text-text-secondary uppercase tracking-wider font-ui">Manuscript</span>
-                                <div className="flex gap-1">
-                                    <button onClick={async () => {
-                                        handleManualSave();
-                                        const newId = await addChapter('', 'chapter');
-                                        if (newId) setActiveChapterId(newId);
-                                    }} className="p-1 rounded hover:bg-white/[0.08] text-text-secondary hover:text-starforge-gold" title="Add chapter">
-                                        <FilePlus className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button onClick={async () => {
-                                        handleManualSave();
-                                        const newId = await addChapter('', 'notes');
-                                        if (newId) setActiveChapterId(newId);
-                                    }} className="p-1 rounded hover:bg-white/[0.08] text-text-secondary hover:text-starforge-gold" title="Add notes">
-                                        <StickyNote className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
+                                <button onClick={async () => {
+                                    handleManualSave();
+                                    const newId = await addChapter('', 'chapter');
+                                    if (newId) setActiveChapterId(newId);
+                                }} className="p-1 rounded hover:bg-white/[0.08] text-text-secondary hover:text-starforge-gold" title="Add chapter">
+                                    <FilePlus className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                             <div className="flex-1 overflow-y-auto py-1">
-                                {chapters.map((ch, idx) => (
+                                {chapters.filter(ch => ch.type === 'chapter' || ch.type === 'scene').map((ch, idx) => (
                                     <div key={ch.id}
                                         className={`group flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${activeChapterId === ch.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:bg-white/[0.04] hover:text-white'}`}
                                         onClick={() => { handleManualSave(); setActiveChapterId(ch.id); }}>
                                         <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-40 flex-none" />
                                         {ch.type === 'chapter' ? <FileText className="w-3.5 h-3.5 flex-none" /> :
-                                            ch.type === 'notes' ? <StickyNote className="w-3.5 h-3.5 flex-none" /> :
-                                                ch.type === 'research' ? <Microscope className="w-3.5 h-3.5 flex-none" /> :
-                                                    <FileText className="w-3.5 h-3.5 flex-none" />}
+                                            <Scroll className="w-3.5 h-3.5 flex-none" />}
                                         {editingTitle === ch.id ? (
                                             <input value={editTitleValue} onChange={e => setEditTitleValue(e.target.value)}
                                                 className="flex-1 bg-transparent border-b border-starforge-gold/40 text-xs text-white focus:outline-none min-w-0"
                                                 autoFocus
                                                 onBlur={() => { updateChapter(ch.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }}
-                                                onKeyDown={e => { if (e.key === 'Enter') { updateChapter(ch.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); } }} />
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') { updateChapter(ch.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }
+                                                    if (e.key === 'Escape') setEditingTitle(null);
+                                                }} />
                                         ) : (
                                             <span className="text-xs truncate flex-1" onDoubleClick={() => { setEditingTitle(ch.id); setEditTitleValue(ch.title); }}>
                                                 {ch.title}
                                             </span>
                                         )}
-                                        <span className="text-[9px] opacity-60 flex-none">{ch.wordCount || 0}</span>
+                                        <span className="text-[9px] opacity-60 flex-none">
+                                            {activeChapterId === ch.id ? liveWordCount : (ch.wordCount || 0)}
+                                        </span>
+                                        <button onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingTitle(ch.id);
+                                            setEditTitleValue(ch.title);
+                                        }}
+                                            className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-starforge-gold"
+                                            title="Rename">
+                                            <Edit2 className="w-3 h-3" />
+                                        </button>
                                         <button onClick={async (e) => {
                                             e.stopPropagation();
-                                            // If deleting the active chapter, switch to an adjacent one
+                                            if (!confirm(`Delete "${ch.title}"?`)) return;
                                             if (activeChapterId === ch.id) {
                                                 handleManualSave();
                                                 const remaining = chapters.filter(c => c.id !== ch.id);
                                                 if (remaining.length > 0) {
-                                                    // Select the chapter before, or the first one
                                                     const currentIdx = chapters.findIndex(c => c.id === ch.id);
                                                     const nextChapter = chapters[currentIdx - 1] || chapters[currentIdx + 1] || remaining[0];
                                                     setActiveChapterId(nextChapter?.id || null);
@@ -414,7 +437,8 @@ export default function ForgeEditor() {
                                             }
                                             await deleteChapter(ch.id);
                                         }}
-                                            className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-red-400">
+                                            className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-red-400"
+                                            title="Delete">
                                             <Trash2 className="w-3 h-3" />
                                         </button>
                                     </div>
@@ -596,9 +620,12 @@ export default function ForgeEditor() {
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] text-text-secondary uppercase tracking-wider">Scene Notes</span>
-                                            <button onClick={handleSaveNotes} className="text-[10px] text-starforge-gold hover:text-starforge-gold/80">Save</button>
+                                            <div className="flex items-center gap-2">
+                                                {notesDirtyRef.current && <span className="text-[9px] text-starforge-gold/50 animate-pulse">Modified</span>}
+                                                <button onClick={handleSaveNotes} className="text-[10px] text-starforge-gold hover:text-starforge-gold/80 font-semibold">Save</button>
+                                            </div>
                                         </div>
-                                        <textarea value={notesValue} onChange={e => setNotesValue(e.target.value)}
+                                        <textarea value={notesValue} onChange={e => handleNotesChange(e.target.value)}
                                             placeholder="Notes, ideas, reminders..."
                                             className="w-full h-48 px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white resize-none focus:outline-none focus:border-starforge-gold/30" />
                                     </div>
@@ -618,7 +645,7 @@ export default function ForgeEditor() {
                                         </div>
                                         <div>
                                             <span className="text-[10px] text-text-secondary uppercase tracking-wider block mb-2">Word Count</span>
-                                            <p className="text-2xl font-semibold text-white">{(activeChapter.wordCount || 0).toLocaleString()}</p>
+                                            <p className="text-2xl font-semibold text-white">{(activeChapterId === activeChapter.id ? liveWordCount : (activeChapter.wordCount || 0)).toLocaleString()}</p>
                                         </div>
                                         <div>
                                             <span className="text-[10px] text-text-secondary uppercase tracking-wider block mb-2">Type</span>
