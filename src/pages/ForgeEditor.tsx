@@ -25,6 +25,7 @@ import {
     MessageSquare, Users, Send, CheckCircle, XCircle,
     PenLine, UserCheck, Reply, Search, Replace, Columns,
     Download, Globe, MapPin, Sword, Shield, BookMarked,
+    Keyboard, BookOpenCheck, BarChart3, Type, Maximize2, Activity,
     type LucideIcon
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -115,6 +116,18 @@ export default function ForgeEditor() {
 
     // Export
     const [showExportModal, setShowExportModal] = useState(false);
+
+    // Typewriter scroll
+    const [typewriterMode, setTypewriterMode] = useState(false);
+
+    // Reading mode
+    const [readingMode, setReadingMode] = useState(false);
+
+    // Keyboard shortcuts panel
+    const [showShortcuts, setShowShortcuts] = useState(false);
+
+    // Manuscript statistics
+    const [showStats, setShowStats] = useState(false);
 
     // DnD sensors
     const sensors = useSensors(
@@ -239,6 +252,15 @@ export default function ForgeEditor() {
             if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
                 e.preventDefault();
                 setShowFindReplace(true);
+            }
+            // Keyboard shortcuts panel: Ctrl+/ or ?
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                setShowShortcuts(prev => !prev);
+            }
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement) && !(e.target as HTMLElement)?.closest?.('.ProseMirror')) {
+                e.preventDefault();
+                setShowShortcuts(prev => !prev);
             }
         };
         window.addEventListener('keydown', handler);
@@ -370,6 +392,56 @@ export default function ForgeEditor() {
         const interval = setInterval(() => forceRender(v => v + 1), 10000);
         return () => clearInterval(interval);
     }, []);
+
+    // ── Typewriter Scroll ──
+    useEffect(() => {
+        if (!typewriterMode || !editor) return;
+        const scrollCursorToCenter = () => {
+            const editorEl = editor.view.dom.closest('.overflow-y-auto');
+            if (!editorEl) return;
+            const { node: cursorNode } = editor.view.domAtPos(editor.state.selection.from);
+            const el = cursorNode instanceof HTMLElement ? cursorNode : cursorNode.parentElement;
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const containerRect = editorEl.getBoundingClientRect();
+            const scrollOffset = rect.top - containerRect.top - containerRect.height / 2 + editorEl.scrollTop;
+            editorEl.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+        };
+        editor.on('selectionUpdate', scrollCursorToCenter);
+        return () => { editor.off('selectionUpdate', scrollCursorToCenter); };
+    }, [typewriterMode, editor]);
+
+    // ── Reading mode toggle ──
+    useEffect(() => {
+        if (!editor) return;
+        editor.setEditable(!readingMode);
+    }, [readingMode, editor]);
+
+    // ── Manuscript Statistics ──
+    const manuscriptStats = useMemo(() => {
+        const chaps = chapters.filter(c => c.type === 'chapter' || c.type === 'scene');
+        if (chaps.length === 0) return null;
+        const wordCounts = chaps.map(c => c.wordCount || 0);
+        const total = wordCounts.reduce((a, b) => a + b, 0);
+        const avg = Math.round(total / chaps.length);
+        const longest = chaps.reduce((a, b) => ((a.wordCount || 0) > (b.wordCount || 0) ? a : b));
+        const shortest = chaps.reduce((a, b) => ((a.wordCount || 0) < (b.wordCount || 0) ? a : b));
+        // Estimate completion: if manuscript has a target
+        const targetWords = activeManuscript?.targetWords || 0;
+        const remaining = targetWords > total ? targetWords - total : 0;
+        // Average words per day from writing sessions (rough estimate: 500 words/day)
+        const wordsPerDay = 500; // fallback
+        const daysRemaining = remaining > 0 ? Math.ceil(remaining / wordsPerDay) : 0;
+        const estimatedDate = daysRemaining > 0 ? new Date(Date.now() + daysRemaining * 86400000) : null;
+
+        return { total, avg, longest, shortest, chapterCount: chaps.length, wordCounts, estimatedDate, remaining, targetWords };
+    }, [chapters, activeManuscript]);
+
+    // ── Sparkline data for binder ──
+    const chapterMaxWords = useMemo(() => {
+        const words = binderChapters.map(c => c.wordCount || 0);
+        return Math.max(...words, 1);
+    }, [binderChapters]);
 
     // ── Export Functions ──
     const handleExportDocx = useCallback(async () => {
@@ -591,6 +663,18 @@ export default function ForgeEditor() {
                 <button onClick={() => setShowExportModal(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Export manuscript">
                     <Download className="w-4 h-4" />
                 </button>
+                <button onClick={() => setTypewriterMode(t => !t)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${typewriterMode ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title={`Typewriter scroll ${typewriterMode ? 'ON' : 'OFF'}`}>
+                    <Type className="w-4 h-4" />
+                </button>
+                <button onClick={() => setReadingMode(r => !r)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${readingMode ? 'text-aurora-teal bg-aurora-teal/10' : 'text-text-secondary hover:text-white'}`} title={readingMode ? 'Reading mode ON (click to edit)' : 'Reading mode'}>
+                    <BookOpenCheck className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowStats(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Manuscript statistics">
+                    <BarChart3 className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowShortcuts(s => !s)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Keyboard shortcuts (Ctrl+/)">
+                    <Keyboard className="w-4 h-4" />
+                </button>
                 <div className="w-px h-5 bg-white/[0.08]" />
                 <button onClick={() => setShowInspector(i => !i)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Toggle inspector">
                     {showInspector ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
@@ -623,6 +707,7 @@ export default function ForgeEditor() {
                                                 chapter={ch}
                                                 isActive={activeChapterId === ch.id}
                                                 liveWordCount={activeChapterId === ch.id ? liveWordCount : undefined}
+                                                sparklinePct={chapterMaxWords > 0 ? ((ch.wordCount || 0) / chapterMaxWords) * 100 : 0}
                                                 isEditing={editingTitle === ch.id}
                                                 editValue={editTitleValue}
                                                 onSelect={() => { handleManualSave(); setActiveChapterId(ch.id); }}
@@ -713,6 +798,12 @@ export default function ForgeEditor() {
                             {suggestionMode && (
                                 <span className="text-[9px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">SUGGESTING</span>
                             )}
+                            {typewriterMode && (
+                                <span className="text-[9px] text-starforge-gold bg-starforge-gold/10 px-2 py-0.5 rounded">TYPEWRITER</span>
+                            )}
+                            {readingMode && (
+                                <span className="text-[9px] text-aurora-teal bg-aurora-teal/10 px-2 py-0.5 rounded">READING</span>
+                            )}
                             <div className="flex-1" />
                             <button onClick={handleManualSave} className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] text-text-secondary hover:text-starforge-gold hover:bg-white/[0.04] transition-colors" title="Save (Ctrl+S)">
                                 <Save className="w-3.5 h-3.5" /> Save
@@ -762,9 +853,9 @@ export default function ForgeEditor() {
                         </AnimatePresence>
 
                         {/* Main Editor */}
-                        <div className={`${splitChapterId ? 'w-1/2 border-r border-white/[0.06]' : 'w-full'} overflow-y-auto`}>
+                        <div className={`${splitChapterId ? 'w-1/2 border-r border-white/[0.06]' : 'w-full'} overflow-y-auto ${readingMode ? 'forge-reading-mode' : ''}`}>
                             {activeChapter ? (
-                                <div className="max-w-3xl mx-auto px-8 py-12">
+                                <div className={`mx-auto px-8 py-12 ${readingMode ? 'max-w-2xl' : 'max-w-3xl'}`}>
                                     <h2 className="text-2xl font-display text-white/80 mb-8 tracking-wide">{activeChapter.title}</h2>
                                     <EditorContent editor={editor} />
 
@@ -1287,6 +1378,152 @@ export default function ForgeEditor() {
                 )}
             </AnimatePresence>
 
+            {/* ── Keyboard Shortcuts Modal ── */}
+            <AnimatePresence>
+                {showShortcuts && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowShortcuts(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-[480px] max-h-[80vh] overflow-y-auto"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><Keyboard className="w-5 h-5 text-starforge-gold" /> Keyboard Shortcuts</h3>
+                                <button onClick={() => setShowShortcuts(false)} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="space-y-4">
+                                {[
+                                    { label: 'Editing', shortcuts: [
+                                        ['⌘/Ctrl + S', 'Save'],
+                                        ['⌘/Ctrl + Z', 'Undo'],
+                                        ['⌘/Ctrl + Shift + Z', 'Redo'],
+                                        ['⌘/Ctrl + B', 'Bold'],
+                                        ['⌘/Ctrl + I', 'Italic'],
+                                        ['⌘/Ctrl + U', 'Underline'],
+                                    ]},
+                                    { label: 'Navigation', shortcuts: [
+                                        ['⌘/Ctrl + F', 'Find & Replace'],
+                                        ['⌘/Ctrl + H', 'Find & Replace (focused)'],
+                                        ['⌘/Ctrl + /', 'Keyboard shortcuts'],
+                                        ['?', 'Keyboard shortcuts'],
+                                    ]},
+                                    { label: 'View', shortcuts: [
+                                        ['Split icon', 'Split editor view'],
+                                        ['Type icon', 'Typewriter scroll'],
+                                        ['Book icon', 'Reading mode'],
+                                        ['Chart icon', 'Manuscript statistics'],
+                                        ['Download icon', 'Export manuscript'],
+                                    ]},
+                                ].map(group => (
+                                    <div key={group.label}>
+                                        <h4 className="text-[10px] uppercase tracking-wider text-text-secondary mb-2 font-ui">{group.label}</h4>
+                                        <div className="space-y-1">
+                                            {group.shortcuts.map(([key, desc]) => (
+                                                <div key={key} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/[0.02]">
+                                                    <span className="text-xs text-white/80">{desc}</span>
+                                                    <kbd className="text-[10px] px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-text-secondary font-mono">{key}</kbd>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Manuscript Statistics Modal ── */}
+            <AnimatePresence>
+                {showStats && manuscriptStats && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowStats(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-[520px] max-h-[80vh] overflow-y-auto"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-starforge-gold" /> Manuscript Statistics</h3>
+                                <button onClick={() => setShowStats(false)} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            {/* Key Metrics */}
+                            <div className="grid grid-cols-3 gap-3 mb-6">
+                                <div className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-center">
+                                    <p className="text-2xl font-semibold text-white">{manuscriptStats.total.toLocaleString()}</p>
+                                    <p className="text-[10px] text-text-secondary uppercase tracking-wider">Total Words</p>
+                                </div>
+                                <div className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-center">
+                                    <p className="text-2xl font-semibold text-white">{manuscriptStats.chapterCount}</p>
+                                    <p className="text-[10px] text-text-secondary uppercase tracking-wider">Chapters</p>
+                                </div>
+                                <div className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-center">
+                                    <p className="text-2xl font-semibold text-white">{manuscriptStats.avg.toLocaleString()}</p>
+                                    <p className="text-[10px] text-text-secondary uppercase tracking-wider">Avg / Chapter</p>
+                                </div>
+                            </div>
+                            {/* Chapter Length Chart */}
+                            <div className="mb-6">
+                                <h4 className="text-[10px] uppercase tracking-wider text-text-secondary mb-3 font-ui">Chapter Lengths</h4>
+                                <div className="space-y-1.5">
+                                    {binderChapters.map(ch => {
+                                        const wc = ch.wordCount || 0;
+                                        const pct = chapterMaxWords > 0 ? (wc / chapterMaxWords) * 100 : 0;
+                                        return (
+                                            <div key={ch.id} className="flex items-center gap-2">
+                                                <span className="text-[10px] text-white/60 w-24 truncate flex-none">{ch.title}</span>
+                                                <div className="flex-1 h-3 bg-white/[0.04] rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full transition-all ${ch.id === activeChapterId ? 'bg-starforge-gold/50' : 'bg-aurora-teal/30'}`}
+                                                        style={{ width: `${pct}%` }} />
+                                                </div>
+                                                <span className="text-[9px] text-text-secondary w-12 text-right flex-none">{wc.toLocaleString()}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {/* Highlights */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                    <p className="text-[10px] text-text-secondary uppercase mb-1">Longest Chapter</p>
+                                    <p className="text-xs text-white font-semibold truncate">{manuscriptStats.longest.title}</p>
+                                    <p className="text-[10px] text-starforge-gold">{(manuscriptStats.longest.wordCount || 0).toLocaleString()} words</p>
+                                </div>
+                                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                    <p className="text-[10px] text-text-secondary uppercase mb-1">Shortest Chapter</p>
+                                    <p className="text-xs text-white font-semibold truncate">{manuscriptStats.shortest.title}</p>
+                                    <p className="text-[10px] text-aurora-teal">{(manuscriptStats.shortest.wordCount || 0).toLocaleString()} words</p>
+                                </div>
+                            </div>
+                            {/* Estimated reading time */}
+                            <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg mb-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-text-secondary uppercase">Estimated Reading Time</span>
+                                    <span className="text-sm text-white font-semibold">{Math.max(1, Math.ceil(manuscriptStats.total / 250))} min</span>
+                                </div>
+                            </div>
+                            {/* Completion Estimate */}
+                            {manuscriptStats.targetWords > 0 && (
+                                <div className="p-3 bg-starforge-gold/5 border border-starforge-gold/20 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[10px] text-starforge-gold uppercase">Completion Estimate</span>
+                                        <span className="text-xs text-white">{manuscriptStats.total.toLocaleString()} / {manuscriptStats.targetWords.toLocaleString()}</span>
+                                    </div>
+                                    <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden mb-2">
+                                        <div className="h-full bg-starforge-gold/50 rounded-full transition-all"
+                                            style={{ width: `${Math.min(100, (manuscriptStats.total / manuscriptStats.targetWords) * 100)}%` }} />
+                                    </div>
+                                    {manuscriptStats.estimatedDate && (
+                                        <p className="text-[10px] text-text-secondary">
+                                            At ~500 words/day: <span className="text-white">{manuscriptStats.estimatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Editor Styles */}
             <style>{`
         .forge-editor-content {
@@ -1335,6 +1572,16 @@ export default function ForgeEditor() {
         }
         .ProseMirror { outline: none !important; }
         .ProseMirror:focus { outline: none !important; }
+        /* Reading mode styles */
+        .forge-reading-mode .forge-editor-content {
+          font-size: 19px;
+          line-height: 2;
+          color: rgba(255,255,255,0.9);
+          letter-spacing: 0.01em;
+        }
+        .forge-reading-mode {
+          background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,10,20,0.3) 100%);
+        }
       `}</style>
         </div>
     );
@@ -1351,10 +1598,11 @@ function ToolbarBtn({ onClick, active, icon: Icon, title }: { onClick: () => voi
 }
 
 // ── Sortable Chapter Item (DnD) ──
-function SortableChapterItem({ chapter, isActive, liveWordCount, isEditing, editValue, onSelect, onStartRename, onRename, onCancelRename, onEditChange, onSplitView, onDelete }: {
+function SortableChapterItem({ chapter, isActive, liveWordCount, sparklinePct, isEditing, editValue, onSelect, onStartRename, onRename, onCancelRename, onEditChange, onSplitView, onDelete }: {
     chapter: Chapter;
     isActive: boolean;
     liveWordCount?: number;
+    sparklinePct: number;
     isEditing: boolean;
     editValue: string;
     onSelect: () => void;
@@ -1420,6 +1668,15 @@ function SortableChapterItem({ chapter, isActive, liveWordCount, isEditing, edit
                     <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${goalPercent >= 100 ? 'bg-emerald-400/60' : 'bg-starforge-gold/40'}`}
                             style={{ width: `${goalPercent}%` }} />
+                    </div>
+                </div>
+            )}
+            {/* Sparkline — relative chapter length */}
+            {goalPercent === null && sparklinePct > 0 && (
+                <div className="ml-7 mt-0.5">
+                    <div className="h-[3px] bg-white/[0.03] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${isActive ? 'bg-starforge-gold/30' : 'bg-white/10'}`}
+                            style={{ width: `${sparklinePct}%` }} />
                     </div>
                 </div>
             )}
