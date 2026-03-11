@@ -28,6 +28,8 @@ import {
     Download, Globe, MapPin, Sword, Shield, BookMarked,
     Keyboard, BookOpenCheck, BarChart3, Type, Maximize2, Activity,
     Tag, PackageCheck, CircleDot, Palette,
+    SearchX, Camera, LayoutGrid, ListTree, Sun, Moon, Coffee,
+    Flame, Calendar, GitCompare, Clock3, Milestone,
     type LucideIcon
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -72,6 +74,19 @@ const AnnotationMark = Mark.create({
         }), 0];
     },
 });
+
+// ── Types for new features ──
+interface Snapshot { id: string; name: string; content: string; plainText: string; timestamp: number; chapterId: string; }
+interface TimelineEvent { id: string; title: string; description: string; chapterId?: string; order: number; color: string; }
+interface DailyGoal { date: string; wordsWritten: number; target: number; }
+
+const EDITOR_THEMES = [
+    { id: 'dark', label: 'Deep Space', icon: Moon, bg: 'transparent', text: 'rgba(255,255,255,0.78)', editorBg: 'transparent', accent: '#d4af37' },
+    { id: 'light', label: 'Parchment', icon: Sun, bg: '#f5f0e8', text: '#2a2520', editorBg: '#faf7f2', accent: '#8b6914' },
+    { id: 'sepia', label: 'Sepia', icon: Coffee, bg: '#3a2f25', text: '#d4c5a9', editorBg: '#2e241c', accent: '#c9a84c' },
+] as const;
+
+const TIMELINE_COLORS = ['#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#06b6d4', '#f97316'];
 
 // ════════════════════════════════════════════════════════
 // FORGE EDITOR PAGE
@@ -169,6 +184,35 @@ export default function ForgeEditor() {
     // Compile / manuscript assembly
     const [showCompileModal, setShowCompileModal] = useState(false);
     const [compileSelection, setCompileSelection] = useState<{ id: string; included: boolean }[]>([]);
+
+    // Cross-chapter search
+    const [showCrossSearch, setShowCrossSearch] = useState(false);
+    const [crossSearchQuery, setCrossSearchQuery] = useState('');
+    const [crossSearchResults, setCrossSearchResults] = useState<{ chapterId: string; title: string; matches: { text: string; index: number }[] }[]>([]);
+
+    // Snapshot branching
+    const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+    const [showSnapshots, setShowSnapshots] = useState(false);
+    const [snapshotName, setSnapshotName] = useState('');
+    const [comparingSnapshot, setComparingSnapshot] = useState<Snapshot | null>(null);
+
+    // Corkboard & Outline views
+    const [viewMode, setViewMode] = useState<'editor' | 'corkboard' | 'outline'>('editor');
+
+    // Custom editor theme
+    const [editorTheme, setEditorTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
+    const [showThemePicker, setShowThemePicker] = useState(false);
+
+    // Daily writing goals & streaks
+    const [showGoals, setShowGoals] = useState(false);
+    const [dailyTarget, setDailyTarget] = useState(500);
+    const [dailyLog, setDailyLog] = useState<DailyGoal[]>([]);
+    const [todayWords, setTodayWords] = useState(0);
+
+    // Timeline view
+    const [showTimeline, setShowTimeline] = useState(false);
+    const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+    const [newEventTitle, setNewEventTitle] = useState('');
     const [compileFormat, setCompileFormat] = useState<'docx' | 'md' | 'txt'>('docx');
 
     // DnD sensors
@@ -609,7 +653,155 @@ export default function ForgeEditor() {
         setSaveStatus('unsaved');
     }, [editor]);
 
-    // ── Split Editor ──
+    // ── Cross-Chapter Search ──
+    const handleCrossSearch = useCallback((query: string) => {
+        setCrossSearchQuery(query);
+        if (!query.trim()) { setCrossSearchResults([]); return; }
+        const results: typeof crossSearchResults = [];
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedQuery, 'gi');
+        for (const ch of chapters) {
+            const text = ch.plainText || '';
+            const matches: { text: string; index: number }[] = [];
+            let m: RegExpExecArray | null;
+            while ((m = regex.exec(text)) !== null) {
+                const start = Math.max(0, m.index - 30);
+                const end = Math.min(text.length, m.index + query.length + 30);
+                matches.push({ text: '...' + text.slice(start, end) + '...', index: m.index });
+            }
+            if (matches.length > 0) results.push({ chapterId: ch.id, title: ch.title, matches });
+        }
+        setCrossSearchResults(results);
+    }, [chapters]);
+
+    // ── Snapshot Branching ──
+    const createSnapshot = useCallback((name: string) => {
+        if (!activeChapter || !editor) return;
+        const snap: Snapshot = {
+            id: Date.now().toString(),
+            name: name || `Snapshot ${new Date().toLocaleString()}`,
+            content: editor.getHTML(),
+            plainText: editor.getText(),
+            timestamp: Date.now(),
+            chapterId: activeChapter.id,
+        };
+        setSnapshots(prev => [snap, ...prev]);
+        setSnapshotName('');
+    }, [activeChapter, editor]);
+
+    const restoreSnapshot = useCallback((snap: Snapshot) => {
+        if (!editor || !confirm(`Restore "${snap.name}"? Current content will be replaced.`)) return;
+        editor.commands.setContent(snap.content);
+        setSaveStatus('unsaved');
+        setShowSnapshots(false);
+    }, [editor]);
+
+    const deleteSnapshot = useCallback((id: string) => {
+        setSnapshots(prev => prev.filter(s => s.id !== id));
+    }, []);
+
+    const chapterSnapshots = useMemo(() =>
+        snapshots.filter(s => s.chapterId === activeChapterId),
+    [snapshots, activeChapterId]);
+
+    // ── Outline View Data ──
+    const outlineData = useMemo(() => {
+        return chapters.filter(c => c.type === 'chapter' || c.type === 'scene').map(ch => {
+            const headings: { level: number; text: string }[] = [];
+            const content = ch.content || '';
+            // Parse TipTap HTML headings
+            const hRegex = /<h([1-3])[^>]*>(.*?)<\/h[1-3]>/gi;
+            let hm: RegExpExecArray | null;
+            while ((hm = hRegex.exec(content)) !== null) {
+                headings.push({ level: parseInt(hm[1]), text: hm[2].replace(/<[^>]+>/g, '') });
+            }
+            return { id: ch.id, title: ch.title, wordCount: ch.wordCount || 0, headings };
+        });
+    }, [chapters]);
+
+    // ── Daily Writing Goals & Streaks ──
+    const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+    // Track daily words when auto-saving
+    const updateDailyLog = useCallback((delta: number) => {
+        if (delta <= 0) return;
+        setTodayWords(prev => prev + delta);
+        setDailyLog(prev => {
+            const existing = prev.find(d => d.date === todayKey);
+            if (existing) return prev.map(d => d.date === todayKey ? { ...d, wordsWritten: d.wordsWritten + delta } : d);
+            return [...prev, { date: todayKey, wordsWritten: delta, target: dailyTarget }];
+        });
+    }, [todayKey, dailyTarget]);
+
+    const currentStreak = useMemo(() => {
+        let streak = 0;
+        const sorted = [...dailyLog].sort((a, b) => b.date.localeCompare(a.date));
+        const today = new Date();
+        for (let i = 0; i < 60; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0, 10);
+            const entry = sorted.find(e => e.date === key);
+            if (entry && entry.wordsWritten >= entry.target) streak++;
+            else if (i > 0) break; // Allow today to be incomplete
+        }
+        return streak;
+    }, [dailyLog]);
+
+    // Calendar heatmap data (last 30 days)
+    const calendarData = useMemo(() => {
+        const days: { date: string; words: number; pct: number }[] = [];
+        const today = new Date();
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0, 10);
+            const entry = dailyLog.find(e => e.date === key);
+            const words = entry?.wordsWritten || 0;
+            days.push({ date: key, words, pct: dailyTarget > 0 ? Math.min(100, (words / dailyTarget) * 100) : 0 });
+        }
+        return days;
+    }, [dailyLog, dailyTarget]);
+
+    // ── Timeline Events ──
+    const addTimelineEvent = useCallback(() => {
+        if (!newEventTitle.trim()) return;
+        const event: TimelineEvent = {
+            id: Date.now().toString(),
+            title: newEventTitle.trim(),
+            description: '',
+            chapterId: activeChapterId || undefined,
+            order: timelineEvents.length,
+            color: TIMELINE_COLORS[timelineEvents.length % TIMELINE_COLORS.length],
+        };
+        setTimelineEvents(prev => [...prev, event]);
+        setNewEventTitle('');
+    }, [newEventTitle, activeChapterId, timelineEvents.length]);
+
+    const deleteTimelineEvent = useCallback((id: string) => {
+        setTimelineEvents(prev => prev.filter(e => e.id !== id));
+    }, []);
+
+    // ── Revision Diff ──
+    const computeRevisionDiff = useCallback((snapshot: Snapshot): { type: 'same' | 'add' | 'remove'; text: string }[] => {
+        const current = (editor?.getText() || '').split(/\n/);
+        const old = snapshot.plainText.split(/\n/);
+        const result: { type: 'same' | 'add' | 'remove'; text: string }[] = [];
+        const maxLen = Math.max(current.length, old.length);
+        for (let i = 0; i < maxLen; i++) {
+            const c = current[i] || '';
+            const o = old[i] || '';
+            if (c === o) result.push({ type: 'same', text: c });
+            else {
+                if (o) result.push({ type: 'remove', text: o });
+                if (c) result.push({ type: 'add', text: c });
+            }
+        }
+        return result;
+    }, [editor]);
+
+    // ── Editor theme style ──
+    const activeTheme = EDITOR_THEMES.find(t => t.id === editorTheme) || EDITOR_THEMES[0];
     const splitEditor = useEditor({
         extensions: [
             StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -788,6 +980,44 @@ export default function ForgeEditor() {
                 </button>
                 <button onClick={() => setShowShortcuts(s => !s)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Keyboard shortcuts (Ctrl+/)">
                     <Keyboard className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowCrossSearch(s => !s)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${showCrossSearch ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Cross-chapter search">
+                    <SearchX className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowSnapshots(s => !s)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${showSnapshots ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Snapshots">
+                    <Camera className="w-4 h-4" />
+                </button>
+                <button onClick={() => setViewMode(v => v === 'corkboard' ? 'editor' : 'corkboard')} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${viewMode === 'corkboard' ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Corkboard view">
+                    <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button onClick={() => setViewMode(v => v === 'outline' ? 'editor' : 'outline')} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${viewMode === 'outline' ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Outline view">
+                    <ListTree className="w-4 h-4" />
+                </button>
+                <div className="relative">
+                    <button onClick={() => setShowThemePicker(s => !s)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${showThemePicker ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Editor theme">
+                        <Palette className="w-4 h-4" />
+                    </button>
+                    <AnimatePresence>
+                        {showThemePicker && (
+                            <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                                className="absolute top-full right-0 mt-1 bg-deep-space border border-white/[0.1] rounded-lg shadow-2xl z-40 p-2 w-44 space-y-1">
+                                {EDITOR_THEMES.map(t => (
+                                    <button key={t.id} onClick={() => { setEditorTheme(t.id as any); setShowThemePicker(false); }}
+                                        className={`w-full flex items-center gap-2 px-3 py-2 rounded text-xs transition-colors ${editorTheme === t.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:text-white hover:bg-white/[0.04]'}`}>
+                                        <t.icon className="w-3.5 h-3.5" />
+                                        <span>{t.label}</span>
+                                        <div className="w-3 h-3 rounded-full ml-auto border border-white/10" style={{ background: t.editorBg === 'transparent' ? '#0a0a14' : t.editorBg }} />
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+                <button onClick={() => setShowGoals(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Daily goals & streaks">
+                    <Flame className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowTimeline(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Timeline view">
+                    <Milestone className="w-4 h-4" />
                 </button>
                 <div className="w-px h-5 bg-white/[0.08]" />
                 <button onClick={() => setShowInspector(i => !i)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Toggle inspector">
@@ -1049,10 +1279,77 @@ export default function ForgeEditor() {
                         </AnimatePresence>
 
                         {/* Main Editor */}
-                        <div className={`${splitChapterId ? 'w-1/2 border-r border-white/[0.06]' : 'w-full'} overflow-y-auto ${readingMode ? 'forge-reading-mode' : ''}`}>
+                        {viewMode === 'corkboard' ? (
+                            /* ── Corkboard View ── */
+                            <div className="w-full overflow-y-auto p-6" style={{ background: activeTheme.editorBg === 'transparent' ? undefined : activeTheme.editorBg }}>
+                                <h3 className="text-sm text-text-secondary uppercase tracking-wider mb-4 font-ui flex items-center gap-2">
+                                    <LayoutGrid className="w-4 h-4" /> Corkboard
+                                </h3>
+                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={binderChapters.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                            {binderChapters.map(ch => (
+                                                <div key={ch.id}
+                                                    onClick={() => { setActiveChapterId(ch.id); setViewMode('editor'); }}
+                                                    className={`p-4 rounded-lg border cursor-pointer hover:border-starforge-gold/30 transition-all group ${activeChapterId === ch.id ? 'border-starforge-gold/40 bg-starforge-gold/5' : 'border-white/[0.06] bg-white/[0.02]'}`}>
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <h4 className="text-sm font-semibold text-white truncate">{ch.title}</h4>
+                                                        <span className="text-[9px] text-text-secondary flex-none">{(ch.wordCount || 0).toLocaleString()}w</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-text-secondary line-clamp-4 leading-relaxed">
+                                                        {(ch.plainText || '').slice(0, 200) || 'Empty chapter...'}
+                                                    </p>
+                                                    <div className="mt-3 flex items-center gap-2">
+                                                        <span className={`text-[8px] px-1.5 py-0.5 rounded ${ch.status === 'final' ? 'bg-emerald-500/10 text-emerald-400' : ch.status === 'revised' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.04] text-text-secondary'}`}>{ch.status}</span>
+                                                        {ch.targetWords && (
+                                                            <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                                                                <div className={`h-full rounded-full ${(ch.wordCount || 0) >= ch.targetWords ? 'bg-emerald-400/60' : 'bg-starforge-gold/40'}`}
+                                                                    style={{ width: `${Math.min(100, ((ch.wordCount || 0) / ch.targetWords) * 100)}%` }} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </SortableContext>
+                                </DndContext>
+                            </div>
+                        ) : viewMode === 'outline' ? (
+                            /* ── Outline View ── */
+                            <div className="w-full overflow-y-auto p-6" style={{ background: activeTheme.editorBg === 'transparent' ? undefined : activeTheme.editorBg }}>
+                                <h3 className="text-sm text-text-secondary uppercase tracking-wider mb-4 font-ui flex items-center gap-2">
+                                    <ListTree className="w-4 h-4" /> Outline
+                                </h3>
+                                <div className="space-y-3 max-w-2xl mx-auto">
+                                    {outlineData.map(ch => (
+                                        <div key={ch.id} className={`p-3 rounded-lg border transition-colors cursor-pointer hover:border-starforge-gold/20 ${activeChapterId === ch.id ? 'border-starforge-gold/30 bg-starforge-gold/5' : 'border-white/[0.06] bg-white/[0.01]'}`}
+                                            onClick={() => { setActiveChapterId(ch.id); setViewMode('editor'); }}>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <h4 className="text-sm font-semibold text-white">{ch.title}</h4>
+                                                <span className="text-[9px] text-text-secondary">{ch.wordCount.toLocaleString()}w</span>
+                                            </div>
+                                            {ch.headings.length > 0 ? (
+                                                <div className="ml-2 space-y-0.5">
+                                                    {ch.headings.map((h, i) => (
+                                                        <div key={i} className="flex items-center gap-1.5" style={{ paddingLeft: `${(h.level - 1) * 12}px` }}>
+                                                            <div className={`w-1.5 h-1.5 rounded-full flex-none ${h.level === 1 ? 'bg-starforge-gold/50' : h.level === 2 ? 'bg-aurora-teal/50' : 'bg-white/20'}`} />
+                                                            <span className={`text-[10px] ${h.level === 1 ? 'text-white/70' : 'text-text-secondary'}`}>{h.text}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-[9px] text-text-secondary/50 ml-2">No headings</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                        <div className={`${splitChapterId ? 'w-1/2 border-r border-white/[0.06]' : 'w-full'} overflow-y-auto ${readingMode ? 'forge-reading-mode' : ''}`}
+                            style={{ background: activeTheme.editorBg === 'transparent' ? undefined : activeTheme.editorBg, color: activeTheme.text }}>
                             {activeChapter ? (
                                 <div className={`mx-auto px-8 py-12 ${readingMode ? 'max-w-2xl' : 'max-w-3xl'}`}>
-                                    <h2 className="text-2xl font-display text-white/80 mb-8 tracking-wide">{activeChapter.title}</h2>
+                                    <h2 className="text-2xl font-display mb-8 tracking-wide" style={{ color: activeTheme.text, opacity: 0.8 }}>{activeChapter.title}</h2>
                                     <EditorContent editor={editor} />
 
                                     {/* Pending Suggestions Overlay */}
@@ -1091,6 +1388,7 @@ export default function ForgeEditor() {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Split Editor Panel */}
                         {splitChapterId && (
@@ -1788,6 +2086,238 @@ export default function ForgeEditor() {
                                             At ~500 words/day: <span className="text-white">{manuscriptStats.estimatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                         </p>
                                     )}
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Cross-Chapter Search Modal ── */}
+            <AnimatePresence>
+                {showCrossSearch && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20 z-50"
+                        onClick={() => setShowCrossSearch(false)}>
+                        <motion.div initial={{ scale: 0.95, y: -10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: -10 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl w-[560px] max-h-[70vh] flex flex-col"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="p-4 border-b border-white/[0.06] flex items-center gap-3">
+                                <SearchX className="w-5 h-5 text-starforge-gold flex-none" />
+                                <input value={crossSearchQuery} onChange={e => handleCrossSearch(e.target.value)}
+                                    placeholder="Search across all chapters..."
+                                    className="flex-1 bg-transparent text-white text-sm focus:outline-none" autoFocus />
+                                <span className="text-[9px] text-text-secondary">
+                                    {crossSearchResults.reduce((a, r) => a + r.matches.length, 0)} matches
+                                </span>
+                                <button onClick={() => setShowCrossSearch(false)} className="text-text-secondary hover:text-white"><X className="w-4 h-4" /></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                                {crossSearchResults.length === 0 && crossSearchQuery && (
+                                    <p className="text-center text-text-secondary text-xs py-8">No matches found</p>
+                                )}
+                                {crossSearchResults.map(r => (
+                                    <div key={r.chapterId} className="space-y-1">
+                                        <h4 className="text-[10px] text-starforge-gold uppercase tracking-wider font-ui flex items-center gap-1">
+                                            <FileText className="w-3 h-3" /> {r.title}
+                                            <span className="text-text-secondary ml-auto">{r.matches.length} matches</span>
+                                        </h4>
+                                        {r.matches.slice(0, 5).map((m, i) => (
+                                            <div key={i} onClick={() => { setActiveChapterId(r.chapterId); setShowCrossSearch(false); setViewMode('editor'); }}
+                                                className="px-3 py-1.5 bg-white/[0.02] border border-white/[0.04] rounded text-[10px] text-text-secondary cursor-pointer hover:bg-white/[0.04] hover:text-white transition-colors">
+                                                {m.text}
+                                            </div>
+                                        ))}
+                                        {r.matches.length > 5 && <p className="text-[9px] text-text-secondary pl-3">+{r.matches.length - 5} more</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Snapshots Panel ── */}
+            <AnimatePresence>
+                {showSnapshots && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => { setShowSnapshots(false); setComparingSnapshot(null); }}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-5 w-[600px] max-h-[80vh] overflow-y-auto"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><Camera className="w-5 h-5 text-starforge-gold" /> Snapshots</h3>
+                                <button onClick={() => { setShowSnapshots(false); setComparingSnapshot(null); }} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            {activeChapter ? (
+                                <>
+                                    <div className="flex gap-2 mb-4">
+                                        <input value={snapshotName} onChange={e => setSnapshotName(e.target.value)}
+                                            placeholder={`Snapshot name (${activeChapter.title})`}
+                                            className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white focus:outline-none focus:border-starforge-gold/30"
+                                            onKeyDown={e => e.key === 'Enter' && createSnapshot(snapshotName)} />
+                                        <button onClick={() => createSnapshot(snapshotName)}
+                                            className="px-3 py-2 bg-starforge-gold text-void-black text-xs font-semibold uppercase rounded hover:bg-starforge-gold/90 flex items-center gap-1">
+                                            <Camera className="w-3 h-3" /> Save
+                                        </button>
+                                    </div>
+                                    {chapterSnapshots.length === 0 ? (
+                                        <p className="text-center text-text-secondary text-xs py-6">No snapshots for this chapter yet</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {chapterSnapshots.map(snap => (
+                                                <div key={snap.id} className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h4 className="text-xs text-white font-semibold">{snap.name}</h4>
+                                                        <span className="text-[9px] text-text-secondary">{new Date(snap.timestamp).toLocaleString()}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-text-secondary mb-2 line-clamp-2">{snap.plainText.slice(0, 120)}...</p>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => restoreSnapshot(snap)} className="text-[9px] px-2 py-1 rounded bg-starforge-gold/10 text-starforge-gold hover:bg-starforge-gold/20">Restore</button>
+                                                        <button onClick={() => setComparingSnapshot(comparingSnapshot?.id === snap.id ? null : snap)}
+                                                            className={`text-[9px] px-2 py-1 rounded ${comparingSnapshot?.id === snap.id ? 'bg-aurora-teal/20 text-aurora-teal' : 'bg-white/[0.04] text-text-secondary hover:bg-white/[0.08]'}`}>
+                                                            <GitCompare className="w-3 h-3 inline mr-1" />Compare
+                                                        </button>
+                                                        <button onClick={() => deleteSnapshot(snap.id)} className="text-[9px] px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 ml-auto">Delete</button>
+                                                    </div>
+                                                    {/* Revision Diff */}
+                                                    {comparingSnapshot?.id === snap.id && (
+                                                        <div className="mt-3 border-t border-white/[0.06] pt-3 max-h-60 overflow-y-auto font-mono text-[10px] space-y-0.5">
+                                                            {computeRevisionDiff(snap).map((seg, i) => (
+                                                                <div key={i} className={`px-2 py-0.5 rounded ${seg.type === 'add' ? 'bg-emerald-500/10 text-emerald-400' : seg.type === 'remove' ? 'bg-red-500/10 text-red-400 line-through' : 'text-text-secondary/50'}`}>
+                                                                    {seg.type === 'add' ? '+ ' : seg.type === 'remove' ? '- ' : '  '}{seg.text || '\u00A0'}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-center text-text-secondary text-xs py-6">Select a chapter to manage snapshots</p>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Daily Goals & Streaks Modal ── */}
+            <AnimatePresence>
+                {showGoals && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowGoals(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-[480px]"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><Flame className="w-5 h-5 text-orange-400" /> Daily Goals</h3>
+                                <button onClick={() => setShowGoals(false)} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            {/* Streak */}
+                            <div className="flex items-center gap-4 mb-5 p-4 bg-gradient-to-r from-orange-500/10 to-starforge-gold/5 rounded-lg border border-orange-500/10">
+                                <div className="text-center">
+                                    <div className="text-3xl font-bold text-orange-400">{currentStreak}</div>
+                                    <div className="text-[9px] text-text-secondary uppercase">Day Streak</div>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs text-white">Today: {todayWords.toLocaleString()} / {dailyTarget.toLocaleString()}</span>
+                                        <span className="text-[10px] text-starforge-gold">{dailyTarget > 0 ? Math.min(100, Math.round((todayWords / dailyTarget) * 100)) : 0}%</span>
+                                    </div>
+                                    <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-orange-400 to-starforge-gold rounded-full transition-all"
+                                            style={{ width: `${dailyTarget > 0 ? Math.min(100, (todayWords / dailyTarget) * 100) : 0}%` }} />
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Daily target setter */}
+                            <div className="flex items-center gap-3 mb-5">
+                                <span className="text-[10px] text-text-secondary uppercase tracking-wider">Daily Target</span>
+                                <input type="number" value={dailyTarget} onChange={e => setDailyTarget(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-24 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white text-center focus:outline-none focus:border-starforge-gold/30" />
+                                <span className="text-[10px] text-text-secondary">words</span>
+                            </div>
+                            {/* Calendar heatmap */}
+                            <div>
+                                <h4 className="text-[10px] text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1"><Calendar className="w-3 h-3" /> Last 30 Days</h4>
+                                <div className="grid grid-cols-10 gap-1">
+                                    {calendarData.map(d => (
+                                        <div key={d.date} title={`${d.date}: ${d.words} words`}
+                                            className="aspect-square rounded-sm border border-white/[0.04]"
+                                            style={{ background: d.pct >= 100 ? 'rgba(251,146,60,0.4)' : d.pct > 50 ? 'rgba(251,146,60,0.2)' : d.pct > 0 ? 'rgba(251,146,60,0.08)' : 'rgba(255,255,255,0.01)' }} />
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2 mt-2 text-[8px] text-text-secondary justify-end">
+                                    <span>Less</span>
+                                    <div className="w-2 h-2 rounded-sm bg-white/[0.01] border border-white/[0.04]" />
+                                    <div className="w-2 h-2 rounded-sm" style={{ background: 'rgba(251,146,60,0.08)' }} />
+                                    <div className="w-2 h-2 rounded-sm" style={{ background: 'rgba(251,146,60,0.2)' }} />
+                                    <div className="w-2 h-2 rounded-sm" style={{ background: 'rgba(251,146,60,0.4)' }} />
+                                    <span>More</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Timeline View Modal ── */}
+            <AnimatePresence>
+                {showTimeline && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowTimeline(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-[560px] max-h-[80vh] overflow-y-auto"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><Milestone className="w-5 h-5 text-starforge-gold" /> Story Timeline</h3>
+                                <button onClick={() => setShowTimeline(false)} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            {/* Add event */}
+                            <div className="flex gap-2 mb-4">
+                                <input value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)}
+                                    placeholder="Add timeline event..."
+                                    className="flex-1 px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white focus:outline-none focus:border-starforge-gold/30"
+                                    onKeyDown={e => e.key === 'Enter' && addTimelineEvent()} />
+                                <button onClick={addTimelineEvent}
+                                    className="px-3 py-2 bg-starforge-gold text-void-black text-xs font-semibold uppercase rounded hover:bg-starforge-gold/90">Add</button>
+                            </div>
+                            {/* Timeline */}
+                            {timelineEvents.length === 0 ? (
+                                <p className="text-center text-text-secondary text-xs py-6">No timeline events yet. Add events to track your story's chronology.</p>
+                            ) : (
+                                <div className="relative">
+                                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-white/[0.06]" />
+                                    <div className="space-y-3">
+                                        {timelineEvents.map((event, i) => {
+                                            const linkedChapter = chapters.find(c => c.id === event.chapterId);
+                                            return (
+                                                <div key={event.id} className="flex gap-3 ml-1 group">
+                                                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-none z-10 text-[9px] font-bold text-void-black"
+                                                        style={{ background: event.color }}>{i + 1}</div>
+                                                    <div className="flex-1 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-xs text-white font-semibold">{event.title}</h4>
+                                                            <button onClick={() => deleteTimelineEvent(event.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity">
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                        {linkedChapter && (
+                                                            <button onClick={() => { setActiveChapterId(linkedChapter.id); setShowTimeline(false); setViewMode('editor'); }}
+                                                                className="text-[9px] text-starforge-gold/60 hover:text-starforge-gold flex items-center gap-1 mt-1">
+                                                                <FileText className="w-2.5 h-2.5" /> {linkedChapter.title}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </motion.div>
