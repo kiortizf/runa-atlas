@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   Users, Plus, Edit2, Trash2, Save, ChevronDown, ChevronRight, AlertCircle,
-  Eye, Shield, BookOpen, Clock, Star, Target, Award, Bell, Settings, Zap
+  Eye, Shield, BookOpen, Clock, Star, Target, Award, Bell, Settings, Zap,
+  Upload, MessageSquare, FileUp
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import AdminModal, { FormSection, FormField } from './AdminModal';
 
@@ -72,6 +73,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminBetaReaders() {
   const [readers, setReaders] = useState<BetaReaderProfile[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignOverview[]>([]);
+  const [feedback, setFeedback] = useState<{ id: string; readerId: string; readerName: string; campaignId: string; campaignTitle: string; rating: number; categories: Record<string, number>; notes: string; createdAt: any }[]>([]);
   const [settings, setSettings] = useState<BetaSettings>({
     id: 'main', maxReadersPerCampaign: 8, autoApproveVetted: true, requireNDA: false,
     defaultFeedbackDeadlineDays: 21, feedbackRubricEnabled: true,
@@ -88,6 +90,11 @@ export default function AdminBetaReaders() {
   const [tagInput, setTagInput] = useState('');
   const [genreInput, setGenreInput] = useState('');
   const [catInput, setCatInput] = useState('');
+  // Feedback import state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState({
+    readerId: '', campaignId: '', rating: 4, notes: '', categories: {} as Record<string, number>,
+  });
 
   useEffect(() => {
     const unsubs: (() => void)[] = [];
@@ -100,6 +107,9 @@ export default function AdminBetaReaders() {
     unsubs.push(onSnapshot(collection(db, 'beta_settings'), (snap) => {
       if (snap.docs.length > 0) setSettings({ id: snap.docs[0].id, ...snap.docs[0].data() } as BetaSettings);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'beta_settings')));
+    unsubs.push(onSnapshot(collection(db, 'beta_feedback'), (snap) => {
+      setFeedback(snap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'beta_feedback')));
     return () => unsubs.forEach(u => u());
   }, []);
 
@@ -131,6 +141,33 @@ export default function AdminBetaReaders() {
     if (window.confirm('Remove this beta reader?')) {
       try { await deleteDoc(doc(db, 'beta_readers', id)); }
       catch (err) { handleFirestoreError(err, OperationType.DELETE, 'beta_readers'); }
+    }
+  };
+
+  const submitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const reader = readers.find(r => r.id === feedbackForm.readerId);
+    const campaign = campaigns.find(c => c.id === feedbackForm.campaignId);
+    try {
+      await addDoc(collection(db, 'beta_feedback'), {
+        readerId: feedbackForm.readerId,
+        readerName: reader?.name || 'Unknown',
+        campaignId: feedbackForm.campaignId,
+        campaignTitle: campaign?.manuscriptTitle || 'Unknown',
+        rating: feedbackForm.rating,
+        categories: feedbackForm.categories,
+        notes: feedbackForm.notes,
+        createdAt: serverTimestamp(),
+      });
+      setShowFeedbackModal(false);
+      setFeedbackForm({ readerId: '', campaignId: '', rating: 4, notes: '', categories: {} });
+    } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'beta_feedback'); }
+  };
+
+  const deleteFeedback = async (id: string) => {
+    if (window.confirm('Delete this feedback entry?')) {
+      try { await deleteDoc(doc(db, 'beta_feedback', id)); }
+      catch (err) { handleFirestoreError(err, OperationType.DELETE, 'beta_feedback'); }
     }
   };
 
@@ -211,6 +248,85 @@ export default function AdminBetaReaders() {
           <button onClick={saveSettings} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-ui text-sm font-medium transition-all ${settingsSaved ? 'bg-aurora-teal text-void-black' : 'bg-starforge-gold text-void-black hover:bg-starforge-gold/90'}`}><Save className="w-4 h-4" />{settingsSaved ? 'Saved!' : 'Save Settings'}</button>
         </div>
       </Panel>
+
+      {/* Feedback Import */}
+      <Panel title="Feedback Import" icon={Upload} count={feedback.length}>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <p className="font-ui text-sm text-text-muted">Manually record beta reader feedback for campaigns.</p>
+            <button onClick={() => { setShowFeedbackModal(true); setFeedbackForm({ readerId: '', campaignId: '', rating: 4, notes: '', categories: {} }); }}
+              className="flex items-center gap-2 px-4 py-2 bg-starforge-gold text-void-black rounded-full font-ui text-sm font-medium hover:bg-starforge-gold/90 transition-all">
+              <FileUp className="w-4 h-4" /> Add Feedback
+            </button>
+          </div>
+          {feedback.length === 0 && <div className="text-center py-8 text-text-muted font-ui text-sm"><MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" />No feedback entries yet.</div>}
+          {feedback.map(fb => (
+            <div key={fb.id} className="flex items-center gap-4 bg-surface-elevated border border-border/50 rounded-xl px-4 py-3">
+              <MessageSquare className="w-5 h-5 text-amber-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-heading text-sm text-text-primary">{fb.readerName}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 bg-starforge-gold/10 text-starforge-gold rounded">{'★'.repeat(fb.rating)}</span>
+                </div>
+                <p className="text-[11px] text-text-muted">{fb.campaignTitle} · {fb.notes ? fb.notes.slice(0, 80) + (fb.notes.length > 80 ? '...' : '') : 'No notes'}</p>
+              </div>
+              <button onClick={() => deleteFeedback(fb.id)} className="p-1.5 text-text-muted hover:text-forge-red transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      {/* Feedback Modal */}
+      <AdminModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} title="Import Beta Feedback">
+        <form onSubmit={submitFeedback} className="space-y-6">
+          <FormSection title="Feedback Details">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Reader">
+                <select required value={feedbackForm.readerId} onChange={e => setFeedbackForm({ ...feedbackForm, readerId: e.target.value })} className={inputClass}>
+                  <option value="">Select reader...</option>
+                  {readers.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </FormField>
+              <FormField label="Campaign">
+                <select required value={feedbackForm.campaignId} onChange={e => setFeedbackForm({ ...feedbackForm, campaignId: e.target.value })} className={inputClass}>
+                  <option value="">Select campaign...</option>
+                  {campaigns.map(c => <option key={c.id} value={c.id}>{c.manuscriptTitle}</option>)}
+                </select>
+              </FormField>
+            </div>
+            <FormField label="Overall Rating">
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button key={n} type="button" onClick={() => setFeedbackForm({ ...feedbackForm, rating: n })}
+                    className={`w-10 h-10 rounded-lg font-ui text-sm font-bold transition-all border ${feedbackForm.rating >= n ? 'bg-starforge-gold text-void-black border-starforge-gold' : 'bg-surface-elevated text-text-muted border-border/50 hover:border-starforge-gold/30'}`}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormSection>
+          <FormSection title="Category Scores">
+            <div className="grid grid-cols-2 gap-3">
+              {settings.feedbackCategories.map(cat => (
+                <div key={cat}>
+                  <label className="font-ui text-xs text-text-muted block mb-1">{cat}</label>
+                  <input type="number" min="1" max="5" value={feedbackForm.categories[cat] || ''}
+                    onChange={e => setFeedbackForm({ ...feedbackForm, categories: { ...feedbackForm.categories, [cat]: Number(e.target.value) } })}
+                    className={inputClass} placeholder="1-5" />
+                </div>
+              ))}
+            </div>
+          </FormSection>
+          <FormSection title="Notes">
+            <textarea value={feedbackForm.notes} onChange={e => setFeedbackForm({ ...feedbackForm, notes: e.target.value })}
+              className={`${inputClass} h-24 resize-none`} placeholder="Detailed feedback notes..." />
+          </FormSection>
+          <div className="flex gap-4 pt-4">
+            <button type="submit" className="flex-1 py-4 bg-starforge-gold text-void-black rounded-xl font-ui font-bold uppercase tracking-widest hover:bg-starforge-gold/90 transition-all">Save Feedback</button>
+            <button type="button" onClick={() => setShowFeedbackModal(false)} className="px-8 py-4 bg-surface-elevated text-text-primary rounded-xl font-ui font-bold uppercase tracking-widest border border-border/50 hover:bg-surface transition-all">Cancel</button>
+          </div>
+        </form>
+      </AdminModal>
 
       {/* Reader Modal */}
       <AdminModal isOpen={readerModal} onClose={() => setReaderModal(false)} title={editingReader ? 'Edit Beta Reader' : 'Add Beta Reader'}>

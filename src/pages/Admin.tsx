@@ -1,6 +1,11 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Users, BookOpen, Star, Scroll, MessageCircle, Calendar, Newspaper, Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame, Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale, PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer, MessageSquareText } from 'lucide-react';
+import { useState, useRef, useCallback, useTransition } from 'react';
+import {
+  FileText, Users, BookOpen, Star, Scroll, MessageCircle, Calendar, Newspaper,
+  Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame,
+  Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale,
+  PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer,
+  MessageSquareText, ChevronDown, Search, Menu, X
+} from 'lucide-react';
 // Import Admin Tab Components
 import AdminSubmissions from '../components/admin/AdminSubmissions';
 import AdminAuthors from '../components/admin/AdminAuthors';
@@ -38,123 +43,325 @@ import AdminAwards from '../components/admin/AdminAwards';
 import AdminContacts from '../components/admin/AdminContacts';
 import AdminProduction from '../components/admin/AdminProduction';
 import AdminReviewTracker from '../components/admin/AdminReviewTracker';
+import React from 'react';
 
-export default function Admin() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  // Access is already enforced by ProtectedRoute in App.tsx
+// ── Tab Error Boundary ──────────────────────────
+class TabErrorBoundary extends React.Component<
+  { tabId: string; children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  state = { hasError: false, error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error) { console.error(`[Admin Tab Error]`, error); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-surface border border-forge-red/30 rounded-xl p-8 text-center">
+          <h3 className="font-heading text-lg text-forge-red mb-2">Tab Error</h3>
+          <p className="font-ui text-sm text-text-muted mb-4">This panel encountered an error. Try switching away and back.</p>
+          <pre className="font-mono text-[10px] text-text-muted bg-void-black p-3 rounded-lg overflow-auto max-h-24 text-left mb-4">{this.state.error?.message}</pre>
+          <button onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 bg-starforge-gold text-void-black rounded-lg font-ui text-sm font-medium">Retry</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'landing', label: 'Landing Page', icon: Globe },
-    { id: 'submissions', label: 'Submissions', icon: FileText },
-    { id: 'authors', label: 'Authors', icon: Users },
-    { id: 'catalogue', label: 'Catalogue', icon: BookOpen },
-    { id: 'constellations', label: 'Constellations', icon: Star },
-    { id: 'journeys', label: 'Journeys', icon: Scroll },
-    { id: 'community', label: 'Community', icon: MessageCircle },
-    { id: 'forge', label: 'Forge & Connect', icon: Flame },
-    { id: 'editorial', label: 'Editorial', icon: Scissors },
-    { id: 'rights', label: 'Rights', icon: Shield },
-    { id: 'media', label: 'Media', icon: Image },
-    { id: 'newsletter', label: 'Newsletter', icon: Mail },
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'events', label: 'Events', icon: Calendar },
-    { id: 'posts', label: 'Posts', icon: Newspaper },
-    { id: 'membership', label: 'Membership', icon: Crown },
-    { id: 'orders', label: 'Orders', icon: ShoppingCart },
-    { id: 'royalties', label: 'Royalties', icon: DollarSign },
-    { id: 'pipeline', label: 'Pipeline', icon: GitBranch },
-    { id: 'beta-readers', label: 'Beta Readers', icon: Eye },
-    { id: 'reader-tools', label: 'Reader Tools', icon: Sparkles },
-    { id: 'pages', label: 'Pages', icon: Globe },
-    { id: 'legal', label: 'Legal', icon: Scale },
-    { id: 'author-tools', label: 'Author Tools', icon: PenTool },
-    { id: 'reader-exp', label: 'Reader Exp', icon: Monitor },
-    { id: 'onboarding', label: 'Onboarding', icon: Compass },
-    { id: 'imprints', label: 'Imprints & Genres', icon: BookOpen },
-    { id: 'sops', label: 'SOPs', icon: ClipboardList },
-    { id: 'distribution', label: 'Distribution', icon: Truck },
-    { id: 'awards', label: 'Awards', icon: Trophy },
-    { id: 'contacts', label: 'Contacts', icon: Contact },
-    { id: 'production', label: 'Production', icon: Printer },
-    { id: 'reviews', label: 'Reviews', icon: MessageSquareText },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'activity', label: 'Activity', icon: Activity },
-  ];
+// ── Tab component map ──────────────────────────
+const TAB_COMPONENTS: Record<string, React.ComponentType> = {
+  dashboard: AdminDashboard, landing: AdminLandingPage, submissions: AdminSubmissions,
+  authors: AdminAuthors, catalogue: AdminCatalogue, constellations: AdminConstellations,
+  journeys: AdminJourneys, community: AdminCommunity, forge: AdminForge,
+  editorial: AdminEditorial, rights: AdminRights, media: AdminMedia,
+  newsletter: AdminNewsletter, users: AdminUsers, events: AdminEvents,
+  posts: AdminPosts, membership: AdminMembership, orders: AdminOrders,
+  royalties: AdminRoyalties, pipeline: AdminPipeline, 'beta-readers': AdminBetaReaders,
+  'reader-tools': AdminReaderTools, pages: AdminPages, legal: AdminLegal,
+  'author-tools': AdminAuthorTools, 'reader-exp': AdminReaderExp,
+  onboarding: AdminOnboarding, imprints: AdminImprints, sops: AdminSOPs,
+  distribution: AdminDistribution, awards: AdminAwards, contacts: AdminContacts,
+  production: AdminProduction, reviews: AdminReviewTracker, settings: AdminSettings,
+  activity: AdminActivity,
+};
+
+// ── Grouped navigation ──────────────────────────
+const NAV_GROUPS = [
+  {
+    label: 'Overview',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'activity', label: 'Activity Log', icon: Activity },
+      { id: 'landing', label: 'Landing Page', icon: Globe },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { id: 'catalogue', label: 'Catalogue', icon: BookOpen },
+      { id: 'authors', label: 'Authors', icon: Users },
+      { id: 'constellations', label: 'Constellations', icon: Star },
+      { id: 'journeys', label: 'Journeys', icon: Scroll },
+      { id: 'posts', label: 'Blog Posts', icon: Newspaper },
+      { id: 'imprints', label: 'Imprints & Genres', icon: BookOpen },
+      { id: 'pages', label: 'Pages', icon: Globe },
+    ],
+  },
+  {
+    label: 'Publishing',
+    items: [
+      { id: 'submissions', label: 'Submissions', icon: FileText },
+      { id: 'editorial', label: 'Editorial', icon: Scissors },
+      { id: 'pipeline', label: 'Pipeline', icon: GitBranch },
+      { id: 'production', label: 'Production', icon: Printer },
+      { id: 'distribution', label: 'Distribution', icon: Truck },
+      { id: 'sops', label: 'SOPs', icon: ClipboardList },
+    ],
+  },
+  {
+    label: 'Community',
+    items: [
+      { id: 'community', label: 'Community', icon: MessageCircle },
+      { id: 'forge', label: 'Forge & Connect', icon: Flame },
+      { id: 'beta-readers', label: 'Beta Readers', icon: Eye },
+      { id: 'events', label: 'Events', icon: Calendar },
+      { id: 'reader-tools', label: 'Reader Tools', icon: Sparkles },
+      { id: 'reader-exp', label: 'Reader Experience', icon: Monitor },
+    ],
+  },
+  {
+    label: 'Commerce',
+    items: [
+      { id: 'orders', label: 'Orders', icon: ShoppingCart },
+      { id: 'membership', label: 'Membership', icon: Crown },
+      { id: 'royalties', label: 'Royalties', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { id: 'users', label: 'Users & Staff', icon: Users },
+      { id: 'contacts', label: 'Industry Contacts', icon: Contact },
+      { id: 'newsletter', label: 'Newsletter', icon: Mail },
+      { id: 'onboarding', label: 'Onboarding', icon: Compass },
+    ],
+  },
+  {
+    label: 'Legal & Rights',
+    items: [
+      { id: 'rights', label: 'Rights & Licensing', icon: Shield },
+      { id: 'legal', label: 'Legal', icon: Scale },
+      { id: 'awards', label: 'Awards', icon: Trophy },
+      { id: 'reviews', label: 'Reviews', icon: MessageSquareText },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { id: 'media', label: 'Media Library', icon: Image },
+      { id: 'author-tools', label: 'Author Tools', icon: PenTool },
+      { id: 'settings', label: 'Settings', icon: Settings },
+    ],
+  },
+];
+
+// ── All item labels for search ──────────────────
+const ALL_ITEMS = NAV_GROUPS.flatMap(g => g.items.map(i => ({ ...i, group: g.label })));
+
+// ── Sidebar Group ──────────────────────────
+function SidebarGroup({ label, items, activeTab, onSelect, defaultOpen = false }: {
+  label: string;
+  items: { id: string; label: string; icon: any }[];
+  activeTab: string;
+  onSelect: (id: string) => void;
+  defaultOpen?: boolean;
+}) {
+  const hasActive = items.some(i => i.id === activeTab);
+  const [open, setOpen] = useState(defaultOpen || hasActive);
 
   return (
-    <div className="bg-void-black min-h-screen flex flex-col">
-      {/* Top Navigation Bar */}
-      <div className="bg-surface border-b border-border/50 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto hide-scrollbar py-4 gap-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-ui text-sm whitespace-nowrap transition-all ${isActive
-                    ? 'bg-starforge-gold text-void-black font-medium'
-                    : 'bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-elevated/80 border border-border/50'
-                    }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+    <div className="mb-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left group hover:bg-surface-elevated/50 transition-colors"
+      >
+        <span className={`font-ui text-[10px] uppercase tracking-[0.15em] font-semibold ${hasActive ? 'text-starforge-gold' : 'text-text-muted'}`}>
+          {label}
+        </span>
+        <ChevronDown className={`w-3 h-3 text-text-muted transition-transform ${open ? '' : '-rotate-90'}`} />
+      </button>
+      {open && (
+        <div className="ml-1 mt-0.5 space-y-0.5">
+          {items.map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelect(item.id)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all text-sm font-ui ${
+                  isActive
+                    ? 'bg-starforge-gold/10 text-starforge-gold border-l-2 border-starforge-gold'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated/30'
+                }`}
+              >
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-starforge-gold' : 'text-text-muted'}`} />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === 'dashboard' && <AdminDashboard />}
-          {activeTab === 'landing' && <AdminLandingPage />}
-          {activeTab === 'submissions' && <AdminSubmissions />}
-          {activeTab === 'authors' && <AdminAuthors />}
-          {activeTab === 'catalogue' && <AdminCatalogue />}
-          {activeTab === 'constellations' && <AdminConstellations />}
-          {activeTab === 'journeys' && <AdminJourneys />}
-          {activeTab === 'community' && <AdminCommunity />}
-          {activeTab === 'forge' && <AdminForge />}
-          {activeTab === 'editorial' && <AdminEditorial />}
-          {activeTab === 'rights' && <AdminRights />}
-          {activeTab === 'media' && <AdminMedia />}
-          {activeTab === 'newsletter' && <AdminNewsletter />}
-          {activeTab === 'users' && <AdminUsers />}
-          {activeTab === 'events' && <AdminEvents />}
-          {activeTab === 'posts' && <AdminPosts />}
-          {activeTab === 'membership' && <AdminMembership />}
-          {activeTab === 'orders' && <AdminOrders />}
-          {activeTab === 'royalties' && <AdminRoyalties />}
-          {activeTab === 'pipeline' && <AdminPipeline />}
-          {activeTab === 'beta-readers' && <AdminBetaReaders />}
-          {activeTab === 'reader-tools' && <AdminReaderTools />}
-          {activeTab === 'pages' && <AdminPages />}
-          {activeTab === 'legal' && <AdminLegal />}
-          {activeTab === 'author-tools' && <AdminAuthorTools />}
-          {activeTab === 'reader-exp' && <AdminReaderExp />}
-          {activeTab === 'onboarding' && <AdminOnboarding />}
-          {activeTab === 'imprints' && <AdminImprints />}
-          {activeTab === 'sops' && <AdminSOPs />}
-          {activeTab === 'distribution' && <AdminDistribution />}
-          {activeTab === 'awards' && <AdminAwards />}
-          {activeTab === 'contacts' && <AdminContacts />}
-          {activeTab === 'production' && <AdminProduction />}
-          {activeTab === 'reviews' && <AdminReviewTracker />}
-          {activeTab === 'settings' && <AdminSettings />}
-          {activeTab === 'activity' && <AdminActivity />}
-        </motion.div>
-      </main>
+// ── Main Admin Component ──────────────────────────
+export default function Admin() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [mountedTabs, setMountedTabs] = useState<Set<string>>(new Set(['dashboard']));
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleTabSwitch = useCallback((tabId: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      startTransition(() => {
+        setActiveTab(tabId);
+        setMountedTabs(prev => {
+          if (prev.has(tabId)) return prev;
+          const next = new Set(prev);
+          next.add(tabId);
+          return next;
+        });
+      });
+      // Close sidebar on mobile after selection
+      if (window.innerWidth < 1024) setSidebarOpen(false);
+    }, 80);
+  }, []);
+
+  // Filtered items for search
+  const searchResults = searchQuery.trim()
+    ? ALL_ITEMS.filter(i =>
+        i.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.group.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  const currentLabel = ALL_ITEMS.find(i => i.id === activeTab)?.label || 'Dashboard';
+
+  return (
+    <div className="bg-void-black min-h-screen flex">
+      {/* ── Sidebar Overlay (mobile) ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ── */}
+      <aside className={`
+        fixed lg:sticky top-0 left-0 z-50 lg:z-auto
+        w-64 h-screen bg-surface border-r border-border/50
+        flex flex-col overflow-hidden
+        transition-transform duration-200
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        {/* Sidebar header */}
+        <div className="px-4 py-4 border-b border-border/30 flex items-center justify-between">
+          <h2 className="font-display text-sm text-starforge-gold uppercase tracking-[0.2em]">Admin Console</h2>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-text-muted hover:text-text-primary">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Quick search */}
+        <div className="px-3 py-3 border-b border-border/20">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+            <input
+              type="text"
+              placeholder="Quick find..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-void-black/50 border border-border/30 rounded-lg pl-8 pr-3 py-2 text-text-primary font-ui text-xs outline-none focus:border-starforge-gold/40 transition-colors placeholder:text-text-muted"
+            />
+          </div>
+          {/* Search results dropdown */}
+          {searchResults.length > 0 && (
+            <div className="mt-1 bg-surface-elevated border border-border/30 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+              {searchResults.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { handleTabSwitch(item.id); setSearchQuery(''); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-starforge-gold/10 transition-colors"
+                  >
+                    <Icon className="w-3.5 h-3.5 text-text-muted" />
+                    <div>
+                      <span className="font-ui text-xs text-text-primary">{item.label}</span>
+                      <span className="font-ui text-[9px] text-text-muted ml-2">{item.group}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Nav groups */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1 scrollbar-thin">
+          {NAV_GROUPS.map(group => (
+            <SidebarGroup
+              key={group.label}
+              label={group.label}
+              items={group.items}
+              activeTab={activeTab}
+              onSelect={handleTabSwitch}
+              defaultOpen={group.label === 'Overview'}
+            />
+          ))}
+        </nav>
+
+        {/* Sidebar footer */}
+        <div className="px-4 py-3 border-t border-border/30">
+          <p className="font-mono text-[9px] text-text-muted text-center">RÜNA ATLAS PRESS v2.0</p>
+        </div>
+      </aside>
+
+      {/* ── Main Content ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 bg-surface/80 backdrop-blur-sm border-b border-border/30 px-4 sm:px-6 py-3 flex items-center gap-4">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-text-muted hover:text-text-primary">
+            <Menu className="w-5 h-5" />
+          </button>
+          <h1 className="font-heading text-lg text-text-primary flex-1 truncate">{currentLabel}</h1>
+          {isPending && (
+            <div className="w-4 h-4 border-2 border-starforge-gold/30 border-t-starforge-gold rounded-full animate-spin" />
+          )}
+        </header>
+
+        {/* Content area — keep-alive: mount once, show/hide */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full">
+          {Array.from(mountedTabs).map(tabId => {
+            const Component = TAB_COMPONENTS[tabId];
+            if (!Component) return null;
+            return (
+              <div key={tabId} style={{ display: activeTab === tabId ? 'block' : 'none' }}>
+                <TabErrorBoundary tabId={tabId}>
+                  <Component />
+                </TabErrorBoundary>
+              </div>
+            );
+          })}
+        </main>
+      </div>
     </div>
   );
 }
