@@ -24,7 +24,7 @@ interface ToolCard {
 const READER_TOOLS: ToolCard[] = [
     { label: 'My Library', description: 'Your purchased books and reading progress', href: '/library', icon: BookOpen, color: 'text-aurora-teal', bgColor: 'bg-aurora-teal/10' },
     { label: 'Book DNA', description: 'Your unique reading personality profile', href: '/book-dna', icon: Dna, color: 'text-violet-400', bgColor: 'bg-violet-400/10' },
-    { label: 'Year in Review', description: 'Your annual reading wrapped', href: '/reading-wrapped', icon: CalendarHeart, color: 'text-rose-400', bgColor: 'bg-rose-400/10' },
+    { label: 'Year in Review', description: 'Your annual reading wrapped', href: '/wrapped', icon: CalendarHeart, color: 'text-rose-400', bgColor: 'bg-rose-400/10' },
     { label: 'Mood Matcher', description: 'Find books by how you feel', href: '/mood-matcher', icon: Sparkles, color: 'text-amber-400', bgColor: 'bg-amber-400/10' },
 ];
 

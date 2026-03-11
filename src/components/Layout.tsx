@@ -63,45 +63,43 @@ export default function Layout() {
     { name: 'Events', path: '/events', icon: Calendar, show: true },
     { name: 'Community', path: '/community', icon: Users, show: true },
     { name: 'News', path: '/posts', icon: Newspaper, show: true },
-    {
-      name: 'Our Imprints', path: '/genres', icon: BookOpen, show: true,
-      children: [
-        { name: 'Genre Catalog', path: '/genres' },
-        { name: '✦ Rüna Atlas Press', path: '/for-authors' },
-        { name: '☀ Bohío Press', path: '/imprints/bohio' },
-        { name: '🌑 Void Noir', path: '/imprints/void-noir' },
-      ],
-    },
   ].filter(l => l.show);
 
   // ── Footer sections ──
-  const footerAuthorDashboard = [
-    { name: 'Author Portal', path: '/portal' },
-    { name: 'Creator Studio', path: '/creator' },
-    { name: 'Forge Editor', path: '/forge-editor' },
-    { name: 'Writing Goals', path: '/writing-goals' },
-    { name: 'Launch Planner', path: '/launch-planner' },
-    { name: 'ARC Manager', path: '/arc-manager' },
-    { name: 'Submission Tracker', path: '/submission-tracker' },
-  ];
-
-  const footerEditorTools = [
-    { name: 'Manuscript Inbox', path: '/manuscript-inbox' },
-    { name: 'Editor Feedback Bridge', path: '/editor-bridge' },
-    { name: 'Editor Beta Manager', path: '/editor-beta-manager' },
-    { name: 'Revision Rounds', path: '/revision-rounds' },
-    { name: 'Manuscript Pipeline', path: '/manuscript-pipeline' },
-  ];
-
   const footerExplore = [
     { name: 'Catalog', path: '/catalog' },
     { name: 'Journeys', path: '/journeys' },
     { name: 'The Forge', path: '/forge' },
     { name: 'Events', path: '/events' },
     { name: 'Community', path: '/community' },
-    { name: 'Content Compass', path: '/content-compass' },
     { name: 'News', path: '/posts' },
     { name: 'About Us', path: '/about' },
+  ];
+
+  const footerReaderTools = [
+    { name: 'Book DNA', path: '/book-dna' },
+    { name: 'Reading Wrapped', path: '/wrapped' },
+    { name: 'Mood Matcher', path: '/mood-matcher' },
+    { name: 'Spoiler Shield', path: '/spoiler-shield' },
+    { name: 'Content Compass', path: '/content-compass' },
+    { name: 'Passage Collections', path: '/passages' },
+    { name: 'Reader Compatibility', path: '/compatibility' },
+  ];
+
+  const footerImprints = [
+    { name: '✦ Rüna Atlas Press', path: '/for-authors' },
+    { name: '☀ Bohío Press', path: '/imprints/bohio' },
+    { name: '🌑 Void Noir', path: '/imprints/void-noir' },
+  ];
+
+  const footerCompany = [
+    { name: 'For Authors', path: '/for-authors' },
+    { name: 'For Readers', path: '/for-readers' },
+    { name: 'For Beta Readers', path: '/for-beta-readers' },
+    { name: 'Membership', path: '/membership' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Foreign Rights', path: '/rights' },
+    { name: 'Press', path: '/press' },
   ];
 
   const isActive = (path: string) =>
@@ -219,7 +217,7 @@ export default function Layout() {
       {/* ═══ Footer ═══ */}
       <footer className="bg-deep-space border-t border-border pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 mb-12">
 
             {/* Brand */}
             <div className="lg:col-span-1">
@@ -229,6 +227,13 @@ export default function Layout() {
               <p className="text-text-secondary text-sm font-ui leading-relaxed mb-6">
                 Charting the unwritten territories of speculative fiction.
               </p>
+              <form className="flex gap-2">
+                <input type="email" placeholder="Email"
+                  className="bg-surface border border-border rounded-md px-3 py-2 text-sm font-ui w-full focus:outline-none focus:border-starforge-gold focus:ring-1 focus:ring-starforge-gold text-text-primary" />
+                <button type="submit" className="bg-starforge-gold text-void-black px-3 py-2 rounded-md font-ui text-xs font-medium hover:bg-white transition-colors whitespace-nowrap">
+                  Go
+                </button>
+              </form>
             </div>
 
             {/* Explore */}
@@ -241,43 +246,36 @@ export default function Layout() {
               </ul>
             </div>
 
-            {/* Author Dashboards */}
+            {/* Reader Tools */}
             <div>
-              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Author Tools</h3>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Reader Tools</h3>
               <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
-                {footerAuthorDashboard.map(link => (
+                {footerReaderTools.map(link => (
                   <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
                 ))}
               </ul>
             </div>
 
-            {/* Editor Tools */}
+            {/* Our Imprints */}
             <div>
-              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Editor Tools</h3>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Our Imprints</h3>
               <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
-                {footerEditorTools.map(link => (
+                {footerImprints.map(link => (
                   <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
                 ))}
               </ul>
+              <Link to="/genres" className="inline-block mt-4 font-ui text-xs text-text-muted hover:text-starforge-gold transition-colors">Browse all genres →</Link>
             </div>
 
-            {/* Newsletter */}
+            {/* Company */}
             <div>
-              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Chart the Stars</h3>
-              <p className="text-text-secondary text-sm font-ui mb-4">New Forgings, open calls, and dispatches from the Deep Sky.</p>
-              <form className="flex gap-2">
-                <input type="email" placeholder="Email address"
-                  className="bg-surface border border-border rounded-md px-4 py-2 text-sm font-ui w-full focus:outline-none focus:border-starforge-gold focus:ring-1 focus:ring-starforge-gold text-text-primary" />
-                <button type="submit" className="bg-starforge-gold text-void-black px-4 py-2 rounded-md font-ui text-sm font-medium hover:bg-white transition-colors whitespace-nowrap">
-                  Subscribe
-                </button>
-              </form>
-              <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs font-ui text-text-muted">
-                <Link to="/membership" className="hover:text-starforge-gold transition-colors">Membership</Link>
-                <Link to="/contact" className="hover:text-starforge-gold transition-colors">Contact</Link>
-                <Link to="/rights" className="hover:text-starforge-gold transition-colors">Foreign Rights</Link>
-                {isAdmin && <Link to="/admin" className="hover:text-starforge-gold transition-colors">Admin Panel</Link>}
-              </div>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Company</h3>
+              <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
+                {footerCompany.map(link => (
+                  <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
+                ))}
+                {isAdmin && <li><Link to="/admin" className="hover:text-starforge-gold transition-colors">Admin Panel</Link></li>}
+              </ul>
             </div>
           </div>
 
