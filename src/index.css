@@ -32,8 +32,20 @@
 }
 
 @layer base {
+  /* ── Mobile-first foundation ── */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-void-black text-text-primary font-body antialiased selection:bg-cosmic-purple selection:text-white;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: rgba(212, 168, 83, 0.15);
+    /* Safe area for notched phones (iPhone X+) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -42,6 +54,24 @@
   
   .font-display {
     @apply font-display;
+  }
+
+  /* ── Touch-friendly minimum targets (WCAG 2.5.5) ── */
+  a, button, [role="button"], input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Allow inline links to be smaller (they don't need tap targets) */
+  p a, li a, span a, td a {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* ── Image defaults ── */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
 
@@ -52,5 +82,40 @@
   }
   .bg-glow-purple {
     box-shadow: 0 0 20px rgba(45, 27, 78, 0.5);
+  }
+}
+
+/* ══════════════════════════════════
+   REDUCED MOTION — Accessibility
+   Honors user preference to reduce motion.
+   Disables ALL animations and transitions.
+   ══════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ══════════════════════════════════
+   MOBILE-SPECIFIC OVERRIDES
+   ══════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Prevent horizontal overflow from any element */
+  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* More readable text on small screens */
+  html {
+    font-size: 15px;
+  }
+
+  /* Footer safe-area for iOS bottom bar */
+  footer {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 }
