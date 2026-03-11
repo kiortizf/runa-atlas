@@ -6,6 +6,7 @@ import {
   Feather, Moon, Ghost, Flame, Brain
 } from 'lucide-react';
 import { VOID_NOIR_GENRES } from '../data/genreData';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // ═══════════════════════════════════════════════════════════════
 // VOID NOIR — IMPRINT LANDING PAGE
@@ -68,6 +69,10 @@ function DriftingParticle({ delay, x, size }: { delay: number; x: number; size: 
 }
 
 export default function ImprintVoidNoir() {
+  usePageSEO({
+    title: 'Void Noir',
+    description: 'Void Noir — Where the dark looks back. The horror and dark fiction imprint of RÜNA ATLAS PRESS. Queer horror, BIPOC horror, gothic fiction, and weird fiction from marginalized creators.',
+  });
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.05]);

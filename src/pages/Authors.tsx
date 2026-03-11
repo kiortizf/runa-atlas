@@ -4,6 +4,7 @@ import { BookOpen, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 interface Author {
   id: string;
@@ -39,6 +40,10 @@ const SEED_AUTHORS: Author[] = [
 ];
 
 export default function Authors() {
+  usePageSEO({
+    title: 'Authors',
+    description: 'Meet the brilliant minds forging constellations of voice at RÜNA ATLAS PRESS. Discover the creators behind our speculative fiction, dark fantasy, and literary works.',
+  });
   const [authors, setAuthors] = useState<Author[]>(SEED_AUTHORS);
   const [loading, setLoading] = useState(true);
 

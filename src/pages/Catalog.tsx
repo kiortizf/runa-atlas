@@ -4,6 +4,7 @@ import { Filter, Search, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 const CODEMARKS = [
   'All',
@@ -31,6 +32,10 @@ interface Book {
 }
 
 export default function Catalog() {
+  usePageSEO({
+    title: 'Catalog',
+    description: 'Browse the full RÜNA ATLAS PRESS catalog — speculative fiction, dark fantasy, horror, queer romance, magical realism, and more from marginalized voices.',
+  });
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [books, setBooks] = useState<Book[]>([]);

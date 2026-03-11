@@ -11,6 +11,7 @@ import {
   BOHIO_GENRES, VOID_NOIR_GENRES, GENRE_ENRICHMENT,
   type Genre
 } from '../data/genreData';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // ═══════════════════════════════════════════════════════════════
 // GENRE CATALOG — Reader and Author Resource
@@ -69,6 +70,10 @@ const CW_EXPECTATIONS = [
 type ViewMode = 'browse' | 'moods' | 'authors';
 
 export default function Genres() {
+  usePageSEO({
+    title: 'Genres',
+    description: 'Explore every genre RÜNA ATLAS PRESS publishes — from epic fantasy and Afrofuturism to gothic horror and queer romance. Discover by mood, find submission tips, and browse our genre universe.',
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGenres, setExpandedGenres] = useState<Set<string>>(new Set(['fantasy', 'scifi', 'horror']));
   const [filterImprint, setFilterImprint] = useState<string | null>(null);

@@ -10,6 +10,7 @@ import {
 import { useRef, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // Feature screenshots
 import forgeEditorImg from '../assets/features/forge-editor.png';
@@ -45,6 +46,10 @@ const stagger = {
 };
 
 export default function ForAuthors() {
+  usePageSEO({
+    title: 'For Authors',
+    description: 'Your craft deserves more. RÜNA ATLAS PRESS offers author-first economics, The Forge editor, Creator Studio analytics, beta reader matching, and a built-in community that amplifies your voice.',
+  });
     const heroRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
     const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);

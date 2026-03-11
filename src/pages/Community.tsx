@@ -7,6 +7,7 @@ import {
 import { collection, doc, getDoc, setDoc, addDoc, updateDoc, increment, onSnapshot, query, orderBy, serverTimestamp, Timestamp, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // ─── Types ──────────────────────────────────────────
 type PollOption = { id: string; text: string; votes: number };
@@ -33,6 +34,10 @@ type Discussion = {
 };
 
 export default function Community() {
+  usePageSEO({
+    title: 'Community',
+    description: 'Join The Runeweave — the RÜNA ATLAS PRESS community hub. Vote on anthology themes, join reading circles, participate in author Q&As, and shape the stories you read.',
+  });
   const { user, signIn } = useAuth();
   const [votedPolls, setVotedPolls] = useState<string[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);

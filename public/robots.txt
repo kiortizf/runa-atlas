@@ -1,0 +1,42 @@
+# RÜNA ATLAS PRESS — robots.txt
+# https://runaatlas.com/robots.txt
+
+User-agent: *
+Allow: /
+
+# Protected areas
+Disallow: /admin
+Disallow: /admin/
+Disallow: /portal
+Disallow: /portal/
+Disallow: /api/
+Disallow: /manuscript-inbox
+Disallow: /editor-bridge
+Disallow: /editor-beta-manager
+Disallow: /revision-rounds
+Disallow: /manuscript-pipeline
+
+# Allow crawlers to index all public content
+Allow: /catalog
+Allow: /genres
+Allow: /authors
+Allow: /imprints/
+Allow: /submissions
+Allow: /journeys
+Allow: /community
+Allow: /forge
+Allow: /events
+Allow: /posts
+Allow: /about
+Allow: /contact
+Allow: /press
+Allow: /rights
+Allow: /for-authors
+Allow: /for-readers
+Allow: /membership
+
+# Sitemap
+Sitemap: https://runaatlas.com/sitemap.xml
+
+# Crawl-delay (be gentle with indie hosting)
+Crawl-delay: 1

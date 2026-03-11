@@ -3,8 +3,13 @@ import { motion } from 'framer-motion';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { doc, onSnapshot, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 export default function Contact() {
+  usePageSEO({
+    title: 'Contact',
+    description: 'Reach RÜNA ATLAS PRESS — general inquiries, press and media, foreign rights, and author portal support. Send a transmission across the void.',
+  });
   const [contactInfo, setContactInfo] = useState({
     emails: { general: 'hello@runaatlas.com', press: 'press@runaatlas.com', rights: 'rights@runaatlas.com' },
     address: '101 Nebula Way, Suite 404\nPortland, OR 97204\nEarth, Sol System',

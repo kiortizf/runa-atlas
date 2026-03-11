@@ -6,6 +6,7 @@ import {
   Flame, Globe, Users, Feather, Star, Sparkles
 } from 'lucide-react';
 import { BOHIO_GENRES } from '../data/genreData';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // ═══════════════════════════════════════════════════════════════
 // BOHÍO PRESS — IMPRINT LANDING PAGE
@@ -71,6 +72,10 @@ function Firefly({ delay, x, size }: { delay: number; x: number; size: number })
 }
 
 export default function ImprintBohio() {
+  usePageSEO({
+    title: 'Bohío Press',
+    description: 'Bohío Press — Pa\'l mundo desde Borinquen. The Puerto Rican imprint of RÜNA ATLAS PRESS publishing Boricua speculative fiction, magical realism, and diaspora stories.',
+  });
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.03]);

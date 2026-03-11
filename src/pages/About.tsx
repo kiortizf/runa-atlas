@@ -3,8 +3,13 @@ import { motion } from 'framer-motion';
 import { Star, Sparkles, Shield, Heart, Compass, BookOpen, Users, Pen } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 export default function About() {
+  usePageSEO({
+    title: 'About',
+    description: 'RÜNA ATLAS PRESS is an independent speculative fiction publisher forging constellations of voice from the margins. Learn about our mission, the Starforge process, and why every silenced voice is a stolen star.',
+  });
   const [hero, setHero] = useState({
     subtitle: 'Charting the unwritten territories of speculative fiction. Forging constellations of voice from the margins of the literary cosmos.',
   });

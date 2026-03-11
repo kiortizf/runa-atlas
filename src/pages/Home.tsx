@@ -4,6 +4,7 @@ import { Star, ArrowRight, BookOpen, PenTool, Sparkles, Send } from 'lucide-reac
 import { motion } from 'framer-motion';
 import { collection, onSnapshot, query, limit, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 interface FeaturedBook {
   id: string;
@@ -24,6 +25,10 @@ const SEED_BOOKS: FeaturedBook[] = [
 ];
 
 export default function Home() {
+  usePageSEO({
+    title: 'RÜNA ATLAS PRESS',
+    description: 'Independent speculative fiction publisher centering voices from marginalized communities. Explore science fiction, fantasy, horror, and magical realism across our Bohío Press and Void Noir imprints.',
+  });
   const [books, setBooks] = useState<FeaturedBook[]>(SEED_BOOKS);
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import {
 import { useRef, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import { usePageSEO } from '../hooks/usePageSEO';
 
 // Feature screenshots
 import runeweaveImg from '../assets/features/runeweave-starmap.png';
@@ -41,6 +42,10 @@ const stagger = {
 };
 
 export default function ForReaders() {
+  usePageSEO({
+    title: 'For Readers',
+    description: 'Your next obsession starts here. Discover stories through the Runeweave star-map, read with immersive tools, vote on what gets published, and connect with your favorite authors at RÜNA ATLAS PRESS.',
+  });
     const heroRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
     const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
