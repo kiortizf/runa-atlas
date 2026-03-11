@@ -1210,5 +1210,129 @@ service cloud.firestore {
       allow create: if isMember() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isAdmin() || (isMember() && resource.data.authorId == request.auth.uid);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLISHER PLATFORM — GLOBAL COLLECTIONS (admin read/write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /sales_monthly/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /sales_titles/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /sales_channels/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /isbns/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /contracts/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /marketing_assets/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /audiobook_projects/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLISHER PLATFORM — READER ENGAGEMENT (public read, admin write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /challenges/{docId} {
+      allow read: if isMember();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /challenge_leaderboard/{docId} {
+      allow read: if isMember();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /book_clubs/{docId} {
+      allow read: if isMember();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /club_discussions/{docId} {
+      allow read: if isMember();
+      allow create: if isMember();
+      allow update, delete: if isAdmin();
+    }
+
+    match /reward_tiers/{docId} {
+      allow read: if isMember();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLISHER PLATFORM — PER-USER SUBCOLLECTIONS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /users/{userId}/analytics/{docId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId}/analytics_titles/{docId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId}/series/{seriesId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+
+      match /books/{bookId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /users/{userId}/notifications/{notifId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/wishlist/{itemId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/referrals/{refId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/challenge_progress/{challengeId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
   }
 }
