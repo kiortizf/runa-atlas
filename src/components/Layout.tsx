@@ -223,14 +223,8 @@ export default function Layout() {
 
             {/* Brand */}
             <div className="lg:col-span-1">
-              <Link to="/" className="inline-block mb-4 group">
-                <img
-                  src="/logo-mark.png"
-                  alt="Rüna Atlas Press logo"
-                  className="w-14 h-14 mb-3 object-contain drop-shadow-[0_0_8px_rgba(201,138,75,0.3)] group-hover:drop-shadow-[0_0_12px_rgba(201,138,75,0.5)] transition-all duration-300"
-                  style={{ background: 'transparent' }}
-                />
-                <span className="font-display text-lg tracking-wider text-text-primary uppercase block">Rüna Atlas</span>
+              <Link to="/" className="inline-block mb-4">
+                <span className="font-display text-lg tracking-wider text-text-primary uppercase">Rüna Atlas</span>
               </Link>
               <p className="text-text-secondary text-sm font-ui leading-relaxed mb-6">
                 Charting the unwritten territories of speculative fiction.
