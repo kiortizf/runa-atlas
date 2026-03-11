@@ -1,89 +1,209 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { BookOpen, Star, Menu, X, ShoppingCart, UserCircle, Scroll, Vote, Newspaper, FileText, LayoutDashboard, Settings } from 'lucide-react';
-import { useState } from 'react';
+import {
+  BookOpen, Menu, X, Scroll, Newspaper, Flame, Users, Calendar,
+  PenTool, Feather, BookMarked, Eye, ChevronDown
+} from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
   const { user, isAdmin, isAuthor } = useAuth();
+  const dropdownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Build nav links based on user role
-  const navLinks = [
-    { name: 'Runeweave', path: '/', icon: Star, show: true },
+  // Close dropdown when navigating
+  useEffect(() => { setOpenDropdown(null); setIsMenuOpen(false); }, [location.pathname]);
+
+  const handleMouseEnter = (name: string) => {
+    if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+    setOpenDropdown(name);
+  };
+  const handleMouseLeave = () => {
+    dropdownTimeout.current = setTimeout(() => setOpenDropdown(null), 200);
+  };
+
+  // ── Top nav: role-based landing pages + key modules ──
+  const navItems = [
+    {
+      name: 'For Authors', path: '/for-authors', icon: Feather, show: true,
+      children: [
+        { name: 'Publish With Us', path: '/for-authors' },
+        { name: 'What We Publish', path: '/genres' },
+        { name: 'Author Directory', path: '/authors' },
+        { name: 'Author Connect', path: '/connect' },
+        { name: 'Royalty Calculator', path: '/royalty-calculator' },
+        { name: 'Submissions', path: '/submissions' },
+      ],
+    },
+    {
+      name: 'For Readers', path: '/for-readers', icon: BookMarked, show: true,
+      children: [
+        { name: 'Reader Home', path: '/for-readers' },
+        { name: 'Mood Matcher', path: '/mood-matcher' },
+        { name: 'Book DNA', path: '/book-dna' },
+        { name: 'Reader Compatibility', path: '/compatibility' },
+        { name: 'Spoiler Shield', path: '/spoiler-shield' },
+        { name: 'Reading Wrapped', path: '/wrapped' },
+        { name: 'Passage Collections', path: '/passages' },
+      ],
+    },
+    {
+      name: 'Beta Readers', path: '/for-beta-readers', icon: Eye, show: true,
+      children: [
+        { name: 'Beta Reader Info', path: '/for-beta-readers' },
+        { name: 'Beta Reader Hub', path: '/beta-reader' },
+        { name: 'Beta Campaigns', path: '/beta-campaign' },
+      ],
+    },
+    { name: 'Catalog', path: '/catalog', icon: BookOpen, show: true },
     { name: 'Journeys', path: '/journeys', icon: Scroll, show: true },
-    { name: 'Community', path: '/community', icon: Vote, show: true },
+    { name: 'The Forge', path: '/forge', icon: Flame, show: true },
+    { name: 'Events', path: '/events', icon: Calendar, show: true },
+    { name: 'Community', path: '/community', icon: Users, show: true },
     { name: 'News', path: '/posts', icon: Newspaper, show: true },
-    { name: 'Submit', path: '/submissions', icon: FileText, show: isAuthor },
-    { name: 'Dashboard', path: '/portal', icon: LayoutDashboard, show: isAuthor },
-    { name: 'Admin', path: '/admin', icon: Settings, show: isAdmin },
-  ].filter(link => link.show);
+    {
+      name: 'Our Imprints', path: '/genres', icon: BookOpen, show: true,
+      children: [
+        { name: 'Genre Catalog', path: '/genres' },
+        { name: '✦ Rüna Atlas Press', path: '/for-authors' },
+        { name: '☀ Bohío Press', path: '/imprints/bohio' },
+        { name: '🌑 Void Noir', path: '/imprints/void-noir' },
+      ],
+    },
+  ].filter(l => l.show);
+
+  // ── Footer sections ──
+  const footerAuthorDashboard = [
+    { name: 'Author Portal', path: '/portal' },
+    { name: 'Creator Studio', path: '/creator' },
+    { name: 'Forge Editor', path: '/forge-editor' },
+    { name: 'Writing Goals', path: '/writing-goals' },
+    { name: 'Launch Planner', path: '/launch-planner' },
+    { name: 'ARC Manager', path: '/arc-manager' },
+    { name: 'Submission Tracker', path: '/submission-tracker' },
+  ];
+
+  const footerEditorTools = [
+    { name: 'Manuscript Inbox', path: '/manuscript-inbox' },
+    { name: 'Editor Feedback Bridge', path: '/editor-bridge' },
+    { name: 'Editor Beta Manager', path: '/editor-beta-manager' },
+    { name: 'Revision Rounds', path: '/revision-rounds' },
+    { name: 'Manuscript Pipeline', path: '/manuscript-pipeline' },
+  ];
+
+  const footerExplore = [
+    { name: 'Catalog', path: '/catalog' },
+    { name: 'Journeys', path: '/journeys' },
+    { name: 'The Forge', path: '/forge' },
+    { name: 'Events', path: '/events' },
+    { name: 'Community', path: '/community' },
+    { name: 'Content Compass', path: '/content-compass' },
+    { name: 'News', path: '/posts' },
+    { name: 'About Us', path: '/about' },
+  ];
+
+  const isActive = (path: string) =>
+    location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   return (
     <div className="min-h-screen flex flex-col bg-void-black text-text-primary font-body">
-      {/* Navigation */}
+      {/* ═══ Navigation ═══ */}
       <nav className="border-b border-border bg-deep-space/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-full bg-cosmic-purple flex items-center justify-center border border-starforge-gold/30 group-hover:bg-glow-purple transition-all duration-300">
-                  <Star className="w-5 h-5 text-starforge-gold" />
-                </div>
-                <div>
-                  <h1 className="font-display text-xl tracking-wider text-text-primary uppercase">Rüna Atlas</h1>
-                  <p className="font-ui text-[10px] uppercase tracking-[0.2em] text-starforge-gold">Publishing</p>
-                </div>
-              </Link>
-            </div>
+          <div className="flex justify-between h-16 items-center">
+            {/* Logo — just text, no star rune, no "PRESS" */}
+            <Link to="/" className="flex items-center group">
+              <h1 className="font-display text-xl tracking-wider text-text-primary uppercase group-hover:text-starforge-gold transition-colors">
+                Rüna Atlas
+              </h1>
+            </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center space-x-6 font-ui text-sm tracking-wide">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+            <div className="hidden lg:flex items-center gap-1 font-ui text-[13px] tracking-wide">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const hasChildren = 'children' in item && item.children;
+                const active = isActive(item.path);
+
+                if (hasChildren) {
+                  return (
+                    <div key={item.name} className="relative"
+                      onMouseEnter={() => handleMouseEnter(item.name)}
+                      onMouseLeave={handleMouseLeave}>
+                      <Link to={item.path}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors
+                          ${active ? 'text-starforge-gold' : 'text-text-secondary hover:text-starforge-gold'}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{item.name}</span>
+                        <ChevronDown className={`w-3 h-3 transition-transform ${openDropdown === item.name ? 'rotate-180' : ''}`} />
+                      </Link>
+                      {openDropdown === item.name && (
+                        <div className="absolute top-full left-0 mt-1 w-52 bg-surface border border-border rounded-lg shadow-xl py-1 z-50"
+                          onMouseEnter={() => handleMouseEnter(item.name)}
+                          onMouseLeave={handleMouseLeave}>
+                          {item.children.map(child => (
+                            <Link key={child.path} to={child.path}
+                              className={`block px-4 py-2 text-xs transition-colors
+                                ${isActive(child.path) ? 'text-starforge-gold bg-white/[0.04]' : 'text-text-secondary hover:text-starforge-gold hover:bg-white/[0.04]'}`}>
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
-                  <Link
-                    key={link.name}
-                    to={link.path}
-                    className={`flex items-center gap-2 transition-colors ${isActive ? 'text-starforge-gold' : 'text-text-secondary hover:text-starforge-gold'}`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{link.name}</span>
+                  <Link key={item.name} to={item.path}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors
+                      ${active ? 'text-starforge-gold' : 'text-text-secondary hover:text-starforge-gold'}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.name}</span>
                   </Link>
                 );
               })}
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden flex items-center gap-4">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-text-secondary hover:text-white"
-              >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-            </div>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden text-text-secondary hover:text-white">
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="md:hidden bg-surface border-b border-border">
+          <div className="lg:hidden bg-surface border-b border-border max-h-[75vh] overflow-y-auto">
             <div className="px-2 pt-2 pb-3 space-y-1 font-ui">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const hasChildren = 'children' in item && item.children;
                 return (
-                  <Link
-                    key={link.name}
-                    to={link.path}
-                    className={`flex items-center gap-3 px-3 py-2 transition-colors ${isActive ? 'text-starforge-gold' : 'text-text-secondary hover:text-starforge-gold'}`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{link.name}</span>
-                  </Link>
+                  <div key={item.name}>
+                    <Link to={item.path}
+                      className={`flex items-center gap-3 px-3 py-2 transition-colors
+                        ${isActive(item.path) ? 'text-starforge-gold' : 'text-text-secondary hover:text-starforge-gold'}`}
+                      onClick={() => !hasChildren && setIsMenuOpen(false)}>
+                      <Icon className="w-5 h-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                    {hasChildren && (
+                      <div className="ml-10 space-y-1 mb-2">
+                        {item.children!.map(child => (
+                          <Link key={child.path} to={child.path}
+                            className={`block px-3 py-1.5 text-sm transition-colors
+                              ${isActive(child.path) ? 'text-starforge-gold' : 'text-text-muted hover:text-starforge-gold'}`}
+                            onClick={() => setIsMenuOpen(false)}>
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -91,67 +211,79 @@ export default function Layout() {
         )}
       </nav>
 
-      {/* Main Content */}
+      {/* ═══ Main Content ═══ */}
       <main className="flex-grow">
         <Outlet />
       </main>
 
-      {/* Footer */}
+      {/* ═══ Footer ═══ */}
       <footer className="bg-deep-space border-t border-border pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="col-span-1 md:col-span-1">
-              <Link to="/" className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-cosmic-purple flex items-center justify-center border border-starforge-gold/30">
-                  <Star className="w-4 h-4 text-starforge-gold" />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+
+            {/* Brand */}
+            <div className="lg:col-span-1">
+              <Link to="/" className="inline-block mb-4">
                 <span className="font-display text-lg tracking-wider text-text-primary uppercase">Rüna Atlas</span>
               </Link>
               <p className="text-text-secondary text-sm font-ui leading-relaxed mb-6">
-                A celestial forge where stories are transmuted into stars. Forging constellations of voice from marginalized creators.
+                Charting the unwritten territories of speculative fiction.
               </p>
             </div>
 
+            {/* Explore */}
             <div>
-              <h3 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">Explore</h3>
-              <ul className="space-y-3 font-ui text-sm text-text-secondary">
-                <li><Link to="/catalog" className="hover:text-starforge-gold transition-colors">Catalog</Link></li>
-                <li><Link to="/journeys" className="hover:text-starforge-gold transition-colors">Journeys</Link></li>
-                <li><Link to="/authors" className="hover:text-starforge-gold transition-colors">Authors</Link></li>
-                <li><Link to="/community" className="hover:text-starforge-gold transition-colors">Community</Link></li>
-                <li><Link to="/about" className="hover:text-starforge-gold transition-colors">About Us</Link></li>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Explore</h3>
+              <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
+                {footerExplore.map(link => (
+                  <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
+                ))}
               </ul>
             </div>
 
+            {/* Author Dashboards */}
             <div>
-              <h3 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">Connect</h3>
-              <ul className="space-y-3 font-ui text-sm text-text-secondary">
-                <li><Link to="/membership" className="hover:text-starforge-gold transition-colors">Membership</Link></li>
-                <li><Link to="/submissions" className="hover:text-starforge-gold transition-colors">Submit Your Story</Link></li>
-                <li><Link to="/contact" className="hover:text-starforge-gold transition-colors">Contact</Link></li>
-                <li><Link to="/rights" className="hover:text-starforge-gold transition-colors">Foreign Rights</Link></li>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Author Tools</h3>
+              <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
+                {footerAuthorDashboard.map(link => (
+                  <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
+                ))}
               </ul>
             </div>
 
+            {/* Editor Tools */}
             <div>
-              <h3 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">Join the Constellation</h3>
-              <p className="text-text-secondary text-sm font-ui mb-4">Subscribe for new releases and submission calls.</p>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Editor Tools</h3>
+              <ul className="space-y-2.5 font-ui text-sm text-text-secondary">
+                {footerEditorTools.map(link => (
+                  <li key={link.path}><Link to={link.path} className="hover:text-starforge-gold transition-colors">{link.name}</Link></li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Newsletter */}
+            <div>
+              <h3 className="font-ui text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">Chart the Stars</h3>
+              <p className="text-text-secondary text-sm font-ui mb-4">New Forgings, open calls, and dispatches from the Deep Sky.</p>
               <form className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="bg-surface border border-border rounded-md px-4 py-2 text-sm font-ui w-full focus:outline-none focus:border-starforge-gold focus:ring-1 focus:ring-starforge-gold text-text-primary"
-                />
-                <button type="submit" className="bg-starforge-gold text-void-black px-4 py-2 rounded-md font-ui text-sm font-medium hover:bg-white transition-colors">
+                <input type="email" placeholder="Email address"
+                  className="bg-surface border border-border rounded-md px-4 py-2 text-sm font-ui w-full focus:outline-none focus:border-starforge-gold focus:ring-1 focus:ring-starforge-gold text-text-primary" />
+                <button type="submit" className="bg-starforge-gold text-void-black px-4 py-2 rounded-md font-ui text-sm font-medium hover:bg-white transition-colors whitespace-nowrap">
                   Subscribe
                 </button>
               </form>
+              <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs font-ui text-text-muted">
+                <Link to="/membership" className="hover:text-starforge-gold transition-colors">Membership</Link>
+                <Link to="/contact" className="hover:text-starforge-gold transition-colors">Contact</Link>
+                <Link to="/rights" className="hover:text-starforge-gold transition-colors">Foreign Rights</Link>
+                {isAdmin && <Link to="/admin" className="hover:text-starforge-gold transition-colors">Admin Panel</Link>}
+              </div>
             </div>
           </div>
 
           <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-text-muted text-xs font-ui">
-              &copy; {new Date().getFullYear()} Rüna Atlas Publishing. All rights reserved.
+              &copy; {new Date().getFullYear()} Rüna Atlas. All rights reserved.
             </p>
             <div className="flex gap-6 text-xs font-ui text-text-muted">
               <Link to="/privacy" className="hover:text-text-primary transition-colors">Privacy Policy</Link>

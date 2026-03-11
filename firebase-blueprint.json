@@ -25,7 +25,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["member", "author", "admin"],
+          "enum": [
+            "member",
+            "author",
+            "admin"
+          ],
           "description": "The user's role on the platform."
         },
         "createdAt": {
@@ -34,98 +38,328 @@
           "description": "The timestamp when the user was created."
         }
       },
-      "required": ["uid", "email", "role", "createdAt"]
+      "required": [
+        "uid",
+        "email",
+        "role",
+        "createdAt"
+      ]
     },
     "Post": {
       "title": "Post",
       "description": "A blog or news post.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "authorId": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "published"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "published"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["title", "content", "authorId", "status", "createdAt"]
+      "required": [
+        "title",
+        "content",
+        "authorId",
+        "status",
+        "createdAt"
+      ]
     },
     "Event": {
       "title": "Event",
       "description": "A platform event like a Q&A session.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "link": { "type": "string", "format": "uri" },
-        "type": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "link": {
+          "type": "string",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["title", "description", "date", "type", "createdAt"]
+      "required": [
+        "title",
+        "description",
+        "date",
+        "type",
+        "createdAt"
+      ]
     },
     "Journey": {
       "title": "Journey",
       "description": "A serialized story.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "authorId": { "type": "string" },
-        "status": { "type": "string", "enum": ["ongoing", "completed"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Active",
+            "Completed",
+            "Hiatus"
+          ]
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "preview",
+            "hidden"
+          ]
+        },
+        "genre": {
+          "type": "string"
+        },
+        "constellation": {
+          "type": "string"
+        },
+        "totalEpisodes": {
+          "type": "number"
+        },
+        "publishedEpisodes": {
+          "type": "number"
+        },
+        "episodes": {
+          "type": "number"
+        },
+        "coverUrl": {
+          "type": "string"
+        },
+        "featured": {
+          "type": "boolean"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["title", "description", "authorId", "status", "createdAt"]
+      "required": [
+        "title",
+        "description",
+        "author",
+        "authorId",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Episode": {
+      "title": "Episode",
+      "description": "An episode (chapter) in a serialized story.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "number": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "scheduled",
+            "published"
+          ]
+        },
+        "publishDate": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "wordCount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "content",
+        "createdAt"
+      ]
     },
     "JourneyChapter": {
       "title": "Journey Chapter",
       "description": "A chapter in a serialized story.",
       "type": "object",
       "properties": {
-        "journeyId": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "order": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "number": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "publishDate": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        },
+        "wordCount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["journeyId", "title", "content", "order", "createdAt"]
+      "required": [
+        "title",
+        "content",
+        "createdAt"
+      ]
     },
     "AuthorProfile": {
       "title": "Author Profile",
       "description": "Public profile for an author.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "bio": { "type": "string" },
-        "website": { "type": "string", "format": "uri" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "userId": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["userId", "bio", "createdAt"]
+      "required": [
+        "userId",
+        "bio",
+        "createdAt"
+      ]
     },
     "Submission": {
       "title": "Submission",
       "description": "A manuscript submission.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "authorId": { "type": "string" },
-        "synopsis": { "type": "string" },
-        "manuscriptUrl": { "type": "string", "format": "uri" },
-        "status": { "type": "string", "enum": ["pending", "reviewing", "accepted", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "synopsis": {
+          "type": "string"
+        },
+        "manuscriptUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "reviewing",
+            "accepted",
+            "rejected"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["title", "authorId", "synopsis", "manuscriptUrl", "status", "createdAt"]
+      "required": [
+        "title",
+        "authorId",
+        "synopsis",
+        "manuscriptUrl",
+        "status",
+        "createdAt"
+      ]
     },
     "Message": {
       "title": "Message",
       "description": "A message between users (e.g., author and admin).",
       "type": "object",
       "properties": {
-        "senderId": { "type": "string" },
-        "receiverId": { "type": "string" },
-        "content": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "senderId": {
+          "type": "string"
+        },
+        "receiverId": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["senderId", "receiverId", "content", "createdAt"]
+      "required": [
+        "senderId",
+        "receiverId",
+        "content",
+        "createdAt"
+      ]
     },
     "Book": {
       "title": "Book",
@@ -171,7 +405,17 @@
           "description": "The timestamp when the book was created."
         }
       },
-      "required": ["title", "author", "cover", "codemark", "synopsis", "editionType", "format", "price", "createdAt"]
+      "required": [
+        "title",
+        "author",
+        "cover",
+        "codemark",
+        "synopsis",
+        "editionType",
+        "format",
+        "price",
+        "createdAt"
+      ]
     },
     "Poll": {
       "title": "Poll",
@@ -195,9 +439,15 @@
           "items": {
             "type": "object",
             "properties": {
-              "id": { "type": "string" },
-              "text": { "type": "string" },
-              "votes": { "type": "number" }
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "votes": {
+                "type": "number"
+              }
             }
           },
           "description": "The options to vote for."
@@ -215,7 +465,15 @@
           "format": "date-time"
         }
       },
-      "required": ["type", "title", "description", "options", "totalVotes", "daysLeft", "createdAt"]
+      "required": [
+        "type",
+        "title",
+        "description",
+        "options",
+        "totalVotes",
+        "daysLeft",
+        "createdAt"
+      ]
     },
     "ReaderCircle": {
       "title": "Reader Circle",
@@ -247,7 +505,14 @@
           "format": "date-time"
         }
       },
-      "required": ["name", "focus", "members", "status", "description", "createdAt"]
+      "required": [
+        "name",
+        "focus",
+        "members",
+        "status",
+        "description",
+        "createdAt"
+      ]
     },
     "BookClubGuide": {
       "title": "Book Club Guide",
@@ -272,7 +537,12 @@
           "format": "date-time"
         }
       },
-      "required": ["title", "description", "fileUrl", "createdAt"]
+      "required": [
+        "title",
+        "description",
+        "fileUrl",
+        "createdAt"
+      ]
     },
     "QASession": {
       "title": "Q&A Session",
@@ -302,23 +572,133 @@
           "format": "date-time"
         }
       },
-      "required": ["title", "author", "date", "link", "createdAt"]
+      "required": [
+        "title",
+        "author",
+        "date",
+        "link",
+        "createdAt"
+      ]
     },
     "Constellation": {
       "title": "Constellation",
       "description": "A thematic story universe.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "curator": { "type": "string" },
-        "booksCount": { "type": "number" },
-        "authorsCount": { "type": "number" },
-        "status": { "type": "string", "enum": ["Active", "Archived", "Planned"] },
-        "color": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "curator": {
+          "type": "string"
+        },
+        "booksCount": {
+          "type": "number"
+        },
+        "authorsCount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Active",
+            "Archived",
+            "Planned"
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["name", "description", "curator", "booksCount", "authorsCount", "status", "color", "createdAt"]
+      "required": [
+        "name",
+        "description",
+        "curator",
+        "booksCount",
+        "authorsCount",
+        "status",
+        "color",
+        "createdAt"
+      ]
+    },
+    "Highlight": {
+      "title": "Highlight",
+      "description": "A reader highlight/annotation on a book chapter.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri"
+        },
+        "paragraphId": {
+          "type": "string"
+        },
+        "startOffset": {
+          "type": "number"
+        },
+        "endOffset": {
+          "type": "number"
+        },
+        "highlightedText": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "reaction": {
+          "type": "string"
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "paragraphId",
+        "highlightedText",
+        "isPublic",
+        "createdAt"
+      ]
+    },
+    "ReadingProgress": {
+      "title": "Reading Progress",
+      "description": "Tracks a user's reading position and bookmarks for a book.",
+      "type": "object",
+      "properties": {
+        "currentChapter": {
+          "type": "string"
+        },
+        "scrollPercent": {
+          "type": "number"
+        },
+        "lastRead": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bookmarks": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "currentChapter",
+        "lastRead"
+      ]
     }
   },
   "firestore": {
@@ -351,6 +731,12 @@
         "$ref": "#/entities/JourneyChapter"
       },
       "description": "Stores chapters for a serialized story."
+    },
+    "/journeys/{journeyId}/episodes/{episodeId}": {
+      "schema": {
+        "$ref": "#/entities/Episode"
+      },
+      "description": "Stores episodes for a serialized story."
     },
     "/authorProfiles/{profileId}": {
       "schema": {
@@ -405,6 +791,18 @@
         "$ref": "#/entities/Constellation"
       },
       "description": "Stores thematic story universes."
+    },
+    "/books/{bookId}/chapters/{chapterId}/highlights/{highlightId}": {
+      "schema": {
+        "$ref": "#/entities/Highlight"
+      },
+      "description": "Stores reader highlights and annotations."
+    },
+    "/users/{userId}/readingProgress/{bookId}": {
+      "schema": {
+        "$ref": "#/entities/ReadingProgress"
+      },
+      "description": "Stores reading position and bookmarks."
     }
   }
 }

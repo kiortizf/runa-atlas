@@ -226,26 +226,37 @@ service cloud.firestore {
     }
 
     function isValidJourney(data) {
-      return hasOnlyAllowedFields(['title', 'description', 'author', 'authorId', 'status', 'episodes', 'genre', 'constellation', 'lastUpdate', 'createdAt']) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.description is string && data.description.size() > 0 && data.description.size() < 2000 &&
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 5000 &&
              data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
              data.authorId is string && data.authorId.size() > 0 && data.authorId.size() < 100 &&
              data.status in ['Active', 'Completed', 'Hiatus'] &&
-             data.episodes is number && data.episodes >= 0 &&
-             data.genre is string && data.genre.size() > 0 && data.genre.size() < 100 &&
-             data.constellation is string && data.constellation.size() > 0 && data.constellation.size() < 100 &&
+             (!('genre' in data) || (data.genre is string && data.genre.size() < 100)) &&
+             (!('constellation' in data) || (data.constellation is string && data.constellation.size() < 100)) &&
              (!('lastUpdate' in data) || data.lastUpdate is timestamp) &&
+             (!('slug' in data) || (data.slug is string && data.slug.size() < 200)) &&
+             (!('visibility' in data) || data.visibility in ['public', 'preview', 'hidden']) &&
+             (!('coverUrl' in data) || data.coverUrl is string) &&
+             (!('featured' in data) || data.featured is bool) &&
+             (!('totalEpisodes' in data) || (data.totalEpisodes is number && data.totalEpisodes >= 0)) &&
+             (!('publishedEpisodes' in data) || (data.publishedEpisodes is number && data.publishedEpisodes >= 0)) &&
+             (!('episodes' in data) || (data.episodes is number && data.episodes >= 0)) &&
              (data.createdAt is timestamp || data.createdAt is string);
     }
 
+    function isValidEpisode(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 100000 &&
+             (!('number' in data) || (data.number is number && data.number >= 0)) &&
+             (!('status' in data) || data.status in ['draft', 'scheduled', 'published']) &&
+             (!('publishDate' in data) || data.publishDate is string) &&
+             (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() < 1000)) &&
+             (!('wordCount' in data) || (data.wordCount is number && data.wordCount >= 0)) &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
     function isValidJourneyChapter(data) {
-      return hasOnlyAllowedFields(['journeyId', 'title', 'content', 'order', 'createdAt']) &&
-             data.journeyId is string && data.journeyId.size() > 0 && data.journeyId.size() < 100 &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
-             data.order is number && data.order >= 0 &&
-             data.createdAt is timestamp;
+      return isValidEpisode(data);
     }
 
     function isValidAuthorProfile(data) {
@@ -365,6 +376,63 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    // Reading progress (position, bookmarks) for social reader
+    match /users/{userId}/readingProgress/{bookId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // User highlights (private annotations)
+    match /users/{userId}/highlights/{bookId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // User bookshelf (saved books)
+    match /users/{userId}/bookshelf/{bookId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Forge voting per user
+    match /users/{userId}/forgeVotes/{voteId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Event RSVPs per user
+    match /users/{userId}/rsvps/{rsvpId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Reading challenge tracking per user
+    match /users/{userId}/readingChallenge/{year} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Writing sessions tracking (Creator Studio analytics)
+    match /users/{userId}/writingSessions/{sessionId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isAuthenticated();
+      allow update: if isOwner(userId) && isAuthenticated();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Episode read tracking (sub-subcollection)
+    match /users/{userId}/readingProgress/{journeyId}/episodes/{episodeId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
     match /posts/{postId} {
       allow read: if true;
       allow create: if isAdmin() && isValidPost(request.resource.data);
@@ -375,22 +443,37 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if true;
       allow create: if isAdmin() && isValidEvent(request.resource.data);
-      allow update: if isAdmin() && isValidEvent(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow update: if isAdmin() || isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /journeys/{journeyId} {
       allow read: if true;
       allow create: if isAdmin() && isValidJourney(request.resource.data);
-      allow update: if isAdmin() && isValidJourney(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /journeys/{journeyId}/chapters/{chapterId} {
       allow read: if true;
       allow create: if isAdmin() && isValidJourneyChapter(request.resource.data);
-      allow update: if isAdmin() && isValidJourneyChapter(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // Episodes (serialized fiction chapters)
+    match /journeys/{journeyId}/episodes/{episodeId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidEpisode(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Journey subscriptions
+    match /journeys/{journeyId}/subscribers/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /authorProfiles/{profileId} {
@@ -411,20 +494,33 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read: if isAdmin() || isOwner(resource.data.senderId) || isOwner(resource.data.receiverId);
       allow create: if (isOwner(request.resource.data.senderId) || isAdmin()) && isValidMessage(request.resource.data);
-      allow update: if false; // Messages are immutable
+      allow update: if isAdmin() || isOwner(resource.data.receiverId);
       allow delete: if isAdmin();
     }
 
     match /books/{bookId} {
-      allow read: if true; // Publicly readable catalog
-      
+      allow read: if true;
       allow create: if isAdmin() && isValidBook(request.resource.data);
-      
       allow update: if isAdmin() && 
                     isValidBook(request.resource.data) &&
                     areImmutableFieldsUnchanged(['createdAt']);
-                    
       allow delete: if isAdmin();
+    }
+
+    // Book chapters (for the social reader)
+    match /books/{bookId}/chapters/{chapterId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Social reader highlights (community annotations)
+    match /books/{bookId}/chapters/{chapterId}/highlights/{highlightId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
     }
 
     match /polls/{pollId} {
@@ -456,6 +552,14 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    // Reader circle discussions
+    match /readerCircles/{circleId}/discussions/{discId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     match /bookClubGuides/{guideId} {
       allow read: if true;
       
@@ -468,22 +572,476 @@ service cloud.firestore {
 
     match /qaSessions/{sessionId} {
       allow read: if true;
-      
       allow create: if isAdmin() && isValidQASession(request.resource.data);
-      
-      allow update: if isAdmin() && isValidQASession(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
-                    
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Q&A session questions
+    match /qaSessions/{sessionId}/questions/{questionId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /constellations/{constellationId} {
       allow read: if true;
-      
       allow create: if isAdmin() && isValidConstellation(request.resource.data);
-      
-      allow update: if isAdmin() && isValidConstellation(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
-                    
+      allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // ═══ Forge & Author Connect Collections ═══
+
+    match /forgeProjects/{projectId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /fanfiction/{ficId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /worldbuilding/{entryId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /amas/{amaId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /writingJournals/{journalId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /officeHours/{hoursId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══ Admin & Platform Collections ═══
+
+    match /siteConfig/{configId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /mediaLibrary/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /rightsDeals/{dealId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /newsletterCampaigns/{campaignId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /bookshelfEntries/{entryId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    match /circleApplications/{appId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Forge Manuscripts ──
+    match /manuscripts/{manuscriptId} {
+      allow read: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+
+      // Chapters subcollection
+      match /chapters/{chapterId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated();
+
+        // Version history sub-subcollection
+        match /versions/{versionId} {
+          allow read: if isAuthenticated();
+          allow create: if isAuthenticated();
+          allow delete: if isAdmin();
+        }
+      }
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated();
+      }
+
+      // Suggestions subcollection
+      match /suggestions/{suggestionId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated();
+      }
+
+      // Presence subcollection (ephemeral)
+      match /presence/{userId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC CONTENT COLLECTIONS (admin writes, everyone reads)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /authors/{authorId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /serials/{serialId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /membership_tiers/{tierId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /legal_pages/{pageId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /page_configs/{configId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    match /contact_submissions/{submissionId} {
+      allow read: if isAdmin();
+      allow create: if true;  // Public contact form
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /spoiler_discussions/{discussionId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /content_warning_categories/{catId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // LANDING PAGE CONFIGURATION (admin writes, everyone reads)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /landingPage_banner/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /landingPage_spotlight/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /landingPage_quotes/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /landingPage_gateways/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /landingPage_activities/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN SETTINGS (admin-only read/write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /onboarding_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /onboarding_steps/{stepId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /pipeline_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /pipeline_stages/{stageId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /reader_exp_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /reader_tools_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /author_tools_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /membership_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /legal_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /contact_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /payment_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /beta_settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /discount_codes/{codeId} {
+      allow read: if isAdmin() || isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /newsletterSubscribers/{subId} {
+      allow read: if isAdmin();
+      allow create: if true;  // Public newsletter signup
+      allow update, delete: if isAdmin();
+    }
+
+    match /mood_axes/{axisId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /mood_presets/{presetId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /royalty_settings/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /royalty_formats/{formatId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /royalties/{royaltyId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /activityLog/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // USER-SCOPED DATA (owner reads/writes, admin can read)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /user_libraries/{entryId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+    }
+
+    match /user_wishlists/{entryId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+    }
+
+    match /user_carts/{entryId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BETA READING / AUTHOR / EDITOR WORKFLOW
+    // ═══════════════════════════════════════════════════════════════
+
+    match /beta_manuscripts/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthor() || isAdmin();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /beta_feedback/{feedbackId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.readerId == request.auth.uid || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /beta_readers/{readerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /beta_campaigns/{campaignId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthor() || isAdmin();
+      allow update: if isAuthor() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /editorialProjects/{projectId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+
+      match /notes/{noteId} {
+        allow read: if isAdmin();
+        allow create: if isAdmin();
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /bookRights/{rightsId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /authorDocuments/{docId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      allow create: if isAuthor() || isAdmin();
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ORDERS & PAYMENTS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /subscriptions/{subId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SUBMISSION SUB-COLLECTIONS
+    // ═══════════════════════════════════════════════════════════════
+
+    match /submissions/{submissionId}/evaluations/{evalId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /submissions/{submissionId}/notes/{noteId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // JOURNEY SUBSCRIPTIONS (user-scoped)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /users/{userId}/journeySubscriptions/{journeyId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
     }
   }
 }

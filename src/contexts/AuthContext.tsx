@@ -26,17 +26,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
         const userRef = doc(db, 'users', currentUser.uid);
         try {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            // Existing user — read their role
+            // Existing user: read their role
             const data = userDoc.data();
             setUserRole((data.role as UserRole) || 'member');
           } else {
-            // New user — create with default 'member' role
+            // New user: create with default 'member' role
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email,
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setUserRole(null);
       }
-      
+
       setIsAuthReady(true);
     });
 

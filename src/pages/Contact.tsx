@@ -1,7 +1,50 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import { doc, onSnapshot, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function Contact() {
+  const [contactInfo, setContactInfo] = useState({
+    emails: { general: 'hello@runaatlas.com', press: 'press@runaatlas.com', rights: 'rights@runaatlas.com' },
+    address: '101 Nebula Way, Suite 404\nPortland, OR 97204\nEarth, Sol System',
+    phone: '+1 (555) 019-8372',
+    hours: 'Mon-Fri, 9am - 5pm PST',
+  });
+  const [formData, setFormData] = useState({ name: '', email: '', subject: 'General Inquiry', message: '' });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'page_configs', 'contact'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setContactInfo(prev => ({
+          emails: {
+            general: data.emailGeneral || prev.emails.general,
+            press: data.emailPress || prev.emails.press,
+            rights: data.emailRights || prev.emails.rights,
+          },
+          address: data.address || prev.address,
+          phone: data.phone || prev.phone,
+          hours: data.hours || prev.hours,
+        }));
+      }
+    }, () => { /* use fallback */ });
+    return () => unsub();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await addDoc(collection(db, 'contact_submissions'), { ...formData, createdAt: serverTimestamp() });
+      setSent(true);
+      setFormData({ name: '', email: '', subject: 'General Inquiry', message: '' });
+    } catch { /* ignore */ }
+    setSending(false);
+  };
+
   return (
     <div className="bg-void-black min-h-screen py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,21 +71,21 @@ export default function Contact() {
             className="bg-surface border border-border p-8 rounded-sm"
           >
             <h2 className="font-heading text-2xl text-text-primary mb-6">Send a Transmission</h2>
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block font-ui text-sm text-text-secondary mb-2 uppercase tracking-wider">Name</label>
-                  <input type="text" id="name" className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors" placeholder="Your Name" />
+                  <input type="text" id="name" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors" placeholder="Your Name" />
                 </div>
                 <div>
                   <label htmlFor="email" className="block font-ui text-sm text-text-secondary mb-2 uppercase tracking-wider">Email</label>
-                  <input type="email" id="email" className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors" placeholder="your@email.com" />
+                  <input type="email" id="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors" placeholder="your@email.com" />
                 </div>
               </div>
               
               <div>
                 <label htmlFor="subject" className="block font-ui text-sm text-text-secondary mb-2 uppercase tracking-wider">Subject</label>
-                <select id="subject" className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors appearance-none">
+                <select id="subject" value={formData.subject} onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))} className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors appearance-none">
                   <option>General Inquiry</option>
                   <option>Press & Media</option>
                   <option>Foreign Rights</option>
@@ -53,12 +96,18 @@ export default function Contact() {
 
               <div>
                 <label htmlFor="message" className="block font-ui text-sm text-text-secondary mb-2 uppercase tracking-wider">Message</label>
-                <textarea id="message" rows={6} className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors resize-none" placeholder="Your message here..."></textarea>
+                <textarea id="message" rows={6} value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))} className="w-full bg-void-black border border-border rounded-sm px-4 py-3 text-text-primary focus:outline-none focus:border-starforge-gold transition-colors resize-none" placeholder="Your message here..."></textarea>
               </div>
 
-              <button type="submit" className="w-full bg-starforge-gold text-void-black font-ui font-semibold uppercase tracking-widest py-4 rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2">
-                Send Message <Send className="w-4 h-4" />
-              </button>
+              {sent ? (
+                <div className="w-full py-4 bg-aurora-teal/10 text-aurora-teal font-ui text-sm uppercase tracking-widest text-center rounded-sm border border-aurora-teal/30">
+                  ✓ Transmission received. We'll be in touch.
+                </div>
+              ) : (
+                <button type="submit" disabled={sending} className="w-full bg-starforge-gold text-void-black font-ui font-semibold uppercase tracking-widest py-4 rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  {sending ? 'Sending...' : 'Send Message'} <Send className="w-4 h-4" />
+                </button>
+              )}
             </form>
           </motion.div>
 
@@ -79,9 +128,9 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-1">Email</h4>
-                    <p className="font-body text-text-secondary text-sm mb-1">General: hello@runaatlas.com</p>
-                    <p className="font-body text-text-secondary text-sm mb-1">Press: press@runaatlas.com</p>
-                    <p className="font-body text-text-secondary text-sm">Rights: rights@runaatlas.com</p>
+                    <p className="font-body text-text-secondary text-sm mb-1">General: {contactInfo.emails.general}</p>
+                    <p className="font-body text-text-secondary text-sm mb-1">Press: {contactInfo.emails.press}</p>
+                    <p className="font-body text-text-secondary text-sm">Rights: {contactInfo.emails.rights}</p>
                   </div>
                 </div>
 
@@ -91,10 +140,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-1">Headquarters</h4>
-                    <p className="font-body text-text-secondary text-sm">
-                      101 Nebula Way, Suite 404<br />
-                      Portland, OR 97204<br />
-                      Earth, Sol System
+                    <p className="font-body text-text-secondary text-sm whitespace-pre-line">
+                      {contactInfo.address}
                     </p>
                   </div>
                 </div>
@@ -105,8 +152,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <h4 className="font-ui text-sm font-semibold text-text-primary uppercase tracking-wider mb-1">Comm Link</h4>
-                    <p className="font-body text-text-secondary text-sm">+1 (555) 019-8372</p>
-                    <p className="font-ui text-xs text-text-muted mt-1">Mon-Fri, 9am - 5pm PST</p>
+                    <p className="font-body text-text-secondary text-sm">{contactInfo.phone}</p>
+                    <p className="font-ui text-xs text-text-muted mt-1">{contactInfo.hours}</p>
                   </div>
                 </div>
               </div>

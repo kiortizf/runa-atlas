@@ -3,6 +3,12 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimest
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
 
+interface Constellation {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface Book {
   id: string;
   title: string;
@@ -13,13 +19,19 @@ interface Book {
   editionType: string;
   format: string;
   price: number;
+  constellationId?: string;
+  themes?: string[];
+  connections?: string[];
 }
 
 export default function AdminCatalogue() {
   const [books, setBooks] = useState<Book[]>([]);
+  const [constellations, setConstellations] = useState<Constellation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentBook, setCurrentBook] = useState<Partial<Book>>({});
+  const [themesInput, setThemesInput] = useState('');
+  const [connectionsInput, setConnectionsInput] = useState('');
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'books'), (snapshot) => {
@@ -34,7 +46,11 @@ export default function AdminCatalogue() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubConst = onSnapshot(collection(db, 'constellations'), (snapshot) => {
+      setConstellations(snapshot.docs.map(d => ({ id: d.id, name: d.data().name, color: d.data().color })));
+    });
+
+    return () => { unsubscribe(); unsubConst(); };
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -49,6 +65,9 @@ export default function AdminCatalogue() {
         editionType: currentBook.editionType,
         format: currentBook.format,
         price: Number(currentBook.price),
+        constellationId: currentBook.constellationId || '',
+        themes: themesInput.split(',').map(t => t.trim()).filter(Boolean),
+        connections: connectionsInput.split(',').map(c => c.trim()).filter(Boolean),
       };
 
       if (currentBook.id) {
@@ -87,8 +106,10 @@ export default function AdminCatalogue() {
         <button
           onClick={() => {
             setCurrentBook({
-              title: '', author: '', cover: '', codemark: '', synopsis: '', editionType: 'Standard', format: 'Paperback', price: 0
+              title: '', author: '', cover: '', codemark: '', synopsis: '', editionType: 'Standard', format: 'Paperback', price: 0, constellationId: '', themes: [], connections: []
             });
+            setThemesInput('');
+            setConnectionsInput('');
             setIsEditing(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-aurora-teal text-void-black font-ui text-sm uppercase tracking-wider rounded-sm hover:bg-teal-400 transition-colors"
@@ -109,85 +130,75 @@ export default function AdminCatalogue() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={currentBook.title || ''}
-                  onChange={e => setCurrentBook({...currentBook, title: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="text" required value={currentBook.title || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, title: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Author</label>
-                <input
-                  type="text"
-                  required
-                  value={currentBook.author || ''}
-                  onChange={e => setCurrentBook({...currentBook, author: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="text" required value={currentBook.author || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, author: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Cover URL</label>
-                <input
-                  type="url"
-                  required
-                  value={currentBook.cover || ''}
-                  onChange={e => setCurrentBook({...currentBook, cover: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="url" required value={currentBook.cover || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, cover: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Codemark (Genre)</label>
-                <input
-                  type="text"
-                  required
-                  value={currentBook.codemark || ''}
-                  onChange={e => setCurrentBook({...currentBook, codemark: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="text" required value={currentBook.codemark || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, codemark: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Edition Type</label>
-                <input
-                  type="text"
-                  required
-                  value={currentBook.editionType || ''}
-                  onChange={e => setCurrentBook({...currentBook, editionType: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="text" required value={currentBook.editionType || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, editionType: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Format</label>
-                <input
-                  type="text"
-                  required
-                  value={currentBook.format || ''}
-                  onChange={e => setCurrentBook({...currentBook, format: e.target.value})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="text" required value={currentBook.format || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, format: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
               </div>
               <div>
                 <label className="block font-ui text-sm text-text-secondary mb-1">Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={currentBook.price || ''}
-                  onChange={e => setCurrentBook({...currentBook, price: Number(e.target.value)})}
-                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none"
-                />
+                <input type="number" step="0.01" required value={currentBook.price || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, price: Number(e.target.value) })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
+              </div>
+              <div>
+                <label className="block font-ui text-sm text-text-secondary mb-1">Constellation</label>
+                <select value={currentBook.constellationId || ''}
+                  onChange={e => setCurrentBook({ ...currentBook, constellationId: e.target.value })}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none">
+                  <option value="">None</option>
+                  {constellations.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
               </div>
             </div>
             <div>
               <label className="block font-ui text-sm text-text-secondary mb-1">Synopsis</label>
-              <textarea
-                required
-                rows={4}
-                value={currentBook.synopsis || ''}
-                onChange={e => setCurrentBook({...currentBook, synopsis: e.target.value})}
-                className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none resize-none"
-              ></textarea>
+              <textarea required rows={3} value={currentBook.synopsis || ''}
+                onChange={e => setCurrentBook({ ...currentBook, synopsis: e.target.value })}
+                className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none resize-none"></textarea>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-ui text-sm text-text-secondary mb-1">Themes (comma-separated)</label>
+                <input type="text" placeholder="e.g. diaspora, identity, magic" value={themesInput}
+                  onChange={e => setThemesInput(e.target.value)}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
+              </div>
+              <div>
+                <label className="block font-ui text-sm text-text-secondary mb-1">Connections (book IDs, comma-separated)</label>
+                <input type="text" placeholder="e.g. abc123, def456" value={connectionsInput}
+                  onChange={e => setConnectionsInput(e.target.value)}
+                  className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary focus:border-aurora-teal outline-none" />
+              </div>
             </div>
             <div className="flex justify-end gap-4 pt-4">
               <button
@@ -242,6 +253,8 @@ export default function AdminCatalogue() {
                         <button
                           onClick={() => {
                             setCurrentBook(book);
+                            setThemesInput((book.themes || []).join(', '));
+                            setConnectionsInput((book.connections || []).join(', '));
                             setIsEditing(true);
                           }}
                           className="text-text-muted hover:text-aurora-teal transition-colors"

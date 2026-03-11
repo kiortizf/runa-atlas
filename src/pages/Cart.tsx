@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Trash2, ArrowRight, CreditCard, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '../firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const CART_ITEMS = [
   {
@@ -28,6 +31,23 @@ const CART_ITEMS = [
 
 export default function Cart() {
   const [items, setItems] = useState(CART_ITEMS);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+      const unsubCart = onSnapshot(
+        query(collection(db, 'user_carts'), where('userId', '==', user.uid)),
+        (snap) => {
+          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof CART_ITEMS[0]));
+          if (data.length > 0) setItems(data);
+        },
+        () => { }
+      );
+      return () => unsubCart();
+    });
+    return () => unsubAuth();
+  }, []);
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;

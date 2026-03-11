@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Play, Lock, Star, ChevronRight, ChevronLeft, Clock } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
 
 type Chapter = {
   num: number;
@@ -60,8 +62,24 @@ const SERIALS: Serial[] = [
 ];
 
 export default function Serials() {
+  const [serials, setSerials] = useState<Serial[]>(SERIALS);
   const [activeSerial, setActiveSerial] = useState<Serial>(SERIALS[0]);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      query(collection(db, 'serials'), orderBy('createdAt', 'desc')),
+      (snap) => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Serial));
+        if (data.length > 0) {
+          setSerials(data);
+          setActiveSerial(prev => data.find(s => s.id === prev.id) || data[0]);
+        }
+      },
+      () => { }
+    );
+    return () => unsub();
+  }, []);
 
   const handleNextChapter = () => {
     if (!activeChapter) return;
@@ -259,7 +277,7 @@ export default function Serials() {
         <section>
           <h3 className="font-heading text-2xl text-text-primary mb-8">More Serialized Journeys</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {SERIALS.map((serial) => (
+            {serials.map((serial) => (
               <div 
                 key={serial.id} 
                 className={`cursor-pointer group ${activeSerial.id === serial.id ? 'opacity-50 pointer-events-none' : ''}`}

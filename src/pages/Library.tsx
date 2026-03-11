@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Download, Heart, Clock, Settings, LogOut, Search, Filter } from 'lucide-react';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const LIBRARY_BOOKS = [
   {
@@ -49,6 +52,33 @@ const WISHLIST = [
 
 export default function Library() {
   const [activeTab, setActiveTab] = useState('library');
+  const [libraryBooks, setLibraryBooks] = useState(LIBRARY_BOOKS);
+  const [wishlist, setWishlist] = useState(WISHLIST);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+      const unsubLib = onSnapshot(
+        query(collection(db, 'user_libraries'), where('userId', '==', user.uid)),
+        (snap) => {
+          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof LIBRARY_BOOKS[0]));
+          if (data.length > 0) setLibraryBooks(data);
+        },
+        () => { }
+      );
+      const unsubWish = onSnapshot(
+        query(collection(db, 'user_wishlists'), where('userId', '==', user.uid)),
+        (snap) => {
+          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof WISHLIST[0]));
+          if (data.length > 0) setWishlist(data);
+        },
+        () => { }
+      );
+      return () => { unsubLib(); unsubWish(); };
+    });
+    return () => unsubAuth();
+  }, []);
 
   return (
     <div className="min-h-screen bg-void-black flex flex-col md:flex-row">
@@ -126,7 +156,7 @@ export default function Library() {
         {activeTab === 'library' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {LIBRARY_BOOKS.map((book) => (
+              {libraryBooks.map((book) => (
                 <div key={book.id} className="group">
                   <div className="relative aspect-[2/3] mb-4 overflow-hidden rounded-sm border border-border group-hover:border-aurora-teal/50 transition-colors shadow-lg">
                     <img src={book.cover} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
@@ -173,9 +203,9 @@ export default function Library() {
         {/* Wishlist Content */}
         {activeTab === 'wishlist' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            {WISHLIST.length > 0 ? (
+            {wishlist.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {WISHLIST.map((book) => (
+                {wishlist.map((book) => (
                   <div key={book.id} className="group">
                     <div className="relative aspect-[2/3] mb-4 overflow-hidden rounded-sm border border-border group-hover:border-aurora-teal/50 transition-colors shadow-lg">
                       <img src={book.cover} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
