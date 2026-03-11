@@ -1,134 +1,104 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Headphones, Upload, Play, Pause, Clock, Users, Mic,
-    CheckCircle, AlertCircle, Edit3, BarChart3, Plus, Search,
-    Volume2, FileAudio
+    Headphones, Mic, Scissors, Wand2, CheckCircle, Clock,
+    Filter, Search, Calendar, User, BarChart3, Loader2
 } from 'lucide-react';
+import { useAudiobookProjects, AudioProject } from '../hooks/useDemoData';
 
-// ═══════════════════════════════════════════
-// AUDIOBOOK PIPELINE — Manage audio editions
-// ═══════════════════════════════════════════
-
-interface AudioProject {
-    title: string;
-    narrator: string;
-    status: 'casting' | 'recording' | 'editing' | 'mastering' | 'review' | 'published';
-    chapters: number;
-    chaptersComplete: number;
-    duration: string;
-    dueDate: string;
-}
-
-const MOCK_PROJECTS: AudioProject[] = [
-    { title: 'Chrome Meridian', narrator: 'James Earl Torres', status: 'published', chapters: 24, chaptersComplete: 24, duration: '11h 42m', dueDate: '2025-12-01' },
-    { title: 'The Obsidian Protocol', narrator: 'Aisha Kwame', status: 'mastering', chapters: 20, chaptersComplete: 20, duration: '9h 15m', dueDate: '2026-04-15' },
-    { title: 'Bioluminescent', narrator: '—', status: 'casting', chapters: 18, chaptersComplete: 0, duration: '—', dueDate: '2026-07-01' },
-    { title: 'Void Frequencies', narrator: 'Diego Morales', status: 'recording', chapters: 22, chaptersComplete: 14, duration: '~10h', dueDate: '2026-05-30' },
-    { title: 'Ancestral Algorithms', narrator: 'Nina Okafor', status: 'editing', chapters: 19, chaptersComplete: 19, duration: '8h 55m', dueDate: '2026-06-15' },
-];
-
-const PIPELINE_STAGES = ['casting', 'recording', 'editing', 'mastering', 'review', 'published'];
-
+const STAGES = ['casting', 'recording', 'editing', 'mastering', 'published'];
+const STAGE_ICONS: Record<string, any> = { casting: User, recording: Mic, editing: Scissors, mastering: Wand2, published: CheckCircle };
 const STAGE_COLORS: Record<string, string> = {
-    casting: 'bg-violet-500/10 text-violet-400',
-    recording: 'bg-rose-500/10 text-rose-400',
-    editing: 'bg-amber-500/10 text-amber-400',
-    mastering: 'bg-blue-500/10 text-blue-400',
-    review: 'bg-aurora-teal/10 text-aurora-teal',
-    published: 'bg-emerald-500/10 text-emerald-400',
-};
-
-const STAGE_DOT: Record<string, string> = {
-    casting: 'bg-violet-400',
-    recording: 'bg-rose-400',
-    editing: 'bg-amber-400',
-    mastering: 'bg-blue-400',
-    review: 'bg-aurora-teal',
-    published: 'bg-emerald-400',
+    casting: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+    recording: 'bg-blue-400/10 text-blue-400 border-blue-400/20',
+    editing: 'bg-violet-400/10 text-violet-400 border-violet-400/20',
+    mastering: 'bg-aurora-teal/10 text-aurora-teal border-aurora-teal/20',
+    published: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
 };
 
 export default function AudiobookPipeline() {
-    const [filter, setFilter] = useState('all');
+    const { data: projects, loading } = useAudiobookProjects();
+    const [filterStage, setFilterStage] = useState<string>('all');
 
-    const filtered = filter === 'all' ? MOCK_PROJECTS : MOCK_PROJECTS.filter(p => p.status === filter);
+    if (loading) {
+        return <div className="min-h-screen bg-void-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-violet-400 animate-spin" /></div>;
+    }
+
+    const filtered = filterStage === 'all' ? projects : projects.filter(p => p.status === filterStage);
 
     return (
         <div className="min-h-screen bg-void-black text-white">
-            <div className="max-w-6xl mx-auto px-6 py-8">
-                {/* Header */}
+            <div className="max-w-5xl mx-auto px-6 py-8">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="font-display text-3xl tracking-wide uppercase">Audiobook <span className="text-rose-400">Pipeline</span></h1>
-                        <p className="text-sm text-text-secondary mt-1">Manage narrators, recording, and audio editions</p>
+                        <h1 className="font-display text-3xl tracking-wide uppercase">Audiobook <span className="text-violet-400">Pipeline</span></h1>
+                        <p className="text-sm text-text-secondary mt-1">Track audiobook production from casting to publication</p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
-                        <Plus className="w-4 h-4" /> New Project
-                    </button>
                 </div>
 
-                {/* Pipeline Overview */}
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-8">
-                    <h2 className="text-xs uppercase tracking-widest text-text-secondary font-semibold mb-4">Pipeline Stages</h2>
-                    <div className="flex items-center gap-2">
-                        {PIPELINE_STAGES.map((stage, i) => {
-                            const count = MOCK_PROJECTS.filter(p => p.status === stage).length;
-                            return (
-                                <div key={stage} className="flex-1 flex items-center gap-2">
-                                    <button onClick={() => setFilter(filter === stage ? 'all' : stage)}
-                                        className={`flex-1 p-3 rounded-lg border text-center transition-all ${filter === stage ? `${STAGE_COLORS[stage]} border-current` : 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]'}`}>
-                                        <p className="text-lg font-bold">{count}</p>
-                                        <p className="text-[10px] uppercase tracking-wider mt-0.5 capitalize">{stage}</p>
-                                    </button>
-                                    {i < PIPELINE_STAGES.length - 1 && (
-                                        <div className="w-4 h-px bg-white/[0.1]" />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                {/* Stage overview */}
+                <div className="grid grid-cols-5 gap-3 mb-8">
+                    {STAGES.map(stage => {
+                        const count = projects.filter(p => p.status === stage).length;
+                        const Icon = STAGE_ICONS[stage];
+                        return (
+                            <div key={stage} className={`rounded-xl p-4 border ${STAGE_COLORS[stage]} cursor-pointer hover:scale-[1.02] transition-transform`}
+                                onClick={() => setFilterStage(filterStage === stage ? 'all' : stage)}>
+                                <Icon className="w-5 h-5 mb-2" />
+                                <p className="text-2xl font-bold">{count}</p>
+                                <p className="text-[10px] uppercase tracking-wider mt-1 opacity-70">{stage}</p>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Projects */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {filtered.map((project, i) => {
-                        const progress = project.chapters > 0 ? (project.chaptersComplete / project.chapters) * 100 : 0;
+                        const pct = project.chapters > 0 ? Math.round((project.chaptersComplete / project.chapters) * 100) : 0;
+                        const StageIcon = STAGE_ICONS[project.status] || Clock;
                         return (
-                            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                            <motion.div key={project.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                                 className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-all">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-lg bg-rose-400/10 flex items-center justify-center">
-                                            <Headphones className="w-6 h-6 text-rose-400" />
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${STAGE_COLORS[project.status]}`}>
+                                            <StageIcon className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-white">{project.title}</h3>
-                                            <div className="flex items-center gap-3 mt-1">
-                                                <span className="text-xs text-white/40"><Mic className="w-3 h-3 inline mr-1" />{project.narrator}</span>
-                                                <span className="text-xs text-white/30"><Clock className="w-3 h-3 inline mr-1" />{project.duration}</span>
-                                            </div>
+                                            <p className="text-xs text-white/40">
+                                                {project.narrator ? `Narrator: ${project.narrator}` : 'Narrator TBD'}
+                                                {project.duration && ` · ${project.duration}`}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-white/30">Due {project.dueDate}</span>
-                                        <span className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full ${STAGE_COLORS[project.status]}`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${STAGE_DOT[project.status]}`} />
-                                            {project.status}
-                                        </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border ${STAGE_COLORS[project.status]}`}>{project.status}</span>
                                     </div>
                                 </div>
 
-                                {/* Progress Bar */}
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1 h-2 bg-white/[0.04] rounded-full overflow-hidden">
-                                        <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }}
-                                            className="h-full bg-gradient-to-r from-rose-500/60 to-rose-400 rounded-full" />
+                                {project.chapters > 0 && (
+                                    <div className="mb-2">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-xs text-white/50">{project.chaptersComplete}/{project.chapters} chapters</span>
+                                            <span className="text-xs text-white/30">{pct}%</span>
+                                        </div>
+                                        <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full bg-gradient-to-r from-violet-400/60 to-violet-400" style={{ width: `${pct}%` }} />
+                                        </div>
                                     </div>
-                                    <span className="text-xs text-white/40 w-20 text-right">{project.chaptersComplete}/{project.chapters} ch</span>
-                                </div>
+                                )}
+
+                                {project.dueDate && (
+                                    <div className="flex items-center gap-1 text-[10px] text-white/30">
+                                        <Calendar className="w-3 h-3" /> Due {project.dueDate}
+                                    </div>
+                                )}
                             </motion.div>
                         );
                     })}
+                    {filtered.length === 0 && <div className="text-center py-12 text-white/20 text-sm">No audiobook projects found.</div>}
                 </div>
             </div>
         </div>

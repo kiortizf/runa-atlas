@@ -1,57 +1,25 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Heart, BookOpen, Bell, ShoppingCart, Trash2, Eye,
-    Calendar, Star, Clock, Check, X
+    Calendar, Star, Check, Loader2
 } from 'lucide-react';
-
-// ═══════════════════════════════════════════
-// WISHLIST & PREORDERS — Save and track
-// ═══════════════════════════════════════════
-
-interface WishlistItem {
-    id: string;
-    title: string;
-    author: string;
-    genre: string;
-    releaseDate: string;
-    released: boolean;
-    preordered: boolean;
-    notify: boolean;
-    rating?: number;
-}
-
-const MOCK_WISHLIST: WishlistItem[] = [
-    { id: '1', title: 'Quantum Borderlands', author: 'Xiomara Vega', genre: 'Cyberpunk', releaseDate: '2026-06-15', released: false, preordered: true, notify: true },
-    { id: '2', title: 'Shadow Resonance', author: 'Alejandro Cruz', genre: 'Dark Fantasy', releaseDate: '2026-05-01', released: false, preordered: false, notify: true },
-    { id: '3', title: 'Code of the Elders', author: 'Amara Osei', genre: 'Afrofuturism', releaseDate: '2026-08-20', released: false, preordered: false, notify: false },
-    { id: '4', title: 'Chrome Meridian', author: 'Xiomara Vega', genre: 'Cyberpunk', releaseDate: '2025-08-15', released: true, preordered: false, notify: false, rating: 5 },
-    { id: '5', title: 'Void Frequencies', author: 'Alejandro Cruz', genre: 'Dark Fantasy', releaseDate: '2025-10-20', released: true, preordered: false, notify: false, rating: 4 },
-];
+import { useState } from 'react';
+import { useWishlist } from '../hooks/useDemoData';
 
 export default function Wishlist() {
-    const [items, setItems] = useState(MOCK_WISHLIST);
+    const { items, toggleNotify, togglePreorder, removeItem, loading } = useWishlist();
     const [tab, setTab] = useState<'upcoming' | 'released'>('upcoming');
+
+    if (loading) {
+        return <div className="min-h-screen bg-void-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-rose-400 animate-spin" /></div>;
+    }
 
     const filtered = items.filter(item => tab === 'upcoming' ? !item.released : item.released);
     const preorderCount = items.filter(i => i.preordered).length;
 
-    const toggleNotify = (id: string) => {
-        setItems(prev => prev.map(i => i.id === id ? { ...i, notify: !i.notify } : i));
-    };
-
-    const togglePreorder = (id: string) => {
-        setItems(prev => prev.map(i => i.id === id ? { ...i, preordered: !i.preordered } : i));
-    };
-
-    const removeItem = (id: string) => {
-        setItems(prev => prev.filter(i => i.id !== id));
-    };
-
     return (
         <div className="min-h-screen bg-void-black text-white">
             <div className="max-w-3xl mx-auto px-6 py-8">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="font-display text-3xl tracking-wide uppercase">Wish<span className="text-rose-400">list</span></h1>
@@ -59,7 +27,6 @@ export default function Wishlist() {
                     </div>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex gap-2 mb-6">
                     {(['upcoming', 'released'] as const).map(t => (
                         <button key={t} onClick={() => setTab(t)}
@@ -69,10 +36,9 @@ export default function Wishlist() {
                     ))}
                 </div>
 
-                {/* Items */}
                 <div className="space-y-3">
                     <AnimatePresence>
-                        {filtered.map((item, i) => (
+                        {filtered.map((item) => (
                             <motion.div key={item.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -100 }}
                                 className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-all">
                                 <div className="flex items-start justify-between">

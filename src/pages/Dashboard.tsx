@@ -1,11 +1,14 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { seedAllDemoData } from '../scripts/seedDemoData';
 import {
     BookOpen, Dna, CalendarHeart, Sparkles, BookMarked, Users,
     Compass, Shield, PenTool, Palette, Target, Rocket, Gift,
     FileText, BarChart3, MessageCircle, GitBranch, Inbox,
-    LayoutDashboard, ChevronRight, Crown, Star, LogOut
+    LayoutDashboard, ChevronRight, Crown, Star, LogOut,
+    Database, Loader2, CheckCircle, AlertCircle
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -94,6 +97,9 @@ export default function Dashboard() {
     const { user, userRole, logOut } = useAuth();
     const navigate = useNavigate();
 
+    const [seedStatus, setSeedStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [seedMessage, setSeedMessage] = useState('');
+
     const isAuthor = userRole === 'author' || userRole === 'admin';
     const isAdmin = userRole === 'admin';
 
@@ -181,6 +187,45 @@ export default function Dashboard() {
                                 <p className="text-[11px] text-text-secondary">Manage users, content, submissions, and platform settings</p>
                             </div>
                             <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-starforge-gold/50 transition-colors" />
+                        </button>
+
+                        {/* Seed Demo Data */}
+                        <button
+                            onClick={async () => {
+                                if (!user?.uid) return;
+                                setSeedStatus('loading');
+                                try {
+                                    const result = await seedAllDemoData(user.uid);
+                                    if (result.success) {
+                                        setSeedStatus('success');
+                                        setSeedMessage(`Seeded ${result.seeded.length} documents`);
+                                    } else {
+                                        setSeedStatus('error');
+                                        setSeedMessage(`${result.seeded.length} ok, ${result.errors.length} errors`);
+                                    }
+                                } catch (e: any) {
+                                    setSeedStatus('error');
+                                    setSeedMessage(e.message);
+                                }
+                                setTimeout(() => setSeedStatus('idle'), 4000);
+                            }}
+                            disabled={seedStatus === 'loading'}
+                            className="group flex items-center gap-4 p-5 bg-aurora-teal/[0.03] border border-aurora-teal/10 rounded-lg hover:border-aurora-teal/30 hover:bg-aurora-teal/[0.06] transition-all w-full text-left mt-3 disabled:opacity-50"
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-aurora-teal/10 flex items-center justify-center">
+                                {seedStatus === 'loading' ? <Loader2 className="w-5 h-5 text-aurora-teal animate-spin" /> :
+                                 seedStatus === 'success' ? <CheckCircle className="w-5 h-5 text-emerald-400" /> :
+                                 seedStatus === 'error' ? <AlertCircle className="w-5 h-5 text-forge-red" /> :
+                                 <Database className="w-5 h-5 text-aurora-teal" />}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-semibold text-white group-hover:text-aurora-teal transition-colors">
+                                    {seedStatus === 'loading' ? 'Seeding...' : seedStatus === 'success' ? 'Seeded!' : seedStatus === 'error' ? 'Seed Error' : 'Seed Demo Data'}
+                                </h3>
+                                <p className="text-[11px] text-text-secondary">
+                                    {seedMessage || 'Populate Firestore with demo data for all publisher modules'}
+                                </p>
+                            </div>
                         </button>
                     </motion.div>
                 )}

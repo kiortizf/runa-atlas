@@ -1,34 +1,10 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     Hash, Plus, Search, Edit3, Trash2, BookOpen, Copy,
-    Check, X, Filter, ChevronDown, ExternalLink, AlertCircle
+    Check, X, Filter, ChevronDown, ExternalLink, AlertCircle, Loader2
 } from 'lucide-react';
-
-// ═══════════════════════════════════════════
-// ISBN MANAGER — Track ISBNs per title
-// ═══════════════════════════════════════════
-
-interface ISBNEntry {
-    isbn: string;
-    title: string;
-    format: 'ebook' | 'paperback' | 'hardcover' | 'audiobook';
-    imprint: string;
-    status: 'active' | 'assigned' | 'reserved' | 'retired';
-    assignedDate: string;
-}
-
-const MOCK_ISBNS: ISBNEntry[] = [
-    { isbn: '978-1-940000-01-2', title: 'Chrome Meridian', format: 'ebook', imprint: 'Rüna Atlas Press', status: 'active', assignedDate: '2025-08-15' },
-    { isbn: '978-1-940000-01-3', title: 'Chrome Meridian', format: 'paperback', imprint: 'Rüna Atlas Press', status: 'active', assignedDate: '2025-08-15' },
-    { isbn: '978-1-940000-02-9', title: 'The Obsidian Protocol', format: 'ebook', imprint: 'Void Noir', status: 'active', assignedDate: '2025-09-01' },
-    { isbn: '978-1-940000-02-0', title: 'The Obsidian Protocol', format: 'hardcover', imprint: 'Void Noir', status: 'active', assignedDate: '2025-09-01' },
-    { isbn: '978-1-940000-03-6', title: 'Bioluminescent', format: 'ebook', imprint: 'Bohío Press', status: 'active', assignedDate: '2025-10-20' },
-    { isbn: '978-1-940000-04-3', title: 'Void Frequencies', format: 'paperback', imprint: 'Rüna Atlas Press', status: 'assigned', assignedDate: '2026-01-10' },
-    { isbn: '978-1-940000-05-0', title: '', format: 'ebook', imprint: '', status: 'reserved', assignedDate: '' },
-    { isbn: '978-1-940000-06-7', title: '', format: 'ebook', imprint: '', status: 'reserved', assignedDate: '' },
-    { isbn: '978-1-940000-07-4', title: 'Legacy Anthology', format: 'paperback', imprint: 'Rüna Atlas Press', status: 'retired', assignedDate: '2024-03-15' },
-];
+import { useISBNs, ISBNEntry } from '../hooks/useDemoData';
 
 const STATUS_COLORS: Record<string, string> = {
     active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -38,31 +14,30 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const FORMAT_LABELS: Record<string, string> = {
-    ebook: 'eBook',
-    paperback: 'Paperback',
-    hardcover: 'Hardcover',
-    audiobook: 'Audiobook',
+    ebook: 'eBook', paperback: 'Paperback', hardcover: 'Hardcover', audiobook: 'Audiobook',
 };
 
 export default function ISBNManager() {
+    const { data: isbns, loading } = useISBNs();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
-    const [showAdd, setShowAdd] = useState(false);
     const [copiedISBN, setCopiedISBN] = useState<string | null>(null);
 
-    const filtered = MOCK_ISBNS.filter(entry => {
-        const matchesSearch = !searchQuery ||
-            entry.isbn.includes(searchQuery) ||
-            entry.title.toLowerCase().includes(searchQuery.toLowerCase());
+    if (loading) {
+        return <div className="min-h-screen bg-void-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-violet-400 animate-spin" /></div>;
+    }
+
+    const filtered = isbns.filter(entry => {
+        const matchesSearch = !searchQuery || entry.isbn.includes(searchQuery) || entry.title.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = filterStatus === 'all' || entry.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
     const stats = {
-        total: MOCK_ISBNS.length,
-        active: MOCK_ISBNS.filter(e => e.status === 'active').length,
-        reserved: MOCK_ISBNS.filter(e => e.status === 'reserved').length,
-        retired: MOCK_ISBNS.filter(e => e.status === 'retired').length,
+        total: isbns.length,
+        active: isbns.filter(e => e.status === 'active').length,
+        reserved: isbns.filter(e => e.status === 'reserved').length,
+        retired: isbns.filter(e => e.status === 'retired').length,
     };
 
     const copyISBN = (isbn: string) => {
@@ -74,19 +49,16 @@ export default function ISBNManager() {
     return (
         <div className="min-h-screen bg-void-black text-white">
             <div className="max-w-6xl mx-auto px-6 py-8">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="font-display text-3xl tracking-wide uppercase">ISBN <span className="text-violet-400">Manager</span></h1>
                         <p className="text-sm text-text-secondary mt-1">Track and manage ISBNs across titles and formats</p>
                     </div>
-                    <button onClick={() => setShowAdd(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
+                    <button className="flex items-center gap-2 px-4 py-2.5 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
                         <Plus className="w-4 h-4" /> Add ISBN
                     </button>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     {[
                         { label: 'Total ISBNs', value: stats.total, color: 'text-white' },
@@ -101,7 +73,6 @@ export default function ISBNManager() {
                     ))}
                 </div>
 
-                {/* Search & Filter */}
                 <div className="flex items-center gap-3 mb-6">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -119,7 +90,6 @@ export default function ISBNManager() {
                     </div>
                 </div>
 
-                {/* Table */}
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
                     <table className="w-full">
                         <thead>
@@ -145,11 +115,11 @@ export default function ISBNManager() {
                                     </td>
                                     <td className="px-4 py-3 text-sm text-white">{entry.title || <span className="text-white/20 italic">Unassigned</span>}</td>
                                     <td className="px-4 py-3">
-                                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-white/50">{FORMAT_LABELS[entry.format]}</span>
+                                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.04] text-white/50">{FORMAT_LABELS[entry.format] || entry.format}</span>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-white/50">{entry.imprint || '—'}</td>
                                     <td className="px-4 py-3">
-                                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${STATUS_COLORS[entry.status]}`}>{entry.status}</span>
+                                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border ${STATUS_COLORS[entry.status] || ''}`}>{entry.status}</span>
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
@@ -161,9 +131,7 @@ export default function ISBNManager() {
                             ))}
                         </tbody>
                     </table>
-                    {filtered.length === 0 && (
-                        <div className="text-center py-12 text-white/30 text-sm">No ISBNs match your search.</div>
-                    )}
+                    {filtered.length === 0 && <div className="text-center py-12 text-white/30 text-sm">No ISBNs found.</div>}
                 </div>
             </div>
         </div>
