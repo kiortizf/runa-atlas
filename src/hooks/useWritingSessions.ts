@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, addDoc, onSnapshot, query, orderBy, where, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface WritingSession {
@@ -36,28 +36,36 @@ export function useWritingSessions() {
     const logSession = useCallback(async (words: number, minutes: number, manuscript: string, date?: string) => {
         if (!user) return;
         const sessionDate = date || new Date().toISOString().split('T')[0];
-        await addDoc(collection(db, `users/${user.uid}/writingSessions`), {
-            words,
-            minutes,
-            manuscript,
-            source: 'manual',
-            date: sessionDate,
-            createdAt: serverTimestamp(),
-        });
+        try {
+            await addDoc(collection(db, `users/${user.uid}/writingSessions`), {
+                words,
+                minutes,
+                manuscript,
+                source: 'manual',
+                date: sessionDate,
+                createdAt: serverTimestamp(),
+            });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'writingSessions');
+        }
     }, [user]);
 
     // Log an automatic session from the episode editor
     const logEpisodeSession = useCallback(async (words: number, manuscript: string) => {
         if (!user || words <= 0) return;
         const today = new Date().toISOString().split('T')[0];
-        await addDoc(collection(db, `users/${user.uid}/writingSessions`), {
-            words,
-            minutes: Math.ceil(words / 15), // estimate ~15 words/min
-            manuscript,
-            source: 'episode',
-            date: today,
-            createdAt: serverTimestamp(),
-        });
+        try {
+            await addDoc(collection(db, `users/${user.uid}/writingSessions`), {
+                words,
+                minutes: Math.ceil(words / 15), // estimate ~15 words/min
+                manuscript,
+                source: 'episode',
+                date: today,
+                createdAt: serverTimestamp(),
+            });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'writingSessions');
+        }
     }, [user]);
 
     // ── Computed analytics ──

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import DiffMatchPatch from 'diff-match-patch';
 
 export interface Version {
@@ -46,14 +46,18 @@ export function useVersionHistory(manuscriptId?: string, chapterId?: string) {
         if (!plainText.trim()) return;
         if (versions.length > 0 && versions[0].plainText === plainText) return;
 
-        const wordCount = plainText.split(/\s+/).filter(Boolean).length;
-        await addDoc(collection(db, `manuscripts/${manuscriptId}/chapters/${chapterId}/versions`), {
-            content,
-            plainText,
-            wordCount,
-            message,
-            createdAt: serverTimestamp(),
-        });
+        try {
+            const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+            await addDoc(collection(db, `manuscripts/${manuscriptId}/chapters/${chapterId}/versions`), {
+                content,
+                plainText,
+                wordCount,
+                message,
+                createdAt: serverTimestamp(),
+            });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'versions');
+        }
     }, [manuscriptId, chapterId, versions]);
 
     // Compute diff between two versions

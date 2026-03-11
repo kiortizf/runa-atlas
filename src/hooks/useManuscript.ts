@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface Manuscript {
@@ -50,7 +50,7 @@ export function useManuscript(manuscriptId?: string) {
                 .filter(m => m.authorId === user.uid)
             );
             setLoading(false);
-        }, () => setLoading(false));
+        }, (err) => { handleFirestoreError(err, OperationType.LIST, 'manuscripts'); setLoading(false); });
         return unsub;
     }, [user]);
 
@@ -63,48 +63,61 @@ export function useManuscript(manuscriptId?: string) {
         );
         const unsub = onSnapshot(q, snap => {
             setChapters(snap.docs.map(d => ({ id: d.id, ...d.data() } as Chapter)));
-        });
+        }, (err) => handleFirestoreError(err, OperationType.LIST, 'chapters'));
         return unsub;
     }, [manuscriptId]);
 
     // Create a new manuscript
     const createManuscript = useCallback(async (title: string, genre: string = '', description: string = '') => {
         if (!user) return null;
-        const ref = await addDoc(collection(db, 'manuscripts'), {
-            title,
-            authorId: user.uid,
-            authorName: user.displayName || user.email || 'Author',
-            genre,
-            description,
-            targetWords: 80000,
-            status: 'draft',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-        // Create a default first chapter
-        await addDoc(collection(db, `manuscripts/${ref.id}/chapters`), {
-            title: 'Chapter 1',
-            content: '',
-            plainText: '',
-            order: 0,
-            wordCount: 0,
-            notes: '',
-            status: 'draft',
-            type: 'chapter',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-        return ref.id;
+        try {
+            const ref = await addDoc(collection(db, 'manuscripts'), {
+                title,
+                authorId: user.uid,
+                authorName: user.displayName || user.email || 'Author',
+                genre,
+                description,
+                targetWords: 80000,
+                status: 'draft',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            // Create a default first chapter
+            await addDoc(collection(db, `manuscripts/${ref.id}/chapters`), {
+                title: 'Chapter 1',
+                content: '',
+                plainText: '',
+                order: 0,
+                wordCount: 0,
+                notes: '',
+                status: 'draft',
+                type: 'chapter',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            return ref.id;
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'manuscripts');
+            return null;
+        }
     }, [user]);
 
     // Update manuscript metadata
     const updateManuscript = useCallback(async (id: string, data: Partial<Manuscript>) => {
-        await setDoc(doc(db, 'manuscripts', id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+        try {
+            await setDoc(doc(db, 'manuscripts', id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.UPDATE, 'manuscripts');
+        }
     }, []);
 
     // Delete manuscript
     const deleteManuscript = useCallback(async (id: string) => {
-        await deleteDoc(doc(db, 'manuscripts', id));
+        try {
+            await deleteDoc(doc(db, 'manuscripts', id));
+        } catch (err) {
+            handleFirestoreError(err, OperationType.DELETE, 'manuscripts');
+        }
     }, []);
 
     // Add a new chapter
@@ -120,50 +133,68 @@ export function useManuscript(manuscriptId?: string) {
                         type === 'research' ? `Research ${sameTypeCount > 0 ? sameTypeCount + 1 : ''}`.trim() :
                             'Untitled'
         );
-        const ref = await addDoc(collection(db, `manuscripts/${manuscriptId}/chapters`), {
-            title: autoTitle,
-            content: '',
-            plainText: '',
-            order,
-            wordCount: 0,
-            notes: '',
-            status: 'draft',
-            type,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-        return ref.id;
+        try {
+            const ref = await addDoc(collection(db, `manuscripts/${manuscriptId}/chapters`), {
+                title: autoTitle,
+                content: '',
+                plainText: '',
+                order,
+                wordCount: 0,
+                notes: '',
+                status: 'draft',
+                type,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            return ref.id;
+        } catch (err) {
+            handleFirestoreError(err, OperationType.CREATE, 'chapters');
+            return null;
+        }
     }, [manuscriptId, chapters]);
 
     // Save chapter content (auto-save)
     const saveChapter = useCallback(async (chapterId: string, content: string, plainText: string) => {
         if (!manuscriptId) return;
         setSaving(true);
-        const wordCount = plainText.split(/\s+/).filter(Boolean).length;
-        await setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId), {
-            content,
-            plainText,
-            wordCount,
-            updatedAt: serverTimestamp(),
-        }, { merge: true });
-        // Update manuscript timestamp
-        await setDoc(doc(db, 'manuscripts', manuscriptId), { updatedAt: serverTimestamp() }, { merge: true });
-        setSaving(false);
+        try {
+            const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+            await setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId), {
+                content,
+                plainText,
+                wordCount,
+                updatedAt: serverTimestamp(),
+            }, { merge: true });
+            // Update manuscript timestamp
+            await setDoc(doc(db, 'manuscripts', manuscriptId), { updatedAt: serverTimestamp() }, { merge: true });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.UPDATE, 'chapters');
+        } finally {
+            setSaving(false);
+        }
     }, [manuscriptId]);
 
     // Update chapter metadata (title, notes, status, order)
     const updateChapter = useCallback(async (chapterId: string, data: Partial<Chapter>) => {
         if (!manuscriptId) return;
-        await setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId), {
-            ...data,
-            updatedAt: serverTimestamp(),
-        }, { merge: true });
+        try {
+            await setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId), {
+                ...data,
+                updatedAt: serverTimestamp(),
+            }, { merge: true });
+        } catch (err) {
+            handleFirestoreError(err, OperationType.UPDATE, 'chapters');
+        }
     }, [manuscriptId]);
 
     // Delete chapter
     const deleteChapter = useCallback(async (chapterId: string) => {
         if (!manuscriptId) return;
-        await deleteDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId));
+        try {
+            await deleteDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, chapterId));
+        } catch (err) {
+            handleFirestoreError(err, OperationType.DELETE, 'chapters');
+        }
     }, [manuscriptId]);
 
     // Reorder chapters
@@ -172,10 +203,14 @@ export function useManuscript(manuscriptId?: string) {
         const reordered = [...chapters];
         const [moved] = reordered.splice(fromIndex, 1);
         reordered.splice(toIndex, 0, moved);
-        // Batch update orders
-        await Promise.all(reordered.map((ch, i) =>
-            setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, ch.id), { order: i }, { merge: true })
-        ));
+        try {
+            // Batch update orders
+            await Promise.all(reordered.map((ch, i) =>
+                setDoc(doc(db, `manuscripts/${manuscriptId}/chapters`, ch.id), { order: i }, { merge: true })
+            ));
+        } catch (err) {
+            handleFirestoreError(err, OperationType.UPDATE, 'chapters');
+        }
     }, [manuscriptId, chapters]);
 
     // Total word count across all chapters
