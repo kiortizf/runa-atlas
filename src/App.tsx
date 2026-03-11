@@ -109,17 +109,37 @@ export default function App() {
             } />
             <Route path="journeys" element={<Journeys />} />
             <Route path="journeys/:slug" element={<JourneyDetail />} />
-            <Route path="journeys/:slug/episode/:num" element={<EpisodeReader />} />
+            <Route path="journeys/:slug/episode/:num" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <EpisodeReader />
+              </ProtectedRoute>
+            } />
             <Route path="community" element={<Community />} />
             <Route path="forge" element={<Forge />} />
             <Route path="connect" element={<AuthorConnect />} />
             <Route path="events" element={<Events />} />
             <Route path="posts" element={<Posts />} />
             <Route path="membership" element={<Membership />} />
-            <Route path="library" element={<Library />} />
-            <Route path="cart" element={<Cart />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="orders" element={<OrderHistory />} />
+            <Route path="library" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <Library />
+              </ProtectedRoute>
+            } />
+            <Route path="cart" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <Cart />
+              </ProtectedRoute>
+            } />
+            <Route path="checkout" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <Checkout />
+              </ProtectedRoute>
+            } />
+            <Route path="orders" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <OrderHistory />
+              </ProtectedRoute>
+            } />
             <Route path="authors" element={<Authors />} />
             <Route path="for-authors" element={<ForAuthors />} />
             <Route path="for-readers" element={<ForReaders />} />
@@ -132,13 +152,41 @@ export default function App() {
             <Route path="content-compass" element={<ContentCompass />} />
             <Route path="beta-reader" element={<BetaReaderHub />} />
             <Route path="for-beta-readers" element={<ForBetaReaders />} />
-            <Route path="manuscript-pipeline" element={<ManuscriptPipeline />} />
-            <Route path="beta-campaign" element={<BetaCampaign />} />
-            <Route path="editor-bridge" element={<EditorBridge />} />
-            <Route path="revision-rounds" element={<RevisionRounds />} />
-            <Route path="manuscript-inbox" element={<ManuscriptInbox />} />
-            <Route path="editor-beta-manager" element={<EditorBetaManager />} />
-            <Route path="royalty-calculator" element={<RoyaltyCalculator />} />
+            <Route path="manuscript-pipeline" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <ManuscriptPipeline />
+              </ProtectedRoute>
+            } />
+            <Route path="beta-campaign" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <BetaCampaign />
+              </ProtectedRoute>
+            } />
+            <Route path="editor-bridge" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <EditorBridge />
+              </ProtectedRoute>
+            } />
+            <Route path="revision-rounds" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <RevisionRounds />
+              </ProtectedRoute>
+            } />
+            <Route path="manuscript-inbox" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <ManuscriptInbox />
+              </ProtectedRoute>
+            } />
+            <Route path="editor-beta-manager" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <EditorBetaManager />
+              </ProtectedRoute>
+            } />
+            <Route path="royalty-calculator" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <RoyaltyCalculator />
+              </ProtectedRoute>
+            } />
             <Route path="author/:slug" element={<AuthorProfile />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
@@ -149,53 +197,55 @@ export default function App() {
             <Route path="accessibility" element={<Accessibility />} />
           </Route>
           <Route path="/portal" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
               <Portal />
-            </ProtectedRoute>
           } />
           <Route path="/admin" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <Admin />
             </ProtectedRoute>
           } />
-          <Route path="/read/:bookId/:chapterId" element={<BookReader />} />
+          <Route path="/read/:bookId/:chapterId" element={
+            <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+              <BookReader />
+            </ProtectedRoute>
+          } />
           <Route path="/creator" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <CreatorStudio />
             </ProtectedRoute>
           } />
           <Route path="/forge-editor" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <ForgeEditor />
             </ProtectedRoute>
           } />
           <Route path="/forge-editor/:manuscriptId" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <ForgeEditor />
             </ProtectedRoute>
           } />
           <Route path="/onboarding" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <AuthorOnboarding />
             </ProtectedRoute>
           } />
           <Route path="/writing-goals" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <WritingGoals />
             </ProtectedRoute>
           } />
           <Route path="/launch-planner" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <BookLaunchPlanner />
             </ProtectedRoute>
           } />
           <Route path="/arc-manager" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <ARCManager />
             </ProtectedRoute>
           } />
           <Route path="/submission-tracker" element={
-            <ProtectedRoute allowedRoles={['author', 'admin']} requireAuth={false}>
+            <ProtectedRoute allowedRoles={['author', 'admin']}>
               <SubmissionTracker />
             </ProtectedRoute>
           } />
