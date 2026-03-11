@@ -23,6 +23,7 @@ export interface Chapter {
     plainText: string; // plain text for search/word count
     order: number;
     wordCount: number;
+    targetWords?: number; // per-chapter word goal
     notes: string;
     status: 'draft' | 'revised' | 'edited' | 'final';
     type: 'chapter' | 'scene' | 'notes' | 'research';

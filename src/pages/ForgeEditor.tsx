@@ -23,12 +23,20 @@ import {
     History, GitBranch, Eye, Highlighter, Minus,
     GripVertical, FolderOpen, FilePlus, Sparkles, Target,
     MessageSquare, Users, Send, CheckCircle, XCircle,
-    PenLine, UserCheck, Reply
+    PenLine, UserCheck, Reply, Search, Replace, Columns,
+    Download, Globe, MapPin, Sword, Shield, BookMarked,
+    type LucideIcon
 } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
 import { useManuscript, type Chapter } from '../hooks/useManuscript';
 import { useVersionHistory, type DiffSegment } from '../hooks/useVersionHistory';
 import { useWritingSessions } from '../hooks/useWritingSessions';
 import { useCollaboration, useComments, useSuggestions } from '../hooks/useCollaboration';
+import { useWorldBible, type WorldBibleEntry } from '../hooks/useWorldBible';
 import { useAuth } from '../contexts/AuthContext';
 
 // ════════════════════════════════════════════════════════
@@ -63,7 +71,7 @@ export default function ForgeEditor() {
     const [newTitle, setNewTitle] = useState('');
     const [editingTitle, setEditingTitle] = useState<string | null>(null);
     const [editTitleValue, setEditTitleValue] = useState('');
-    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments'>('notes');
+    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments' | 'bible'>('notes');
     const [notesValue, setNotesValue] = useState('');
     const notesDirtyRef = useRef(false);
     const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,6 +89,38 @@ export default function ForgeEditor() {
     const { versions, saveVersion, computeDiff, getDiffBetween } = useVersionHistory(manuscriptId, activeChapterId || undefined);
     const [diffView, setDiffView] = useState<DiffSegment[] | null>(null);
     const [compareFrom, setCompareFrom] = useState<number | null>(null);
+
+    // World Bible
+    const { entries: bibleEntries, addEntry: addBibleEntry, updateEntry: updateBibleEntry, deleteEntry: deleteBibleEntry } = useWorldBible(manuscriptId);
+    const [bibleFilter, setBibleFilter] = useState<WorldBibleEntry['type'] | 'all'>('all');
+    const [editingBible, setEditingBible] = useState<string | null>(null);
+    const [newBibleName, setNewBibleName] = useState('');
+    const [newBibleType, setNewBibleType] = useState<WorldBibleEntry['type']>('character');
+
+    // Find & Replace
+    const [showFindReplace, setShowFindReplace] = useState(false);
+    const [findQuery, setFindQuery] = useState('');
+    const [replaceQuery, setReplaceQuery] = useState('');
+    const [findUseRegex, setFindUseRegex] = useState(false);
+    const [findCaseSensitive, setFindCaseSensitive] = useState(false);
+    const [findResults, setFindResults] = useState<{ count: number; current: number }>({ count: 0, current: 0 });
+
+    // Auto-save indicator
+    const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+    const [saveStatus, setSaveStatus] = useState<'saved' | 'unsaved' | 'saving'>('saved');
+
+    // Split editor
+    const [splitChapterId, setSplitChapterId] = useState<string | null>(null);
+    const splitChapter = chapters.find(c => c.id === splitChapterId);
+
+    // Export
+    const [showExportModal, setShowExportModal] = useState(false);
+
+    // DnD sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor)
+    );
 
     // ── TipTap Editor ──
     const editor = useEditor({
@@ -101,6 +141,7 @@ export default function ForgeEditor() {
             },
         },
         onUpdate: ({ editor }) => {
+            setSaveStatus('unsaved');
             // Debounced auto-save
             if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
             saveTimerRef.current = setTimeout(() => {
@@ -149,10 +190,13 @@ export default function ForgeEditor() {
         if (!ed || !activeChapterId || !manuscriptId) return;
         const html = ed.getHTML();
         const text = ed.getText();
-        if (html === lastSavedContent.current) return;
+        if (html === lastSavedContent.current) { setSaveStatus('saved'); return; }
 
+        setSaveStatus('saving');
         await saveChapter(activeChapterId, html, text);
         lastSavedContent.current = html;
+        setSaveStatus('saved');
+        setLastSavedAt(new Date());
 
         // Log writing session for word count delta
         const newWordCount = text.split(/\s+/).filter(Boolean).length;
@@ -178,7 +222,7 @@ export default function ForgeEditor() {
         }
     }, [editor]);
 
-    // Ctrl+S keyboard shortcut
+    // Ctrl+S and Ctrl+F keyboard shortcuts
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -187,6 +231,14 @@ export default function ForgeEditor() {
                     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
                     autoSaveRef.current?.(editor);
                 }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                setShowFindReplace(prev => !prev);
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                e.preventDefault();
+                setShowFindReplace(true);
             }
         };
         window.addEventListener('keydown', handler);
@@ -235,6 +287,164 @@ export default function ForgeEditor() {
     useEffect(() => {
         return () => { if (notesTimerRef.current) clearTimeout(notesTimerRef.current); };
     }, []);
+
+    // ── DnD Chapter Reorder ──
+    const binderChapters = useMemo(() => chapters.filter(ch => ch.type === 'chapter' || ch.type === 'scene'), [chapters]);
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const oldIndex = binderChapters.findIndex(c => c.id === active.id);
+        const newIndex = binderChapters.findIndex(c => c.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+            // Map back to full chapters array indices
+            const fullOldIndex = chapters.findIndex(c => c.id === active.id);
+            const fullNewIndex = chapters.findIndex(c => c.id === (over.id as string));
+            reorderChapters(fullOldIndex, fullNewIndex);
+        }
+    }, [binderChapters, chapters, reorderChapters]);
+
+    // ── Find & Replace ──
+    const handleFind = useCallback(() => {
+        if (!editor || !findQuery) { setFindResults({ count: 0, current: 0 }); return; }
+        const text = editor.getText();
+        let flags = 'g';
+        if (!findCaseSensitive) flags += 'i';
+        let regex: RegExp;
+        try {
+            regex = findUseRegex ? new RegExp(findQuery, flags) : new RegExp(findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        } catch { setFindResults({ count: 0, current: 0 }); return; }
+        const matches = [...text.matchAll(regex)];
+        setFindResults({ count: matches.length, current: matches.length > 0 ? 1 : 0 });
+    }, [editor, findQuery, findUseRegex, findCaseSensitive]);
+
+    useEffect(() => { handleFind(); }, [findQuery, findCaseSensitive, findUseRegex, handleFind]);
+
+    const handleReplace = useCallback(() => {
+        if (!editor || !findQuery) return;
+        const { state } = editor;
+        const text = editor.getText();
+        let flags = findCaseSensitive ? '' : 'i';
+        let regex: RegExp;
+        try {
+            regex = findUseRegex ? new RegExp(findQuery, flags) : new RegExp(findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        } catch { return; }
+        const match = text.match(regex);
+        if (match && match.index !== undefined) {
+            // Find the position in ProseMirror's document
+            const from = match.index + 1; // ProseMirror is 1-indexed for text offset
+            editor.chain().focus().setTextSelection({ from, to: from + match[0].length }).deleteSelection().insertContent(replaceQuery).run();
+            handleFind();
+        }
+    }, [editor, findQuery, replaceQuery, findCaseSensitive, findUseRegex, handleFind]);
+
+    const handleReplaceAll = useCallback(() => {
+        if (!editor || !findQuery) return;
+        const html = editor.getHTML();
+        let flags = 'g';
+        if (!findCaseSensitive) flags += 'i';
+        let regex: RegExp;
+        try {
+            regex = findUseRegex ? new RegExp(findQuery, flags) : new RegExp(findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        } catch { return; }
+        const newHtml = html.replace(regex, replaceQuery);
+        editor.commands.setContent(newHtml);
+        setFindResults({ count: 0, current: 0 });
+        setSaveStatus('unsaved');
+    }, [editor, findQuery, replaceQuery, findCaseSensitive, findUseRegex]);
+
+    // ── Auto-save indicator ──
+    const saveStatusText = useMemo(() => {
+        if (saveStatus === 'saving') return 'Saving...';
+        if (saveStatus === 'unsaved') return 'Unsaved changes';
+        if (!lastSavedAt) return 'Saved';
+        const seconds = Math.floor((Date.now() - lastSavedAt.getTime()) / 1000);
+        if (seconds < 5) return 'Just saved';
+        if (seconds < 60) return `Saved ${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        return `Saved ${minutes}m ago`;
+    }, [saveStatus, lastSavedAt]);
+
+    // Refresh the save indicator every 10 seconds
+    const [, forceRender] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => forceRender(v => v + 1), 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // ── Export Functions ──
+    const handleExportDocx = useCallback(async () => {
+        if (!activeManuscript) return;
+        const paragraphs: Paragraph[] = [];
+        paragraphs.push(new Paragraph({
+            children: [new TextRun({ text: activeManuscript.title, bold: true, size: 48 })],
+            heading: HeadingLevel.TITLE,
+            spacing: { after: 400 },
+        }));
+        for (const ch of chapters.filter(c => c.type === 'chapter' || c.type === 'scene')) {
+            paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: ch.title, bold: true, size: 32 })],
+                heading: HeadingLevel.HEADING_1,
+                spacing: { before: 400, after: 200 },
+            }));
+            const lines = (ch.plainText || '').split('\n');
+            for (const line of lines) {
+                if (line.trim()) {
+                    paragraphs.push(new Paragraph({
+                        children: [new TextRun({ text: line, size: 24, font: 'Georgia' })],
+                        spacing: { after: 120 },
+                    }));
+                }
+            }
+        }
+        const doc = new Document({
+            sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: paragraphs }],
+        });
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, `${activeManuscript.title}.docx`);
+        setShowExportModal(false);
+    }, [activeManuscript, chapters]);
+
+    const handleExportMarkdown = useCallback(() => {
+        if (!activeManuscript) return;
+        let md = `# ${activeManuscript.title}\n\n`;
+        for (const ch of chapters.filter(c => c.type === 'chapter' || c.type === 'scene')) {
+            md += `## ${ch.title}\n\n${ch.plainText || ''}\n\n---\n\n`;
+        }
+        const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+        saveAs(blob, `${activeManuscript.title}.md`);
+        setShowExportModal(false);
+    }, [activeManuscript, chapters]);
+
+    const handleExportTxt = useCallback(() => {
+        if (!activeManuscript) return;
+        let txt = `${activeManuscript.title}\n${'='.repeat(activeManuscript.title.length)}\n\n`;
+        for (const ch of chapters.filter(c => c.type === 'chapter' || c.type === 'scene')) {
+            txt += `${ch.title}\n${'-'.repeat(ch.title.length)}\n\n${ch.plainText || ''}\n\n`;
+        }
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        saveAs(blob, `${activeManuscript.title}.txt`);
+        setShowExportModal(false);
+    }, [activeManuscript, chapters]);
+
+    // ── Split Editor ──
+    const splitEditor = useEditor({
+        extensions: [
+            StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+            Placeholder.configure({ placeholder: 'Select a chapter to compare...' }),
+            CharacterCount,
+            Highlight.configure({ multicolor: true }),
+            Underline,
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            Typography,
+        ],
+        editorProps: { attributes: { class: 'forge-editor-content' } },
+        editable: false,
+    });
+
+    useEffect(() => {
+        if (!splitEditor || !splitChapter) return;
+        splitEditor.commands.setContent(splitChapter.content || '');
+    }, [splitEditor, splitChapter?.content, splitChapterId]);
 
     // ── Manuscript List View (no manuscript selected) ──
     if (!manuscriptId) {
@@ -326,7 +536,9 @@ export default function ForgeEditor() {
                 </button>
                 <h2 className="text-sm text-white font-semibold truncate flex-1 text-center">
                     {activeManuscript?.title || 'Untitled'}
-                    {saving && <span className="text-[10px] text-starforge-gold/60 ml-2 animate-pulse">Saving...</span>}
+                    <span className={`text-[10px] ml-2 ${saveStatus === 'saving' ? 'text-starforge-gold/60 animate-pulse' : saveStatus === 'unsaved' ? 'text-amber-400/60' : 'text-emerald-400/50'}`}>
+                        {saveStatusText}
+                    </span>
                 </h2>
 
                 {/* Presence Avatars */}
@@ -365,6 +577,21 @@ export default function ForgeEditor() {
                 }} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${showVersions ? 'text-starforge-gold' : 'text-text-secondary hover:text-white'}`} title="Version history">
                     <History className="w-4 h-4" />
                 </button>
+                <button onClick={() => setShowFindReplace(f => !f)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${showFindReplace ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Find & Replace (Ctrl+F)">
+                    <Search className="w-4 h-4" />
+                </button>
+                <button onClick={() => {
+                    if (splitChapterId) { setSplitChapterId(null); } else {
+                        const other = binderChapters.find(c => c.id !== activeChapterId);
+                        if (other) setSplitChapterId(other.id);
+                    }
+                }} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${splitChapterId ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title="Split editor">
+                    <Columns className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowExportModal(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Export manuscript">
+                    <Download className="w-4 h-4" />
+                </button>
+                <div className="w-px h-5 bg-white/[0.08]" />
                 <button onClick={() => setShowInspector(i => !i)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Toggle inspector">
                     {showInspector ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
                 </button>
@@ -388,61 +615,41 @@ export default function ForgeEditor() {
                                 </button>
                             </div>
                             <div className="flex-1 overflow-y-auto py-1">
-                                {chapters.filter(ch => ch.type === 'chapter' || ch.type === 'scene').map((ch, idx) => (
-                                    <div key={ch.id}
-                                        className={`group flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${activeChapterId === ch.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:bg-white/[0.04] hover:text-white'}`}
-                                        onClick={() => { handleManualSave(); setActiveChapterId(ch.id); }}>
-                                        <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-40 flex-none" />
-                                        {ch.type === 'chapter' ? <FileText className="w-3.5 h-3.5 flex-none" /> :
-                                            <Scroll className="w-3.5 h-3.5 flex-none" />}
-                                        {editingTitle === ch.id ? (
-                                            <input value={editTitleValue} onChange={e => setEditTitleValue(e.target.value)}
-                                                className="flex-1 bg-transparent border-b border-starforge-gold/40 text-xs text-white focus:outline-none min-w-0"
-                                                autoFocus
-                                                onBlur={() => { updateChapter(ch.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') { updateChapter(ch.id, { title: editTitleValue } as Partial<Chapter>); setEditingTitle(null); }
-                                                    if (e.key === 'Escape') setEditingTitle(null);
-                                                }} />
-                                        ) : (
-                                            <span className="text-xs truncate flex-1" onDoubleClick={() => { setEditingTitle(ch.id); setEditTitleValue(ch.title); }}>
-                                                {ch.title}
-                                            </span>
-                                        )}
-                                        <span className="text-[9px] opacity-60 flex-none">
-                                            {activeChapterId === ch.id ? liveWordCount : (ch.wordCount || 0)}
-                                        </span>
-                                        <button onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingTitle(ch.id);
-                                            setEditTitleValue(ch.title);
-                                        }}
-                                            className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-starforge-gold"
-                                            title="Rename">
-                                            <Edit2 className="w-3 h-3" />
-                                        </button>
-                                        <button onClick={async (e) => {
-                                            e.stopPropagation();
-                                            if (!confirm(`Delete "${ch.title}"?`)) return;
-                                            if (activeChapterId === ch.id) {
-                                                handleManualSave();
-                                                const remaining = chapters.filter(c => c.id !== ch.id);
-                                                if (remaining.length > 0) {
-                                                    const currentIdx = chapters.findIndex(c => c.id === ch.id);
-                                                    const nextChapter = chapters[currentIdx - 1] || chapters[currentIdx + 1] || remaining[0];
-                                                    setActiveChapterId(nextChapter?.id || null);
-                                                } else {
-                                                    setActiveChapterId(null);
-                                                }
-                                            }
-                                            await deleteChapter(ch.id);
-                                        }}
-                                            className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-red-400"
-                                            title="Delete">
-                                            <Trash2 className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
+                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={binderChapters.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                        {binderChapters.map((ch) => (
+                                            <SortableChapterItem
+                                                key={ch.id}
+                                                chapter={ch}
+                                                isActive={activeChapterId === ch.id}
+                                                liveWordCount={activeChapterId === ch.id ? liveWordCount : undefined}
+                                                isEditing={editingTitle === ch.id}
+                                                editValue={editTitleValue}
+                                                onSelect={() => { handleManualSave(); setActiveChapterId(ch.id); }}
+                                                onStartRename={() => { setEditingTitle(ch.id); setEditTitleValue(ch.title); }}
+                                                onRename={(title) => { updateChapter(ch.id, { title } as Partial<Chapter>); setEditingTitle(null); }}
+                                                onCancelRename={() => setEditingTitle(null)}
+                                                onEditChange={setEditTitleValue}
+                                                onSplitView={() => { setSplitChapterId(ch.id); }}
+                                                onDelete={async () => {
+                                                    if (!confirm(`Delete "${ch.title}"?`)) return;
+                                                    if (activeChapterId === ch.id) {
+                                                        handleManualSave();
+                                                        const remaining = chapters.filter(c => c.id !== ch.id);
+                                                        if (remaining.length > 0) {
+                                                            const currentIdx = chapters.findIndex(c => c.id === ch.id);
+                                                            const nextChapter = chapters[currentIdx - 1] || chapters[currentIdx + 1] || remaining[0];
+                                                            setActiveChapterId(nextChapter?.id || null);
+                                                        } else {
+                                                            setActiveChapterId(null);
+                                                        }
+                                                    }
+                                                    await deleteChapter(ch.id);
+                                                }}
+                                            />
+                                        ))}
+                                    </SortableContext>
+                                </DndContext>
                             </div>
                             {/* Binder Footer */}
                             <div className="p-3 border-t border-white/[0.06] text-[10px] text-text-secondary">
@@ -514,44 +721,109 @@ export default function ForgeEditor() {
                     )}
 
                     {/* Editor Content */}
-                    <div className="flex-1 overflow-y-auto relative">
-                        {activeChapter ? (
-                            <div className="max-w-3xl mx-auto px-8 py-12">
-                                <h2 className="text-2xl font-display text-white/80 mb-8 tracking-wide">{activeChapter.title}</h2>
-                                <EditorContent editor={editor} />
-
-                                {/* Pending Suggestions Overlay */}
-                                {pendingSuggestions.length > 0 && (
-                                    <div className="mt-8 border-t border-white/[0.06] pt-6">
-                                        <h4 className="text-[10px] uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-2">
-                                            <PenLine className="w-3 h-3 text-emerald-400" /> {pendingSuggestions.length} Pending Suggestion{pendingSuggestions.length > 1 ? 's' : ''}
-                                        </h4>
-                                        {pendingSuggestions.map(s => (
-                                            <div key={s.id} className="mb-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-[10px] text-text-secondary">{s.authorName}</span>
-                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${s.type === 'insert' ? 'bg-emerald-500/10 text-emerald-400' : s.type === 'delete' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>{s.type}</span>
-                                                </div>
-                                                {s.originalText && <p className="text-xs text-red-300/60 line-through mb-1">{s.originalText}</p>}
-                                                {s.suggestedText && <p className="text-xs text-emerald-300">{s.suggestedText}</p>}
-                                                <div className="flex gap-2 mt-2">
-                                                    <button onClick={() => acceptSuggestion(s.id)} className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">
-                                                        <CheckCircle className="w-3 h-3" /> Accept
-                                                    </button>
-                                                    <button onClick={() => rejectSuggestion(s.id)} className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20">
-                                                        <XCircle className="w-3 h-3" /> Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
+                    <div className="flex-1 overflow-hidden relative flex">
+                        {/* Find & Replace Panel */}
+                        <AnimatePresence>
+                            {showFindReplace && (
+                                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+                                    className="absolute top-2 right-4 z-30 w-80 bg-deep-space border border-white/[0.1] rounded-lg shadow-2xl p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Search className="w-3.5 h-3.5 text-text-secondary flex-none" />
+                                        <input value={findQuery} onChange={e => setFindQuery(e.target.value)}
+                                            placeholder="Find..."
+                                            className="flex-1 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white focus:outline-none focus:border-starforge-gold/30"
+                                            autoFocus />
+                                        <span className="text-[9px] text-text-secondary flex-none">
+                                            {findResults.count > 0 ? `${findResults.current}/${findResults.count}` : findQuery ? '0 found' : ''}
+                                        </span>
+                                        <button onClick={() => { setShowFindReplace(false); setFindQuery(''); setReplaceQuery(''); }} className="text-text-secondary hover:text-white">
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-text-secondary">
-                                <div className="text-center">
-                                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                    <p className="text-sm">Select a chapter from the binder to start writing</p>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Replace className="w-3.5 h-3.5 text-text-secondary flex-none" />
+                                        <input value={replaceQuery} onChange={e => setReplaceQuery(e.target.value)}
+                                            placeholder="Replace..."
+                                            className="flex-1 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white focus:outline-none focus:border-starforge-gold/30" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setFindCaseSensitive(c => !c)}
+                                            className={`px-1.5 py-0.5 text-[9px] rounded border ${findCaseSensitive ? 'border-starforge-gold/40 text-starforge-gold bg-starforge-gold/10' : 'border-white/[0.06] text-text-secondary'}`}
+                                            title="Case sensitive">Aa</button>
+                                        <button onClick={() => setFindUseRegex(r => !r)}
+                                            className={`px-1.5 py-0.5 text-[9px] rounded border ${findUseRegex ? 'border-starforge-gold/40 text-starforge-gold bg-starforge-gold/10' : 'border-white/[0.06] text-text-secondary'}`}
+                                            title="Regex">.*</button>
+                                        <div className="flex-1" />
+                                        <button onClick={handleReplace} className="px-2 py-0.5 text-[9px] rounded bg-white/[0.06] text-text-secondary hover:text-white">Replace</button>
+                                        <button onClick={handleReplaceAll} className="px-2 py-0.5 text-[9px] rounded bg-starforge-gold/10 text-starforge-gold hover:bg-starforge-gold/20">Replace All</button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Main Editor */}
+                        <div className={`${splitChapterId ? 'w-1/2 border-r border-white/[0.06]' : 'w-full'} overflow-y-auto`}>
+                            {activeChapter ? (
+                                <div className="max-w-3xl mx-auto px-8 py-12">
+                                    <h2 className="text-2xl font-display text-white/80 mb-8 tracking-wide">{activeChapter.title}</h2>
+                                    <EditorContent editor={editor} />
+
+                                    {/* Pending Suggestions Overlay */}
+                                    {pendingSuggestions.length > 0 && (
+                                        <div className="mt-8 border-t border-white/[0.06] pt-6">
+                                            <h4 className="text-[10px] uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-2">
+                                                <PenLine className="w-3 h-3 text-emerald-400" /> {pendingSuggestions.length} Pending Suggestion{pendingSuggestions.length > 1 ? 's' : ''}
+                                            </h4>
+                                            {pendingSuggestions.map(s => (
+                                                <div key={s.id} className="mb-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-[10px] text-text-secondary">{s.authorName}</span>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${s.type === 'insert' ? 'bg-emerald-500/10 text-emerald-400' : s.type === 'delete' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>{s.type}</span>
+                                                    </div>
+                                                    {s.originalText && <p className="text-xs text-red-300/60 line-through mb-1">{s.originalText}</p>}
+                                                    {s.suggestedText && <p className="text-xs text-emerald-300">{s.suggestedText}</p>}
+                                                    <div className="flex gap-2 mt-2">
+                                                        <button onClick={() => acceptSuggestion(s.id)} className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">
+                                                            <CheckCircle className="w-3 h-3" /> Accept
+                                                        </button>
+                                                        <button onClick={() => rejectSuggestion(s.id)} className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20">
+                                                            <XCircle className="w-3 h-3" /> Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-text-secondary">
+                                    <div className="text-center">
+                                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                                        <p className="text-sm">Select a chapter from the binder to start writing</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Split Editor Panel */}
+                        {splitChapterId && (
+                            <div className="w-1/2 overflow-y-auto">
+                                <div className="flex items-center gap-2 px-4 py-2 bg-deep-space/40 border-b border-white/[0.06]">
+                                    <Columns className="w-3.5 h-3.5 text-aurora-teal" />
+                                    <select value={splitChapterId} onChange={e => setSplitChapterId(e.target.value)}
+                                        className="flex-1 bg-transparent text-xs text-white focus:outline-none">
+                                        {binderChapters.filter(c => c.id !== activeChapterId).map(c => (
+                                            <option key={c.id} value={c.id} className="bg-deep-space">{c.title}</option>
+                                        ))}
+                                    </select>
+                                    <span className="text-[9px] text-text-secondary">{splitEditor?.storage.characterCount?.words?.() || 0}w</span>
+                                    <button onClick={() => setSplitChapterId(null)} className="text-text-secondary hover:text-white">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <div className="max-w-3xl mx-auto px-8 py-12">
+                                    <h2 className="text-2xl font-display text-white/80 mb-8 tracking-wide">{splitChapter?.title}</h2>
+                                    <EditorContent editor={splitEditor} />
                                 </div>
                             </div>
                         )}
@@ -590,7 +862,15 @@ export default function ForgeEditor() {
                         <span>{wordCount.toLocaleString()} words</span>
                         <span>{charCount.toLocaleString()} chars</span>
                         {activeChapter && <span className="capitalize">{activeChapter.status}</span>}
-                        {saving && <span className="text-starforge-gold/60 animate-pulse">Saving...</span>}
+                        {activeChapter?.targetWords && (
+                            <span className="flex items-center gap-1">
+                                <Target className="w-3 h-3" />
+                                {Math.min(100, Math.round(((activeChapterId === activeChapter.id ? liveWordCount : activeChapter.wordCount) / activeChapter.targetWords) * 100))}%
+                            </span>
+                        )}
+                        <span className={`flex items-center gap-1 ${saveStatus === 'saving' ? 'text-starforge-gold/60 animate-pulse' : saveStatus === 'unsaved' ? 'text-amber-400/60' : 'text-emerald-400/50'}`}>
+                            <Save className="w-3 h-3" /> {saveStatusText}
+                        </span>
                         {suggestionMode && <span className="text-emerald-400">📝 Suggest mode</span>}
                         {collaborators.length > 0 && <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {collaborators.length + 1}</span>}
                         <div className="flex-1" />
@@ -605,12 +885,15 @@ export default function ForgeEditor() {
                         <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 280, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
                             className="flex-none bg-deep-space/40 border-l border-white/[0.06] flex flex-col overflow-hidden">
                             <div className="flex border-b border-white/[0.06]">
-                                {(['notes', 'meta', 'comments'] as const).map(tab => (
+                                {(['notes', 'meta', 'comments', 'bible'] as const).map(tab => (
                                     <button key={tab} onClick={() => setInspectorTab(tab)}
                                         className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-ui transition-colors relative ${inspectorTab === tab ? 'text-starforge-gold border-b border-starforge-gold' : 'text-text-secondary hover:text-white'}`}>
-                                        {tab}
+                                        {tab === 'bible' ? '🌍' : tab}
                                         {tab === 'comments' && openComments.length > 0 && (
                                             <span className="ml-1 px-1 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[8px]">{openComments.length}</span>
+                                        )}
+                                        {tab === 'bible' && bibleEntries.length > 0 && (
+                                            <span className="ml-0.5 text-[8px] text-text-secondary">{bibleEntries.length}</span>
                                         )}
                                     </button>
                                 ))}
@@ -646,6 +929,28 @@ export default function ForgeEditor() {
                                         <div>
                                             <span className="text-[10px] text-text-secondary uppercase tracking-wider block mb-2">Word Count</span>
                                             <p className="text-2xl font-semibold text-white">{(activeChapterId === activeChapter.id ? liveWordCount : (activeChapter.wordCount || 0)).toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] text-text-secondary uppercase tracking-wider block mb-2">Word Goal</span>
+                                            <div className="flex items-center gap-2">
+                                                <input type="number" value={activeChapter.targetWords || ''} onChange={e => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    updateChapter(activeChapter.id, { targetWords: val || undefined } as Partial<Chapter>);
+                                                }}
+                                                    placeholder="e.g. 3000"
+                                                    className="w-24 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white focus:outline-none focus:border-starforge-gold/30" />
+                                                {activeChapter.targetWords && activeChapter.targetWords > 0 && (
+                                                    <div className="flex-1">
+                                                        <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                                                            <div className="h-full bg-starforge-gold/60 rounded-full transition-all"
+                                                                style={{ width: `${Math.min(100, ((activeChapterId === activeChapter.id ? liveWordCount : activeChapter.wordCount) / activeChapter.targetWords) * 100)}%` }} />
+                                                        </div>
+                                                        <span className="text-[9px] text-text-secondary">
+                                                            {Math.min(100, Math.round(((activeChapterId === activeChapter.id ? liveWordCount : activeChapter.wordCount) / activeChapter.targetWords) * 100))}%
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div>
                                             <span className="text-[10px] text-text-secondary uppercase tracking-wider block mb-2">Type</span>
@@ -757,6 +1062,91 @@ export default function ForgeEditor() {
                                         )}
                                     </div>
                                 )}
+                                {/* ── World Bible Tab ── */}
+                                {inspectorTab === 'bible' && (
+                                    <div className="space-y-3">
+                                        {/* Type Filter */}
+                                        <div className="flex flex-wrap gap-1">
+                                            {(['all', 'character', 'location', 'item', 'faction', 'lore', 'timeline'] as const).map(t => (
+                                                <button key={t} onClick={() => setBibleFilter(t)}
+                                                    className={`px-1.5 py-0.5 text-[9px] rounded ${bibleFilter === t ? 'bg-starforge-gold/20 text-starforge-gold' : 'bg-white/[0.04] text-text-secondary hover:text-white'}`}>
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {/* Add Entry */}
+                                        <div className="flex gap-1">
+                                            <select value={newBibleType} onChange={e => setNewBibleType(e.target.value as WorldBibleEntry['type'])}
+                                                className="px-1.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-[10px] text-white focus:outline-none">
+                                                {(['character', 'location', 'item', 'faction', 'lore', 'timeline'] as const).map(t => (
+                                                    <option key={t} value={t} className="bg-deep-space">{t}</option>
+                                                ))}
+                                            </select>
+                                            <input value={newBibleName} onChange={e => setNewBibleName(e.target.value)}
+                                                placeholder="Name..."
+                                                className="flex-1 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-[10px] text-white focus:outline-none focus:border-starforge-gold/30 min-w-0"
+                                                onKeyDown={async e => {
+                                                    if (e.key === 'Enter' && newBibleName.trim()) {
+                                                        await addBibleEntry(newBibleType, newBibleName);
+                                                        setNewBibleName('');
+                                                    }
+                                                }} />
+                                            <button onClick={async () => {
+                                                if (newBibleName.trim()) {
+                                                    await addBibleEntry(newBibleType, newBibleName);
+                                                    setNewBibleName('');
+                                                }
+                                            }} className="p-1 rounded bg-starforge-gold/10 text-starforge-gold hover:bg-starforge-gold/20">
+                                                <Plus className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                        {/* Entries List */}
+                                        {bibleEntries
+                                            .filter(e => bibleFilter === 'all' || e.type === bibleFilter)
+                                            .map(entry => (
+                                                <div key={entry.id} className="p-2.5 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-aurora-teal/10 text-aurora-teal uppercase">{entry.type}</span>
+                                                        <span className="text-xs text-white font-semibold flex-1 truncate">{entry.name}</span>
+                                                        <button onClick={() => setEditingBible(editingBible === entry.id ? null : entry.id)}
+                                                            className="text-text-secondary hover:text-white"><Edit2 className="w-3 h-3" /></button>
+                                                        <button onClick={() => { if (confirm(`Delete "${entry.name}"?`)) deleteBibleEntry(entry.id); }}
+                                                            className="text-text-secondary hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                                                    </div>
+                                                    {editingBible === entry.id && (
+                                                        <div className="mt-2 space-y-2">
+                                                            <textarea value={entry.description}
+                                                                onChange={e => updateBibleEntry(entry.id, { description: e.target.value })}
+                                                                placeholder="Description..."
+                                                                className="w-full h-16 px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-[10px] text-white resize-none focus:outline-none focus:border-starforge-gold/30" />
+                                                            {Object.entries(entry.details || {}).map(([key, val]) => (
+                                                                <div key={key} className="flex items-center gap-1.5">
+                                                                    <span className="text-[9px] text-text-secondary w-16 truncate">{key}</span>
+                                                                    <input value={val} onChange={e => {
+                                                                        const newDetails = { ...entry.details, [key]: e.target.value };
+                                                                        updateBibleEntry(entry.id, { details: newDetails });
+                                                                    }}
+                                                                        className="flex-1 px-1.5 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-[10px] text-white focus:outline-none min-w-0" />
+                                                                </div>
+                                                            ))}
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {entry.tags?.map((tag, i) => (
+                                                                    <span key={i} className="text-[8px] px-1.5 py-0.5 rounded-full bg-starforge-gold/10 text-starforge-gold">{tag}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        {bibleEntries.filter(e => bibleFilter === 'all' || e.type === bibleFilter).length === 0 && (
+                                            <div className="text-center py-6">
+                                                <Globe className="w-8 h-8 mx-auto mb-2 opacity-20 text-text-secondary" />
+                                                <p className="text-xs text-text-secondary">No entries yet</p>
+                                                <p className="text-[10px] text-text-secondary mt-1">Add characters, locations, and lore</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )}
@@ -836,6 +1226,67 @@ export default function ForgeEditor() {
                 </AnimatePresence>
             </div>
 
+            {/* ── Export Modal ── */}
+            <AnimatePresence>
+                {showExportModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowExportModal(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-96"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-display text-white">Export Manuscript</h3>
+                                <button onClick={() => setShowExportModal(false)} className="text-text-secondary hover:text-white">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="space-y-3">
+                                <button onClick={handleExportDocx}
+                                    className="w-full p-4 bg-white/[0.03] border border-white/[0.08] rounded-lg hover:border-starforge-gold/30 hover:bg-starforge-gold/5 transition-all text-left group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                            <FileText className="w-5 h-5 text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-white font-semibold">Microsoft Word (.docx)</p>
+                                            <p className="text-[10px] text-text-secondary">Formatted with headings, Georgia font, and proper margins</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button onClick={handleExportMarkdown}
+                                    className="w-full p-4 bg-white/[0.03] border border-white/[0.08] rounded-lg hover:border-starforge-gold/30 hover:bg-starforge-gold/5 transition-all text-left group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                                            <FileText className="w-5 h-5 text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-white font-semibold">Markdown (.md)</p>
+                                            <p className="text-[10px] text-text-secondary">Plain text with headings and separators</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button onClick={handleExportTxt}
+                                    className="w-full p-4 bg-white/[0.03] border border-white/[0.08] rounded-lg hover:border-starforge-gold/30 hover:bg-starforge-gold/5 transition-all text-left group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                            <FileText className="w-5 h-5 text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-white font-semibold">Plain Text (.txt)</p>
+                                            <p className="text-[10px] text-text-secondary">Simple text with chapter headings</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-text-secondary mt-4 text-center">
+                                Exporting {chapters.filter(c => c.type === 'chapter' || c.type === 'scene').length} chapters · {totalWords.toLocaleString()} words
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Editor Styles */}
             <style>{`
         .forge-editor-content {
@@ -896,5 +1347,82 @@ function ToolbarBtn({ onClick, active, icon: Icon, title }: { onClick: () => voi
             className={`p-1.5 rounded transition-colors ${active ? 'bg-starforge-gold/20 text-starforge-gold' : 'text-text-secondary hover:text-white hover:bg-white/[0.06]'}`}>
             <Icon className="w-3.5 h-3.5" />
         </button>
+    );
+}
+
+// ── Sortable Chapter Item (DnD) ──
+function SortableChapterItem({ chapter, isActive, liveWordCount, isEditing, editValue, onSelect, onStartRename, onRename, onCancelRename, onEditChange, onSplitView, onDelete }: {
+    chapter: Chapter;
+    isActive: boolean;
+    liveWordCount?: number;
+    isEditing: boolean;
+    editValue: string;
+    onSelect: () => void;
+    onStartRename: () => void;
+    onRename: (title: string) => void;
+    onCancelRename: () => void;
+    onEditChange: (val: string) => void;
+    onSplitView: () => void;
+    onDelete: () => void;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: chapter.id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : undefined,
+    };
+    const displayWordCount = liveWordCount ?? (chapter.wordCount || 0);
+    const goalPercent = chapter.targetWords ? Math.min(100, (displayWordCount / chapter.targetWords) * 100) : null;
+
+    return (
+        <div ref={setNodeRef} style={style}
+            className={`group flex flex-col gap-0.5 px-3 py-2 cursor-pointer transition-colors ${isActive ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-secondary hover:bg-white/[0.04] hover:text-white'}`}
+            onClick={onSelect}>
+            <div className="flex items-center gap-2">
+                <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+                    <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-40 flex-none" />
+                </div>
+                {chapter.type === 'chapter' ? <FileText className="w-3.5 h-3.5 flex-none" /> :
+                    <Scroll className="w-3.5 h-3.5 flex-none" />}
+                {isEditing ? (
+                    <input value={editValue} onChange={e => onEditChange(e.target.value)}
+                        className="flex-1 bg-transparent border-b border-starforge-gold/40 text-xs text-white focus:outline-none min-w-0"
+                        autoFocus
+                        onClick={e => e.stopPropagation()}
+                        onBlur={() => onRename(editValue)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') onRename(editValue);
+                            if (e.key === 'Escape') onCancelRename();
+                        }} />
+                ) : (
+                    <span className="text-xs truncate flex-1" onDoubleClick={onStartRename}>
+                        {chapter.title}
+                    </span>
+                )}
+                <span className="text-[9px] opacity-60 flex-none">{displayWordCount}</span>
+                <button onClick={(e) => { e.stopPropagation(); onStartRename(); }}
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-starforge-gold" title="Rename">
+                    <Edit2 className="w-3 h-3" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onSplitView(); }}
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-aurora-teal" title="Open in split view">
+                    <Columns className="w-3 h-3" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:text-red-400" title="Delete">
+                    <Trash2 className="w-3 h-3" />
+                </button>
+            </div>
+            {/* Word Goal Progress Bar */}
+            {goalPercent !== null && (
+                <div className="ml-7 mt-0.5">
+                    <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${goalPercent >= 100 ? 'bg-emerald-400/60' : 'bg-starforge-gold/40'}`}
+                            style={{ width: `${goalPercent}%` }} />
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

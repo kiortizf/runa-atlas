@@ -722,6 +722,14 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         allow write: if isAuthenticated();
       }
+
+      // World Bible subcollection (characters, locations, lore)
+      match /worldBible/{entryId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated();
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════
