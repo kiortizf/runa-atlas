@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   BookOpen, Menu, X, Scroll, Newspaper, Flame, Users, Calendar,
-  PenTool, Feather, BookMarked, Eye, ChevronDown
+  PenTool, Feather, BookMarked, Eye, ChevronDown, LogIn, LayoutDashboard
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -165,6 +165,27 @@ export default function Layout() {
               })}
             </div>
 
+            {/* Auth Button (Desktop) */}
+            <div className="hidden lg:flex items-center ml-2">
+              {user ? (
+                <Link to="/dashboard"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-starforge-gold/10 border border-starforge-gold/20 text-starforge-gold hover:bg-starforge-gold/20 transition-all text-[13px] font-ui tracking-wide">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                  ) : (
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                  )}
+                  <span>Dashboard</span>
+                </Link>
+              ) : (
+                <Link to="/portal"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-starforge-gold text-void-black hover:bg-yellow-400 transition-colors text-[13px] font-ui font-semibold tracking-wide">
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </Link>
+              )}
+            </div>
+
             {/* Mobile menu button */}
             <button onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="lg:hidden text-text-secondary hover:text-white">
@@ -205,6 +226,22 @@ export default function Layout() {
                 );
               })}
             </div>
+              {/* Mobile Auth Button */}
+              <div className="border-t border-border mx-2 mt-2 pt-3 pb-2">
+                {user ? (
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-starforge-gold/10 text-starforge-gold">
+                    <LayoutDashboard className="w-5 h-5" />
+                    <span className="font-semibold">Dashboard</span>
+                  </Link>
+                ) : (
+                  <Link to="/portal" onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-starforge-gold text-void-black font-semibold">
+                    <LogIn className="w-5 h-5" />
+                    <span>Sign In</span>
+                  </Link>
+                )}
+              </div>
           </div>
         )}
       </nav>

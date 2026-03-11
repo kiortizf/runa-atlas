@@ -82,6 +82,7 @@ const SubmissionTracker = lazy(() => import('./pages/SubmissionTracker'));
 // Admin (only 1 user)
 const Admin = lazy(() => import('./pages/Admin'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const MemberOnboarding = lazy(() => import('./pages/MemberOnboarding'));
 
 // Legal / text pages (named exports — need wrapping)
 const Privacy = lazy(() => import('./pages/TextPages').then(m => ({ default: m.Privacy })));
@@ -100,6 +101,11 @@ export default function App() {
             <Route path="dashboard" element={
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="member-onboarding" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <MemberOnboarding />
               </ProtectedRoute>
             } />
             <Route path="constellation/:id" element={<ConstellationDetail />} />

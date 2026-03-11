@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../firebase';
 
@@ -13,6 +13,9 @@ interface AuthContextType {
   isAuthor: boolean;
   isMember: boolean;
   signIn: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logOut: () => Promise<void>;
 }
 
@@ -69,6 +72,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithEmailFn = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signUpWithEmailFn = async (email: string, password: string, displayName: string) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName });
+    // Firestore doc creation is handled by the onAuthStateChanged listener
+  };
+
+  const resetPasswordFn = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   const logOut = async () => {
     try {
       await signOut(auth);
@@ -83,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isMember = userRole != null; // All authenticated users are at least members
 
   return (
-    <AuthContext.Provider value={{ user, userRole, isAuthReady, isAdmin, isAuthor, isMember, signIn, logOut }}>
+    <AuthContext.Provider value={{ user, userRole, isAuthReady, isAdmin, isAuthor, isMember, signIn, signInWithEmail: signInWithEmailFn, signUpWithEmail: signUpWithEmailFn, resetPassword: resetPasswordFn, logOut }}>
       {children}
     </AuthContext.Provider>
   );
