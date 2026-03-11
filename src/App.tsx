@@ -84,6 +84,20 @@ const Admin = lazy(() => import('./pages/Admin'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const MemberOnboarding = lazy(() => import('./pages/MemberOnboarding'));
 
+// Publisher tools
+const SalesDashboard = lazy(() => import('./pages/SalesDashboard'));
+const ISBNManager = lazy(() => import('./pages/ISBNManager'));
+const ContractManager = lazy(() => import('./pages/ContractManager'));
+const AuthorAnalytics = lazy(() => import('./pages/AuthorAnalytics'));
+const MarketingToolkit = lazy(() => import('./pages/MarketingToolkit'));
+const SeriesManager = lazy(() => import('./pages/SeriesManager'));
+const AudiobookPipeline = lazy(() => import('./pages/AudiobookPipeline'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const ReadingChallenges = lazy(() => import('./pages/ReadingChallenges'));
+const BookClubs = lazy(() => import('./pages/BookClubs'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Referrals = lazy(() => import('./pages/Referrals'));
+
 // Legal / text pages (named exports — need wrapping)
 const Privacy = lazy(() => import('./pages/TextPages').then(m => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/TextPages').then(m => ({ default: m.Terms })));
@@ -107,6 +121,46 @@ export default function App() {
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
                 <MemberOnboarding />
               </ProtectedRoute>
+            } />
+
+            {/* Publisher / Admin tools */}
+            <Route path="sales-dashboard" element={
+              <ProtectedRoute allowedRoles={['admin']}><SalesDashboard /></ProtectedRoute>
+            } />
+            <Route path="isbn-manager" element={
+              <ProtectedRoute allowedRoles={['admin']}><ISBNManager /></ProtectedRoute>
+            } />
+            <Route path="contracts" element={
+              <ProtectedRoute allowedRoles={['admin']}><ContractManager /></ProtectedRoute>
+            } />
+            <Route path="author-analytics" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}><AuthorAnalytics /></ProtectedRoute>
+            } />
+            <Route path="marketing-toolkit" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}><MarketingToolkit /></ProtectedRoute>
+            } />
+            <Route path="series-manager" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}><SeriesManager /></ProtectedRoute>
+            } />
+            <Route path="audiobook-pipeline" element={
+              <ProtectedRoute allowedRoles={['admin']}><AudiobookPipeline /></ProtectedRoute>
+            } />
+
+            {/* Member engagement tools */}
+            <Route path="notifications" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><Notifications /></ProtectedRoute>
+            } />
+            <Route path="challenges" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><ReadingChallenges /></ProtectedRoute>
+            } />
+            <Route path="book-clubs" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><BookClubs /></ProtectedRoute>
+            } />
+            <Route path="wishlist" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><Wishlist /></ProtectedRoute>
+            } />
+            <Route path="referrals" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><Referrals /></ProtectedRoute>
             } />
             <Route path="constellation/:id" element={<ConstellationDetail />} />
             <Route path="genres" element={<Genres />} />
