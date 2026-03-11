@@ -41,37 +41,6 @@ interface RightsDeal {
     createdAt: any;
 }
 
-// ─── Demo Data ──────────────────────────────────────
-const DEMO_BOOKS: BookRights[] = [
-    {
-        id: 'br-1', bookTitle: 'The Hollow Crown', authorName: 'Maren Voss',
-        grid: {
-            Print: { World: { status: 'Sold', buyer: 'Rüna Atlas', termStart: '2027-01', termEnd: '2032-01' }, 'North America': { status: 'Sold', buyer: 'Rüna Atlas' }, 'UK/ANZ': { status: 'Available' } },
-            Audio: { World: { status: 'Sold', buyer: 'Audible', termStart: '2027-03', termEnd: '2030-03' } },
-            'Film/TV': { World: { status: 'Optioned', buyer: 'A24', termStart: '2027-06', termEnd: '2028-06' } },
-            Digital: { World: { status: 'Sold', buyer: 'Rüna Atlas' } },
-            Translation: { EU: { status: 'Sold', buyer: 'Gallimard (French)', termStart: '2027-09', termEnd: '2032-09' }, Asia: { status: 'Available' } },
-        },
-        createdAt: new Date('2027-01-10'),
-    },
-    {
-        id: 'br-2', bookTitle: 'Signal Bloom', authorName: 'Ada Chen',
-        grid: {
-            Print: { World: { status: 'Sold', buyer: 'Rüna Atlas' } },
-            Audio: { World: { status: 'Available' } },
-            'Film/TV': { World: { status: 'Available' } },
-            Digital: { World: { status: 'Sold', buyer: 'Rüna Atlas' } },
-            Translation: {},
-        },
-        createdAt: new Date('2027-02-15'),
-    },
-];
-
-const DEMO_DEALS: RightsDeal[] = [
-    { id: 'rd-1', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Audio', territory: 'World', buyer: 'Audible', value: 45000, termStart: '2027-03', termEnd: '2030-03', notes: '3-year exclusive', createdAt: new Date('2027-02-01') },
-    { id: 'rd-2', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Film/TV', territory: 'World', buyer: 'A24', value: 120000, termStart: '2027-06', termEnd: '2028-06', notes: '12-month option with renewal', createdAt: new Date('2027-03-15') },
-    { id: 'rd-3', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Translation', territory: 'EU', buyer: 'Gallimard', value: 18000, termStart: '2027-09', termEnd: '2032-09', notes: 'French language only', createdAt: new Date('2027-04-01') },
-];
 
 const STATUS_COLORS: Record<RightStatus, string> = {
     Available: 'bg-aurora-teal/10 text-aurora-teal border-aurora-teal/30',
@@ -92,17 +61,15 @@ export default function AdminRights() {
     const [dealForm, setDealForm] = useState<Partial<RightsDeal>>({ type: 'Print', territory: 'World', value: 0 });
     const [dealFilter, setDealFilter] = useState<string>('all');
 
-    // Load data
+    // Load data from Firestore
     useEffect(() => {
         const unsub1 = onSnapshot(collection(db, 'bookRights'), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as BookRights));
-            setBooks(data.length > 0 ? data : DEMO_BOOKS);
-        }, () => setBooks(DEMO_BOOKS));
+            setBooks(snap.docs.map(d => ({ id: d.id, ...d.data() } as BookRights)));
+        }, () => {});
 
         const unsub2 = onSnapshot(query(collection(db, 'rightsDeals'), orderBy('createdAt', 'desc')), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as RightsDeal));
-            setDeals(data.length > 0 ? data : DEMO_DEALS);
-        }, () => setDeals(DEMO_DEALS));
+            setDeals(snap.docs.map(d => ({ id: d.id, ...d.data() } as RightsDeal)));
+        }, () => {});
 
         return () => { unsub1(); unsub2(); };
     }, []);

@@ -27,15 +27,7 @@ interface ARCReader {
     progress?: number;
 }
 
-const DEMO_READERS: ARCReader[] = [
-    { id: '1', name: 'Aria Chen', avatar: '🧬', email: 'aria@example.com', genres: ['Fantasy', 'Sci-Fi'], platform: 'Goodreads', followers: 2400, avgRating: 4.2, reviewsWritten: 89, status: 'reviewed', sentDate: 'Feb 15', reviewDate: 'Mar 5', review: { rating: 5, excerpt: '"A masterful blend of dark fantasy and political intrigue. The worldbuilding is exceptional."' }, progress: 100 },
-    { id: '2', name: 'Marcus Webb', avatar: '📚', email: 'marcus@example.com', genres: ['Literary Fiction', 'Fantasy'], platform: 'BookTube', followers: 15200, avgRating: 3.8, reviewsWritten: 145, status: 'reviewed', sentDate: 'Feb 15', reviewDate: 'Mar 8', review: { rating: 4, excerpt: '"Ambitious and atmospheric. The prose occasionally tries too hard, but the story carries itself."' }, progress: 100 },
-    { id: '3', name: 'Luna Okafor', avatar: '🌙', email: 'luna@example.com', genres: ['Fantasy', 'Romance'], platform: 'Instagram', followers: 8900, avgRating: 4.5, reviewsWritten: 67, status: 'reading', sentDate: 'Feb 20', progress: 72 },
-    { id: '4', name: 'Dev Patel', avatar: '🔮', email: 'dev@example.com', genres: ['Sci-Fi', 'Thriller'], platform: 'Goodreads', followers: 3100, avgRating: 4.0, reviewsWritten: 112, status: 'reading', sentDate: 'Feb 22', progress: 45 },
-    { id: '5', name: 'Sophie Turner', avatar: '🦋', email: 'sophie@example.com', genres: ['Fantasy', 'YA'], platform: 'TikTok', followers: 45000, avgRating: 4.3, reviewsWritten: 203, status: 'accepted', sentDate: 'Mar 1' },
-    { id: '6', name: 'James Korrath', avatar: '⚔️', email: 'james@example.com', genres: ['Epic Fantasy', 'Dark Fantasy'], platform: 'Blog', followers: 1800, avgRating: 4.1, reviewsWritten: 56, status: 'invited', sentDate: 'Mar 5' },
-    { id: '7', name: 'Yuki Tanaka', avatar: '🌸', email: 'yuki@example.com', genres: ['Fantasy', 'Literary Fiction'], platform: 'Goodreads', followers: 5600, avgRating: 4.4, reviewsWritten: 78, status: 'declined' },
-];
+
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     invited: { label: 'Invited', color: 'text-white/40', bg: 'bg-white/[0.04]' },
@@ -46,7 +38,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default function ARCManager() {
-    const [readers, setReaders] = useState(DEMO_READERS);
+    const [readers, setReaders] = useState<ARCReader[]>([]);
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [selectedReader, setSelectedReader] = useState<ARCReader | null>(null);
     const [showInvite, setShowInvite] = useState(false);
@@ -58,8 +50,7 @@ export default function ARCManager() {
             const unsub = onSnapshot(
                 query(collection(db, 'beta_readers'), where('authorId', '==', user.uid)),
                 (snap) => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (data.length > 0) setReaders(data as typeof DEMO_READERS);
+                    setReaders(snap.docs.map(d => ({ id: d.id, ...d.data() } as ARCReader)));
                 },
                 () => { }
             );

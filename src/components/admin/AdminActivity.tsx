@@ -14,18 +14,6 @@ interface ActivityEntry {
     details?: string;
 }
 
-const DEMO_ACTIVITY: ActivityEntry[] = [
-    { id: 'a1', action: 'New submission received', type: 'submission', actor: 'System', target: 'The Hollow Crown', timestamp: new Date(Date.now() - 30 * 60000), details: 'By Ada Chen' },
-    { id: 'a2', action: 'User registered', type: 'user', actor: 'System', target: 'jordan.kim@example.com', timestamp: new Date(Date.now() - 90 * 60000) },
-    { id: 'a3', action: 'Submission status changed to reviewing', type: 'submission', actor: 'Admin', target: 'Signal Bloom', timestamp: new Date(Date.now() - 2 * 3600000) },
-    { id: 'a4', action: 'Book published to catalogue', type: 'book', actor: 'Admin', target: 'Voices of the Diaspora', timestamp: new Date(Date.now() - 5 * 3600000) },
-    { id: 'a5', action: 'New review posted', type: 'review', actor: 'Morgan Blake', target: 'The Hollow Crown', timestamp: new Date(Date.now() - 8 * 3600000), details: '5 stars' },
-    { id: 'a6', action: 'New message from author', type: 'message', actor: 'Ada Chen', timestamp: new Date(Date.now() - 12 * 3600000), details: 'Re: manuscript revisions' },
-    { id: 'a7', action: 'Submission declined', type: 'submission', actor: 'Admin', target: 'Untitled Fantasy', timestamp: new Date(Date.now() - 24 * 3600000) },
-    { id: 'a8', action: 'Site settings updated', type: 'setting', actor: 'Admin', timestamp: new Date(Date.now() - 36 * 3600000), details: 'Submissions re-opened' },
-    { id: 'a9', action: 'New constellation created', type: 'book', actor: 'Admin', target: 'Climate Requiem', timestamp: new Date(Date.now() - 48 * 3600000) },
-    { id: 'a10', action: 'User role changed to author', type: 'user', actor: 'Admin', target: 'sam.chen@example.com', timestamp: new Date(Date.now() - 72 * 3600000) },
-];
 
 const TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
     submission: { icon: FileText, color: 'text-cosmic-purple', bg: 'bg-cosmic-purple/10' },
@@ -43,9 +31,8 @@ export default function AdminActivity() {
 
     useEffect(() => {
         const unsub = onSnapshot(collection(db, 'activityLog'), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as ActivityEntry));
-            setActivities(data.length > 0 ? data : DEMO_ACTIVITY);
-        }, () => setActivities(DEMO_ACTIVITY));
+            setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() } as ActivityEntry)));
+        }, () => {});
         return () => unsub();
     }, []);
 

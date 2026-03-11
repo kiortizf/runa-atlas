@@ -27,19 +27,6 @@ interface Campaign {
     createdAt: any;
 }
 
-const DEMO_SUBSCRIBERS: Subscriber[] = [
-    { id: 's1', email: 'reader@example.com', name: 'Alex Rivera', segment: 'Readers', subscribedAt: new Date('2027-01-15'), status: 'active' },
-    { id: 's2', email: 'bookclub@example.com', name: 'Jordan Kim', segment: 'Book Clubs', subscribedAt: new Date('2027-02-01'), status: 'active' },
-    { id: 's3', email: 'reviewer@example.com', name: 'Sam Chen', segment: 'Reviewers', subscribedAt: new Date('2027-02-15'), status: 'active' },
-    { id: 's4', email: 'fantasy@example.com', name: 'Morgan Blake', segment: 'Fantasy', subscribedAt: new Date('2027-03-01'), status: 'active' },
-    { id: 's5', email: 'scifi@example.com', name: 'Avery Okonkwo', segment: 'Sci-Fi', subscribedAt: new Date('2027-01-20'), status: 'unsubscribed' },
-];
-
-const DEMO_CAMPAIGNS: Campaign[] = [
-    { id: 'c1', subject: 'The Hollow Crown: Now Available!', previewText: 'The most anticipated dark fantasy of 2027...', segment: 'All', status: 'sent', recipients: 1240, opens: 892, clicks: 345, sentAt: new Date('2027-03-01'), createdAt: new Date('2027-02-28') },
-    { id: 'c2', subject: 'Spring Reading Guide 2027', previewText: 'Five new titles to dive into this season', segment: 'Readers', status: 'sent', recipients: 890, opens: 567, clicks: 234, sentAt: new Date('2027-03-15'), createdAt: new Date('2027-03-10') },
-    { id: 'c3', subject: 'Author Spotlight: Ada Chen', previewText: 'Meet the mind behind Signal Bloom', segment: 'All', status: 'draft', recipients: 0, opens: 0, clicks: 0, createdAt: new Date('2027-04-01') },
-];
 
 const SEGMENTS = ['All', 'Readers', 'Book Clubs', 'Reviewers', 'Fantasy', 'Sci-Fi', 'Authors'];
 
@@ -55,14 +42,12 @@ export default function AdminNewsletter() {
 
     useEffect(() => {
         const unsub1 = onSnapshot(collection(db, 'newsletterSubscribers'), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Subscriber));
-            setSubscribers(data.length > 0 ? data : DEMO_SUBSCRIBERS);
-        }, () => setSubscribers(DEMO_SUBSCRIBERS));
+            setSubscribers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Subscriber)));
+        }, () => {});
 
         const unsub2 = onSnapshot(collection(db, 'newsletterCampaigns'), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign));
-            setCampaigns(data.length > 0 ? data : DEMO_CAMPAIGNS);
-        }, () => setCampaigns(DEMO_CAMPAIGNS));
+            setCampaigns(snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign)));
+        }, () => {});
 
         return () => { unsub1(); unsub2(); };
     }, []);

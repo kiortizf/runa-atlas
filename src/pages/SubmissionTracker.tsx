@@ -30,22 +30,16 @@ const PIPELINE_STAGES = [
     { key: 'published', label: 'Published', icon: Star, color: 'text-starforge-gold', bg: 'bg-starforge-gold/10', description: 'Your book is live and available to readers!' },
 ];
 
-// Demo submissions for when not logged in
-const DEMO_SUBMISSIONS: TrackedSubmission[] = [
-    { id: '1', trackingId: 'RA-2026-0142', title: 'The Ember Codex', genre: 'Dark Fantasy', status: 'accepted', wordCount: 92400, createdAt: Timestamp.fromDate(new Date('2025-11-15')), updatedAt: Timestamp.fromDate(new Date('2026-03-01')) },
-    { id: '2', trackingId: 'RA-2026-0287', title: 'Whispers in the Aether', genre: 'Magical Realism', status: 'reviewing', wordCount: 68000, createdAt: Timestamp.fromDate(new Date('2026-01-20')), updatedAt: Timestamp.fromDate(new Date('2026-02-28')) },
-    { id: '3', trackingId: 'RA-2026-0341', title: 'The Last Cartographer (Short Story)', genre: 'Science Fiction', status: 'pending', wordCount: 12000, createdAt: Timestamp.fromDate(new Date('2026-03-05')) },
-];
 
 export default function SubmissionTracker() {
     const { user } = useAuth();
-    const [submissions, setSubmissions] = useState<TrackedSubmission[]>(DEMO_SUBMISSIONS);
+    const [submissions, setSubmissions] = useState<TrackedSubmission[]>([]);
     const [selectedSubmission, setSelectedSubmission] = useState<TrackedSubmission | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Load real submissions if logged in
+    // Load submissions from Firestore
     useEffect(() => {
-        if (!user) return;
+        if (!user) { setLoading(false); return; }
         setLoading(true);
         const q = query(
             collection(db, 'submissions'),
@@ -54,8 +48,7 @@ export default function SubmissionTracker() {
         );
         const unsubscribe = onSnapshot(q,
             (snap) => {
-                const subs = snap.docs.map(d => ({ id: d.id, ...d.data() } as TrackedSubmission));
-                if (subs.length > 0) setSubmissions(subs);
+                setSubmissions(snap.docs.map(d => ({ id: d.id, ...d.data() } as TrackedSubmission)));
                 setLoading(false);
             },
             (err) => {

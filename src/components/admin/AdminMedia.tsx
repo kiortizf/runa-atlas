@@ -17,14 +17,6 @@ interface MediaItem {
     createdAt: any;
 }
 
-const DEMO_MEDIA: MediaItem[] = [
-    { id: 'm1', name: 'hollow-crown-cover.jpg', url: 'https://placehold.co/400x600/1a1a2e/d4a017?text=Hollow+Crown', type: 'image/jpeg', size: 245000, altText: 'The Hollow Crown book cover', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-    { id: 'm2', name: 'signal-bloom-cover.jpg', url: 'https://placehold.co/400x600/1a1a2e/9b59b6?text=Signal+Bloom', type: 'image/jpeg', size: 198000, altText: 'Signal Bloom book cover', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-    { id: 'm3', name: 'author-elena-rostova.jpg', url: 'https://placehold.co/400x400/1a1a2e/2ecc71?text=Elena+R', type: 'image/jpeg', size: 87000, altText: 'Author photo: Elena Rostova', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-    { id: 'm4', name: 'runeweave-hero.jpg', url: 'https://placehold.co/1200x400/1a1a2e/d4a017?text=Runeweave+Hero', type: 'image/jpeg', size: 520000, altText: 'Runeweave hero banner', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-    { id: 'm5', name: 'constellation-voices.png', url: 'https://placehold.co/600x300/1a1a2e/9b59b6?text=Voices+Diaspora', type: 'image/png', size: 340000, altText: 'Voices of the Diaspora constellation art', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-    { id: 'm6', name: 'event-worldbuilding-thumb.jpg', url: 'https://placehold.co/400x300/1a1a2e/2ecc71?text=Worldbuilding', type: 'image/jpeg', size: 156000, altText: 'Worldbuilding workshop thumbnail', storagePath: '', uploadedBy: 'Admin', createdAt: new Date() },
-];
 
 type ViewMode = 'grid' | 'list';
 
@@ -41,9 +33,8 @@ export default function AdminMedia() {
 
     useEffect(() => {
         const unsub = onSnapshot(collection(db, 'mediaLibrary'), snap => {
-            const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as MediaItem));
-            setMedia(items.length > 0 ? items : DEMO_MEDIA);
-        }, () => setMedia(DEMO_MEDIA));
+            setMedia(snap.docs.map(d => ({ id: d.id, ...d.data() } as MediaItem)));
+        }, () => {});
         return () => unsub();
     }, []);
 

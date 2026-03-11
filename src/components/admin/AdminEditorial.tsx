@@ -38,53 +38,7 @@ interface EditorNote {
     id: string; text: string; author: string; createdAt: any;
 }
 
-// ─── Hardcoded Demo Data ────────────────────────────
-const DEMO_PROJECTS: EditorialProject[] = [
-    {
-        id: 'ep-1', bookTitle: 'The Hollow Crown', authorName: 'Maren Voss', phase: 'line_edit', assignedEditor: 'Cassandra Liu',
-        deadline: '2027-04-15', priority: true, deliverables: [
-            { id: 'd1', label: 'Structural notes delivered', done: true },
-            { id: 'd2', label: 'Author revisions received', done: true },
-            { id: 'd3', label: 'Line edit pass complete', done: false },
-            { id: 'd4', label: 'Style sheet finalized', done: false },
-        ], fileVersions: [
-            { name: 'HollowCrown_v1_dev.docx', url: '#', uploadedAt: new Date('2027-01-15'), uploadedBy: 'Cassandra Liu' },
-            { name: 'HollowCrown_v2_revised.docx', url: '#', uploadedAt: new Date('2027-03-01'), uploadedBy: 'Maren Voss' },
-        ], createdAt: new Date('2027-01-10')
-    },
-    {
-        id: 'ep-2', bookTitle: 'Signal Bloom', authorName: 'Ada Chen', phase: 'dev_edit', assignedEditor: 'James Park',
-        deadline: '2027-05-01', priority: false, deliverables: [
-            { id: 'd1', label: 'Dev edit notes drafted', done: false },
-            { id: 'd2', label: 'Author call scheduled', done: true },
-        ], fileVersions: [
-            { name: 'SignalBloom_v1_raw.docx', url: '#', uploadedAt: new Date('2027-02-20'), uploadedBy: 'Ada Chen' },
-        ], createdAt: new Date('2027-02-15')
-    },
-    {
-        id: 'ep-3', bookTitle: 'Echoes of Diaspora', authorName: 'Nadia Okafor', phase: 'copy_edit', assignedEditor: 'Cassandra Liu',
-        deadline: '2027-03-20', priority: true, deliverables: [
-            { id: 'd1', label: 'Copy edit pass 1 complete', done: true },
-            { id: 'd2', label: 'Query list resolved', done: false },
-            { id: 'd3', label: 'Final manuscript prepared', done: false },
-        ], fileVersions: [], createdAt: new Date('2027-01-05')
-    },
-    {
-        id: 'ep-4', bookTitle: 'The Cartographer\'s Ghost', authorName: 'Felix Marquez', phase: 'proofread', assignedEditor: 'Priya Sharma',
-        deadline: '2027-03-25', priority: false, deliverables: [
-            { id: 'd1', label: 'First proof read', done: true },
-            { id: 'd2', label: 'Corrections incorporated', done: true },
-            { id: 'd3', label: 'Final proof approved', done: false },
-        ], fileVersions: [], createdAt: new Date('2026-12-01')
-    },
-];
-
-const DEMO_EDITORS = [
-    { name: 'Cassandra Liu', role: 'Senior Editor', active: 2, capacity: 3, available: true },
-    { name: 'James Park', role: 'Developmental Editor', active: 1, capacity: 2, available: true },
-    { name: 'Priya Sharma', role: 'Copyeditor (Freelance)', active: 1, capacity: 2, available: true },
-    { name: 'River Okonkwo', role: 'Proofreader (Freelance)', active: 0, capacity: 3, available: false },
-];
+interface EditorStaff { name: string; role: string; active: number; capacity: number; available: boolean; }
 
 type ViewMode = 'pipeline' | 'calendar' | 'staff';
 
@@ -98,13 +52,17 @@ export default function AdminEditorial() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [newProject, setNewProject] = useState({ bookTitle: '', authorName: '', phase: 'dev_edit' as Phase, assignedEditor: '', deadline: '' });
 
-    // Load from Firestore, fall back to demo
+    const [editors, setEditors] = useState<EditorStaff[]>([]);
+
+    // Load from Firestore
     useEffect(() => {
-        const unsub = onSnapshot(query(collection(db, 'editorialProjects'), orderBy('createdAt', 'desc')), snap => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as EditorialProject));
-            setProjects(data.length > 0 ? data : DEMO_PROJECTS);
-        }, () => setProjects(DEMO_PROJECTS));
-        return () => unsub();
+        const unsub1 = onSnapshot(query(collection(db, 'editorialProjects'), orderBy('createdAt', 'desc')), snap => {
+            setProjects(snap.docs.map(d => ({ id: d.id, ...d.data() } as EditorialProject)));
+        }, () => {});
+        const unsub2 = onSnapshot(collection(db, 'editors'), snap => {
+            setEditors(snap.docs.map(d => d.data() as EditorStaff));
+        }, () => {});
+        return () => { unsub1(); unsub2(); };
     }, []);
 
     // Load notes for expanded project
@@ -187,11 +145,11 @@ export default function AdminEditorial() {
 
     // ─── Staff Data ───────────────────────────────────
     const staffData = useMemo(() => {
-        return DEMO_EDITORS.map(editor => ({
+        return editors.map(editor => ({
             ...editor,
             projects: projects.filter(p => p.assignedEditor === editor.name),
         }));
-    }, [projects]);
+    }, [projects, editors]);
 
     // Conflict detection
     const conflicts = useMemo(() => {

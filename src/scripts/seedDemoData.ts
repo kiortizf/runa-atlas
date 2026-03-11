@@ -389,5 +389,132 @@ export async function seedAllDemoData(uid: string): Promise<{ success: boolean; 
             setDoc(doc(db, 'reward_tiers', item.id), item));
     }
 
+    // 16. Tracked Submissions (per-user)
+    const TRACKED_SUBMISSIONS = [
+        { id: 'ts-1', trackingId: 'RA-2026-0142', title: 'The Ember Codex', genre: 'Dark Fantasy', status: 'accepted', wordCount: 92400, createdAt: ts('2025-11-15'), updatedAt: ts('2026-03-01') },
+        { id: 'ts-2', trackingId: 'RA-2026-0287', title: 'Whispers in the Aether', genre: 'Magical Realism', status: 'reviewing', wordCount: 68000, createdAt: ts('2026-01-20'), updatedAt: ts('2026-02-28') },
+        { id: 'ts-3', trackingId: 'RA-2026-0341', title: 'The Last Cartographer (Short Story)', genre: 'Science Fiction', status: 'pending', wordCount: 12000, createdAt: ts('2026-03-05') },
+    ];
+    for (const item of TRACKED_SUBMISSIONS) {
+        await safeWrite(`submissions/${item.id}`, () =>
+            setDoc(doc(db, 'submissions', item.id), { ...item, userId: uid }));
+    }
+
+    // 17. ARC Readers (per-user author)
+    const ARC_READERS = [
+        { id: 'arc-1', name: 'Aria Chen', avatar: '🧬', email: 'aria@example.com', genres: ['Fantasy', 'Sci-Fi'], platform: 'Goodreads', followers: 2400, avgRating: 4.2, reviewsWritten: 89, status: 'reviewed', sentDate: 'Feb 15', reviewDate: 'Mar 5', review: { rating: 5, excerpt: '"A masterful blend of dark fantasy and political intrigue. The worldbuilding is exceptional."' }, progress: 100 },
+        { id: 'arc-2', name: 'Marcus Webb', avatar: '📚', email: 'marcus@example.com', genres: ['Literary Fiction', 'Fantasy'], platform: 'BookTube', followers: 15200, avgRating: 3.8, reviewsWritten: 145, status: 'reviewed', sentDate: 'Feb 15', reviewDate: 'Mar 8', review: { rating: 4, excerpt: '"Ambitious and atmospheric. The prose occasionally tries too hard, but the story carries itself."' }, progress: 100 },
+        { id: 'arc-3', name: 'Luna Okafor', avatar: '🌙', email: 'luna@example.com', genres: ['Fantasy', 'Romance'], platform: 'Instagram', followers: 8900, avgRating: 4.5, reviewsWritten: 67, status: 'reading', sentDate: 'Feb 20', progress: 72 },
+        { id: 'arc-4', name: 'Dev Patel', avatar: '🔮', email: 'dev@example.com', genres: ['Sci-Fi', 'Thriller'], platform: 'Goodreads', followers: 3100, avgRating: 4.0, reviewsWritten: 112, status: 'reading', sentDate: 'Feb 22', progress: 45 },
+        { id: 'arc-5', name: 'Sophie Turner', avatar: '🦋', email: 'sophie@example.com', genres: ['Fantasy', 'YA'], platform: 'TikTok', followers: 45000, avgRating: 4.3, reviewsWritten: 203, status: 'accepted', sentDate: 'Mar 1' },
+        { id: 'arc-6', name: 'James Korrath', avatar: '⚔️', email: 'james@example.com', genres: ['Epic Fantasy', 'Dark Fantasy'], platform: 'Blog', followers: 1800, avgRating: 4.1, reviewsWritten: 56, status: 'invited', sentDate: 'Mar 5' },
+        { id: 'arc-7', name: 'Yuki Tanaka', avatar: '🌸', email: 'yuki@example.com', genres: ['Fantasy', 'Literary Fiction'], platform: 'Goodreads', followers: 5600, avgRating: 4.4, reviewsWritten: 78, status: 'declined' },
+    ];
+    for (const item of ARC_READERS) {
+        await safeWrite(`beta_readers/${item.id}`, () =>
+            setDoc(doc(db, 'beta_readers', item.id), { ...item, authorId: uid }));
+    }
+
+    // 18. Editorial Projects (admin)
+    const EDITORIAL_PROJECTS = [
+        { id: 'ep-1', bookTitle: 'The Hollow Crown', authorName: 'Maren Voss', phase: 'line_edit', assignedEditor: 'Cassandra Liu', deadline: '2027-04-15', priority: true, deliverables: [{ id: 'd1', label: 'Structural notes delivered', done: true }, { id: 'd2', label: 'Author revisions received', done: true }, { id: 'd3', label: 'Line edit pass complete', done: false }, { id: 'd4', label: 'Style sheet finalized', done: false }], fileVersions: [{ name: 'HollowCrown_v1_dev.docx', url: '#', uploadedAt: ts('2027-01-15'), uploadedBy: 'Cassandra Liu' }, { name: 'HollowCrown_v2_revised.docx', url: '#', uploadedAt: ts('2027-03-01'), uploadedBy: 'Maren Voss' }], createdAt: ts('2027-01-10') },
+        { id: 'ep-2', bookTitle: 'Signal Bloom', authorName: 'Ada Chen', phase: 'dev_edit', assignedEditor: 'James Park', deadline: '2027-05-01', priority: false, deliverables: [{ id: 'd1', label: 'Dev edit notes drafted', done: false }, { id: 'd2', label: 'Author call scheduled', done: true }], fileVersions: [{ name: 'SignalBloom_v1_raw.docx', url: '#', uploadedAt: ts('2027-02-20'), uploadedBy: 'Ada Chen' }], createdAt: ts('2027-02-15') },
+        { id: 'ep-3', bookTitle: 'Echoes of Diaspora', authorName: 'Nadia Okafor', phase: 'copy_edit', assignedEditor: 'Cassandra Liu', deadline: '2027-03-20', priority: true, deliverables: [{ id: 'd1', label: 'Copy edit pass 1 complete', done: true }, { id: 'd2', label: 'Query list resolved', done: false }, { id: 'd3', label: 'Final manuscript prepared', done: false }], fileVersions: [], createdAt: ts('2027-01-05') },
+        { id: 'ep-4', bookTitle: "The Cartographer's Ghost", authorName: 'Felix Marquez', phase: 'proofread', assignedEditor: 'Priya Sharma', deadline: '2027-03-25', priority: false, deliverables: [{ id: 'd1', label: 'First proof read', done: true }, { id: 'd2', label: 'Corrections incorporated', done: true }, { id: 'd3', label: 'Final proof approved', done: false }], fileVersions: [], createdAt: ts('2026-12-01') },
+    ];
+    for (const item of EDITORIAL_PROJECTS) {
+        await safeWrite(`editorialProjects/${item.id}`, () =>
+            setDoc(doc(db, 'editorialProjects', item.id), item));
+    }
+
+    // Editorial staff
+    const EDITORS = [
+        { id: 'ed-1', name: 'Cassandra Liu', role: 'Senior Editor', active: 2, capacity: 3, available: true },
+        { id: 'ed-2', name: 'James Park', role: 'Developmental Editor', active: 1, capacity: 2, available: true },
+        { id: 'ed-3', name: 'Priya Sharma', role: 'Copyeditor (Freelance)', active: 1, capacity: 2, available: true },
+        { id: 'ed-4', name: 'River Okonkwo', role: 'Proofreader (Freelance)', active: 0, capacity: 3, available: false },
+    ];
+    for (const item of EDITORS) {
+        await safeWrite(`editors/${item.id}`, () =>
+            setDoc(doc(db, 'editors', item.id), item));
+    }
+
+    // 19. Book Rights (admin)
+    const BOOK_RIGHTS = [
+        { id: 'br-1', bookTitle: 'The Hollow Crown', authorName: 'Maren Voss', grid: { Print: { World: { status: 'Sold', buyer: 'Rüna Atlas', termStart: '2027-01', termEnd: '2032-01' }, 'North America': { status: 'Sold', buyer: 'Rüna Atlas' }, 'UK/ANZ': { status: 'Available' } }, Audio: { World: { status: 'Sold', buyer: 'Audible', termStart: '2027-03', termEnd: '2030-03' } }, 'Film/TV': { World: { status: 'Optioned', buyer: 'A24', termStart: '2027-06', termEnd: '2028-06' } }, Digital: { World: { status: 'Sold', buyer: 'Rüna Atlas' } }, Translation: { EU: { status: 'Sold', buyer: 'Gallimard (French)', termStart: '2027-09', termEnd: '2032-09' }, Asia: { status: 'Available' } } }, createdAt: ts('2027-01-10') },
+        { id: 'br-2', bookTitle: 'Signal Bloom', authorName: 'Ada Chen', grid: { Print: { World: { status: 'Sold', buyer: 'Rüna Atlas' } }, Audio: { World: { status: 'Available' } }, 'Film/TV': { World: { status: 'Available' } }, Digital: { World: { status: 'Sold', buyer: 'Rüna Atlas' } }, Translation: {} }, createdAt: ts('2027-02-15') },
+    ];
+    for (const item of BOOK_RIGHTS) {
+        await safeWrite(`bookRights/${item.id}`, () =>
+            setDoc(doc(db, 'bookRights', item.id), item));
+    }
+
+    // Rights Deals
+    const RIGHTS_DEALS = [
+        { id: 'rd-1', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Audio', territory: 'World', buyer: 'Audible', value: 45000, termStart: '2027-03', termEnd: '2030-03', notes: '3-year exclusive', createdAt: ts('2027-02-01') },
+        { id: 'rd-2', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Film/TV', territory: 'World', buyer: 'A24', value: 120000, termStart: '2027-06', termEnd: '2028-06', notes: '12-month option with renewal', createdAt: ts('2027-03-15') },
+        { id: 'rd-3', bookId: 'br-1', bookTitle: 'The Hollow Crown', type: 'Translation', territory: 'EU', buyer: 'Gallimard', value: 18000, termStart: '2027-09', termEnd: '2032-09', notes: 'French language only', createdAt: ts('2027-04-01') },
+    ];
+    for (const item of RIGHTS_DEALS) {
+        await safeWrite(`rightsDeals/${item.id}`, () =>
+            setDoc(doc(db, 'rightsDeals', item.id), item));
+    }
+
+    // 20. Media Library (admin)
+    const MEDIA_ITEMS = [
+        { id: 'ml-1', name: 'hollow-crown-cover.jpg', url: 'https://placehold.co/400x600/1a1a2e/d4a017?text=Hollow+Crown', type: 'image/jpeg', size: 245000, altText: 'The Hollow Crown book cover', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-01-15') },
+        { id: 'ml-2', name: 'signal-bloom-cover.jpg', url: 'https://placehold.co/400x600/1a1a2e/9b59b6?text=Signal+Bloom', type: 'image/jpeg', size: 198000, altText: 'Signal Bloom book cover', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-02-20') },
+        { id: 'ml-3', name: 'author-elena-rostova.jpg', url: 'https://placehold.co/400x400/1a1a2e/2ecc71?text=Elena+R', type: 'image/jpeg', size: 87000, altText: 'Author photo: Elena Rostova', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-01-10') },
+        { id: 'ml-4', name: 'runeweave-hero.jpg', url: 'https://placehold.co/1200x400/1a1a2e/d4a017?text=Runeweave+Hero', type: 'image/jpeg', size: 520000, altText: 'Runeweave hero banner', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-03-01') },
+        { id: 'ml-5', name: 'constellation-voices.png', url: 'https://placehold.co/600x300/1a1a2e/9b59b6?text=Voices+Diaspora', type: 'image/png', size: 340000, altText: 'Voices of the Diaspora constellation art', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-02-10') },
+        { id: 'ml-6', name: 'event-worldbuilding-thumb.jpg', url: 'https://placehold.co/400x300/1a1a2e/2ecc71?text=Worldbuilding', type: 'image/jpeg', size: 156000, altText: 'Worldbuilding workshop thumbnail', storagePath: '', uploadedBy: 'Admin', createdAt: ts('2027-03-05') },
+    ];
+    for (const item of MEDIA_ITEMS) {
+        await safeWrite(`mediaLibrary/${item.id}`, () =>
+            setDoc(doc(db, 'mediaLibrary', item.id), item));
+    }
+
+    // 21. Activity Log (admin)
+    const ACTIVITY_LOG = [
+        { id: 'al-1', action: 'New submission received', type: 'submission', actor: 'System', target: 'The Hollow Crown', timestamp: ts('2026-03-11'), details: 'By Ada Chen' },
+        { id: 'al-2', action: 'User registered', type: 'user', actor: 'System', target: 'jordan.kim@example.com', timestamp: ts('2026-03-11') },
+        { id: 'al-3', action: 'Submission status changed to reviewing', type: 'submission', actor: 'Admin', target: 'Signal Bloom', timestamp: ts('2026-03-10') },
+        { id: 'al-4', action: 'Book published to catalogue', type: 'book', actor: 'Admin', target: 'Voices of the Diaspora', timestamp: ts('2026-03-10') },
+        { id: 'al-5', action: 'New review posted', type: 'review', actor: 'Morgan Blake', target: 'The Hollow Crown', timestamp: ts('2026-03-09'), details: '5 stars' },
+        { id: 'al-6', action: 'New message from author', type: 'message', actor: 'Ada Chen', timestamp: ts('2026-03-09'), details: 'Re: manuscript revisions' },
+        { id: 'al-7', action: 'Submission declined', type: 'submission', actor: 'Admin', target: 'Untitled Fantasy', timestamp: ts('2026-03-08') },
+        { id: 'al-8', action: 'Site settings updated', type: 'setting', actor: 'Admin', timestamp: ts('2026-03-07'), details: 'Submissions re-opened' },
+        { id: 'al-9', action: 'New constellation created', type: 'book', actor: 'Admin', target: 'Climate Requiem', timestamp: ts('2026-03-06') },
+        { id: 'al-10', action: 'User role changed to author', type: 'user', actor: 'Admin', target: 'sam.chen@example.com', timestamp: ts('2026-03-05') },
+    ];
+    for (const item of ACTIVITY_LOG) {
+        await safeWrite(`activityLog/${item.id}`, () =>
+            setDoc(doc(db, 'activityLog', item.id), item));
+    }
+
+    // 22. Newsletter Subscribers (admin)
+    const NL_SUBSCRIBERS = [
+        { id: 'ns-1', email: 'reader@example.com', name: 'Alex Rivera', segment: 'Readers', subscribedAt: ts('2027-01-15'), status: 'active' },
+        { id: 'ns-2', email: 'bookclub@example.com', name: 'Jordan Kim', segment: 'Book Clubs', subscribedAt: ts('2027-02-01'), status: 'active' },
+        { id: 'ns-3', email: 'reviewer@example.com', name: 'Sam Chen', segment: 'Reviewers', subscribedAt: ts('2027-02-15'), status: 'active' },
+        { id: 'ns-4', email: 'fantasy@example.com', name: 'Morgan Blake', segment: 'Fantasy', subscribedAt: ts('2027-03-01'), status: 'active' },
+        { id: 'ns-5', email: 'scifi@example.com', name: 'Avery Okonkwo', segment: 'Sci-Fi', subscribedAt: ts('2027-01-20'), status: 'unsubscribed' },
+    ];
+    for (const item of NL_SUBSCRIBERS) {
+        await safeWrite(`newsletterSubscribers/${item.id}`, () =>
+            setDoc(doc(db, 'newsletterSubscribers', item.id), item));
+    }
+
+    // Newsletter Campaigns
+    const NL_CAMPAIGNS = [
+        { id: 'nc-1', subject: 'The Hollow Crown: Now Available!', previewText: 'The most anticipated dark fantasy of 2027...', segment: 'All', status: 'sent', recipients: 1240, opens: 892, clicks: 345, sentAt: ts('2027-03-01'), createdAt: ts('2027-02-28') },
+        { id: 'nc-2', subject: 'Spring Reading Guide 2027', previewText: 'Five new titles to dive into this season', segment: 'Readers', status: 'sent', recipients: 890, opens: 567, clicks: 234, sentAt: ts('2027-03-15'), createdAt: ts('2027-03-10') },
+        { id: 'nc-3', subject: 'Author Spotlight: Ada Chen', previewText: 'Meet the mind behind Signal Bloom', segment: 'All', status: 'draft', recipients: 0, opens: 0, clicks: 0, createdAt: ts('2027-04-01') },
+    ];
+    for (const item of NL_CAMPAIGNS) {
+        await safeWrite(`newsletterCampaigns/${item.id}`, () =>
+            setDoc(doc(db, 'newsletterCampaigns', item.id), item));
+    }
+
     return { success: errors.length === 0, seeded, errors };
 }
