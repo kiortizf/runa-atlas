@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -149,6 +150,7 @@ function RadarChart({ axes }: { axes: TasteAxis[] }) {
 }
 
 export default function BookDNA() {
+    const { user } = useAuth();
     const [activeSection, setActiveSection] = useState<'overview' | 'axes' | 'evolution'>('overview');
 
     useEffect(() => {
@@ -171,6 +173,15 @@ export default function BookDNA() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
+            {/* Demo Banner */}
+            {!user && (
+                <div className="bg-gradient-to-r from-violet-500/10 to-starforge-gold/5 border-b border-violet-500/10">
+                    <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+                        <p className="text-xs text-text-secondary"><span className="text-violet-400 font-semibold">Demo Mode</span> — This is a sample profile. Sign in to build your personal Book DNA.</p>
+                        <a href="/portal" className="px-4 py-1.5 bg-violet-500/10 text-violet-400 text-[10px] font-semibold uppercase tracking-wider border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-6xl mx-auto px-6 py-6">

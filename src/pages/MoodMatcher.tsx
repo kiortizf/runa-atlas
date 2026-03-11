@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -156,6 +157,7 @@ function computeMatch(axes: MoodAxis[], book: BookResult): number {
 }
 
 export default function MoodMatcher() {
+    const { user } = useAuth();
     const [axes, setAxes] = useState<MoodAxis[]>(INITIAL_AXES);
     const [showResults, setShowResults] = useState(false);
 
@@ -192,6 +194,14 @@ export default function MoodMatcher() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
+            {!user && (
+                <div className="bg-gradient-to-r from-violet-500/10 to-starforge-gold/5 border-b border-violet-500/10">
+                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+                        <p className="text-xs text-text-secondary"><span className="text-violet-400 font-semibold">Demo Mode</span> — Sign in to save your mood preferences and get personalized recommendations.</p>
+                        <a href="/portal" className="px-4 py-1.5 bg-violet-500/10 text-violet-400 text-[10px] font-semibold uppercase tracking-wider border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">

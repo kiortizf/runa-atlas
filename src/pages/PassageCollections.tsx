@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -191,6 +192,7 @@ const TRENDING_PASSAGES: Passage[] = [
 ];
 
 export default function PassageCollections() {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'discover' | 'my' | 'trending'>('discover');
     const [openCollection, setOpenCollection] = useState<string | null>(null);
     const [savedPassages, setSavedPassages] = useState<Set<string>>(new Set(['p1', 'p2', 'p7']));
@@ -222,6 +224,14 @@ export default function PassageCollections() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
+            {!user && (
+                <div className="bg-gradient-to-r from-starforge-gold/10 to-violet-500/5 border-b border-starforge-gold/10">
+                    <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+                        <p className="text-xs text-text-secondary"><span className="text-starforge-gold font-semibold">Demo Mode</span> — Sign in to save passages and create your own collections.</p>
+                        <a href="/portal" className="px-4 py-1.5 bg-starforge-gold/10 text-starforge-gold text-[10px] font-semibold uppercase tracking-wider border border-starforge-gold/20 rounded hover:bg-starforge-gold/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-6xl mx-auto px-6 py-6">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -96,6 +97,7 @@ const USER_PREFERENCES = {
 };
 
 export default function ContentCompass() {
+    const { user } = useAuth();
     const [selectedBook, setSelectedBook] = useState<string>('b1');
     const [showSpoilers, setShowSpoilers] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -124,6 +126,14 @@ export default function ContentCompass() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
+            {!user && (
+                <div className="bg-gradient-to-r from-emerald-500/10 to-starforge-gold/5 border-b border-emerald-500/10">
+                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+                        <p className="text-xs text-text-secondary"><span className="text-emerald-400 font-semibold">Demo Mode</span> — Sign in to save your content preferences and get warnings for your library.</p>
+                        <a href="/portal" className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold uppercase tracking-wider border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">

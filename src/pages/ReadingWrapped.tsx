@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -332,6 +333,7 @@ function SlidePersonality({ onNext, onPrev }: SlideProps) {
 const SLIDES = [SlideIntro, SlideStats, SlideGenres, SlideMonthly, SlideAuthors, SlideHighlight, SlideCommunity, SlidePersonality];
 
 export default function ReadingWrapped() {
+    const { user } = useAuth();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [direction, setDirection] = useState(1);
 
@@ -389,6 +391,16 @@ export default function ReadingWrapped() {
                     transition={{ duration: 0.5 }}
                 />
             </div>
+
+            {/* Demo Banner */}
+            {!user && (
+                <div className="fixed top-1 left-0 right-0 z-40 flex justify-center">
+                    <div className="bg-deep-space/90 backdrop-blur-sm border border-white/[0.08] rounded-full px-5 py-2 flex items-center gap-3">
+                        <span className="text-[10px] text-text-secondary"><span className="text-aurora-teal font-semibold">Demo</span> — Sign in to see your personal Year in Review</span>
+                        <a href="/portal" className="px-3 py-1 bg-aurora-teal/10 text-aurora-teal text-[9px] font-semibold uppercase tracking-wider border border-aurora-teal/20 rounded-full hover:bg-aurora-teal/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
 
             {/* Slide area */}
             <div className="flex-1 flex items-center justify-center px-8 py-16 relative">

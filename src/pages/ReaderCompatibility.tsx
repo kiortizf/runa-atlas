@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -93,6 +94,7 @@ const BUDDY_READS = [
 ];
 
 export default function ReaderCompatibility() {
+    const { user } = useAuth();
     const [expandedMatch, setExpandedMatch] = useState<string | null>('m1');
     const [activeTab, setActiveTab] = useState<'matches' | 'buddy-reads' | 'invites'>('matches');
 
@@ -127,6 +129,14 @@ export default function ReaderCompatibility() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
+            {!user && (
+                <div className="bg-gradient-to-r from-rose-500/10 to-starforge-gold/5 border-b border-rose-500/10">
+                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+                        <p className="text-xs text-text-secondary"><span className="text-rose-400 font-semibold">Demo Mode</span> — Sign in to find your real reader matches and start buddy reads.</p>
+                        <a href="/portal" className="px-4 py-1.5 bg-rose-500/10 text-rose-400 text-[10px] font-semibold uppercase tracking-wider border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors">Sign In</a>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">
