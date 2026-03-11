@@ -11,6 +11,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Typography from '@tiptap/extension-typography';
+import { Mark, mergeAttributes } from '@tiptap/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FileText, Plus, ChevronRight, ChevronDown, Trash2, Edit2,
@@ -26,6 +27,7 @@ import {
     PenLine, UserCheck, Reply, Search, Replace, Columns,
     Download, Globe, MapPin, Sword, Shield, BookMarked,
     Keyboard, BookOpenCheck, BarChart3, Type, Maximize2, Activity,
+    Tag, PackageCheck, CircleDot, Palette,
     type LucideIcon
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -39,6 +41,37 @@ import { useWritingSessions } from '../hooks/useWritingSessions';
 import { useCollaboration, useComments, useSuggestions } from '../hooks/useCollaboration';
 import { useWorldBible, type WorldBibleEntry } from '../hooks/useWorldBible';
 import { useAuth } from '../contexts/AuthContext';
+
+// ── Annotation Tag Definitions ──
+const ANNOTATION_TAGS = [
+    { id: 'needs-research', label: 'Needs Research', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+    { id: 'pacing-issue', label: 'Pacing Issue', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+    { id: 'revisit', label: 'Revisit', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+    { id: 'strengthen', label: 'Strengthen', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+    { id: 'cut-maybe', label: 'Cut Maybe', color: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
+    { id: 'great-passage', label: 'Great Passage', color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+    { id: 'continuity', label: 'Continuity', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
+    { id: 'dialogue-fix', label: 'Dialogue Fix', color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
+] as const;
+
+// ── Custom TipTap Annotation Mark ──
+const AnnotationMark = Mark.create({
+    name: 'annotation',
+    addAttributes() {
+        return {
+            annotationType: { default: null, parseHTML: el => el.getAttribute('data-annotation-type'), renderHTML: attrs => ({ 'data-annotation-type': attrs.annotationType }) },
+            annotationColor: { default: null, parseHTML: el => el.getAttribute('data-annotation-color'), renderHTML: attrs => ({ 'data-annotation-color': attrs.annotationColor }) },
+            annotationBg: { default: null, parseHTML: el => el.getAttribute('data-annotation-bg'), renderHTML: attrs => ({ 'data-annotation-bg': attrs.annotationBg }) },
+        };
+    },
+    parseHTML() { return [{ tag: 'span[data-annotation-type]' }]; },
+    renderHTML({ HTMLAttributes }) {
+        return ['span', mergeAttributes(HTMLAttributes, {
+            style: `background: ${HTMLAttributes['data-annotation-bg'] || 'rgba(245,158,11,0.15)'}; border-bottom: 2px solid ${HTMLAttributes['data-annotation-color'] || '#f59e0b'}; padding: 1px 0; cursor: pointer;`,
+            class: 'forge-annotation',
+        }), 0];
+    },
+});
 
 // ════════════════════════════════════════════════════════
 // FORGE EDITOR PAGE
@@ -129,6 +162,15 @@ export default function ForgeEditor() {
     // Manuscript statistics
     const [showStats, setShowStats] = useState(false);
 
+    // Inline annotations
+    const [showAnnotationPicker, setShowAnnotationPicker] = useState(false);
+    const [annotationFilter, setAnnotationFilter] = useState<string | null>(null);
+
+    // Compile / manuscript assembly
+    const [showCompileModal, setShowCompileModal] = useState(false);
+    const [compileSelection, setCompileSelection] = useState<{ id: string; included: boolean }[]>([]);
+    const [compileFormat, setCompileFormat] = useState<'docx' | 'md' | 'txt'>('docx');
+
     // DnD sensors
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -147,6 +189,7 @@ export default function ForgeEditor() {
             Underline,
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
             Typography,
+            AnnotationMark,
         ],
         editorProps: {
             attributes: {
@@ -498,6 +541,72 @@ export default function ForgeEditor() {
         setShowExportModal(false);
     }, [activeManuscript, chapters]);
 
+    // ── Compile Functions (chapter-selective export) ──
+    const initCompile = useCallback(() => {
+        const chaps = chapters.filter(c => c.type === 'chapter' || c.type === 'scene');
+        setCompileSelection(chaps.map(c => ({ id: c.id, included: true })));
+        setShowCompileModal(true);
+    }, [chapters]);
+
+    const compileChapters = useMemo(() => {
+        return compileSelection
+            .filter(s => s.included)
+            .map(s => chapters.find(c => c.id === s.id))
+            .filter(Boolean) as Chapter[];
+    }, [compileSelection, chapters]);
+
+    const handleCompileExport = useCallback(async () => {
+        if (!activeManuscript || compileChapters.length === 0) return;
+        if (compileFormat === 'docx') {
+            const paragraphs: Paragraph[] = [];
+            paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: activeManuscript.title, bold: true, size: 48 })],
+                heading: HeadingLevel.TITLE, spacing: { after: 400 },
+            }));
+            for (const ch of compileChapters) {
+                paragraphs.push(new Paragraph({
+                    children: [new TextRun({ text: ch.title, bold: true, size: 32 })],
+                    heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 },
+                }));
+                for (const line of (ch.plainText || '').split('\n')) {
+                    if (line.trim()) paragraphs.push(new Paragraph({ children: [new TextRun({ text: line, size: 24, font: 'Georgia' })], spacing: { after: 120 } }));
+                }
+            }
+            const docFile = new Document({ sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: paragraphs }] });
+            const blob = await Packer.toBlob(docFile);
+            saveAs(blob, `${activeManuscript.title} — Compiled.docx`);
+        } else if (compileFormat === 'md') {
+            let md = `# ${activeManuscript.title}\n\n`;
+            for (const ch of compileChapters) md += `## ${ch.title}\n\n${ch.plainText || ''}\n\n---\n\n`;
+            saveAs(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${activeManuscript.title} — Compiled.md`);
+        } else {
+            let txt = `${activeManuscript.title}\n${'='.repeat(activeManuscript.title.length)}\n\n`;
+            for (const ch of compileChapters) txt += `${ch.title}\n${'-'.repeat(ch.title.length)}\n\n${ch.plainText || ''}\n\n`;
+            saveAs(new Blob([txt], { type: 'text/plain;charset=utf-8' }), `${activeManuscript.title} — Compiled.txt`);
+        }
+        setShowCompileModal(false);
+    }, [activeManuscript, compileChapters, compileFormat]);
+
+    // ── Annotation apply/remove ──
+    const applyAnnotation = useCallback((tagId: string) => {
+        if (!editor) return;
+        const tag = ANNOTATION_TAGS.find(t => t.id === tagId);
+        if (!tag) return;
+        const { from, to } = editor.state.selection;
+        if (from === to) return;
+        editor.chain().focus()
+            .setMark('annotation', { annotationType: tag.id, annotationColor: tag.color, annotationBg: tag.bg })
+            .run();
+        setShowAnnotationPicker(false);
+        setSaveStatus('unsaved');
+    }, [editor]);
+
+    const removeAnnotation = useCallback(() => {
+        if (!editor) return;
+        editor.chain().focus().unsetMark('annotation').run();
+        setSaveStatus('unsaved');
+    }, [editor]);
+
     // ── Split Editor ──
     const splitEditor = useEditor({
         extensions: [
@@ -663,6 +772,9 @@ export default function ForgeEditor() {
                 <button onClick={() => setShowExportModal(true)} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Export manuscript">
                     <Download className="w-4 h-4" />
                 </button>
+                <button onClick={initCompile} className="p-1.5 rounded hover:bg-white/[0.06] text-text-secondary hover:text-white" title="Compile manuscript (Scrivener-style)">
+                    <PackageCheck className="w-4 h-4" />
+                </button>
                 <button onClick={() => setTypewriterMode(t => !t)} className={`p-1.5 rounded hover:bg-white/[0.06] transition-colors ${typewriterMode ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white'}`} title={`Typewriter scroll ${typewriterMode ? 'ON' : 'OFF'}`}>
                     <Type className="w-4 h-4" />
                 </button>
@@ -794,6 +906,35 @@ export default function ForgeEditor() {
                             }} className="p-1.5 rounded text-text-secondary hover:text-white hover:bg-white/[0.06] transition-colors" title="Add comment on selection">
                                 <MessageSquare className="w-3.5 h-3.5" />
                             </button>
+                            {/* Annotation picker */}
+                            <div className="relative">
+                                <button onClick={() => setShowAnnotationPicker(s => !s)}
+                                    className={`p-1.5 rounded transition-colors ${showAnnotationPicker ? 'text-starforge-gold bg-starforge-gold/10' : 'text-text-secondary hover:text-white hover:bg-white/[0.06]'}`}
+                                    title="Annotate selection">
+                                    <Tag className="w-3.5 h-3.5" />
+                                </button>
+                                <AnimatePresence>
+                                    {showAnnotationPicker && (
+                                        <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
+                                            className="absolute top-full left-0 mt-1 w-48 bg-deep-space border border-white/[0.1] rounded-lg shadow-2xl z-40 p-2 space-y-0.5">
+                                            <p className="text-[9px] text-text-secondary uppercase tracking-wider mb-1 font-ui">Annotate as...</p>
+                                            {ANNOTATION_TAGS.map(tag => (
+                                                <button key={tag.id} onClick={() => applyAnnotation(tag.id)}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-white/80 hover:bg-white/[0.04] transition-colors">
+                                                    <div className="w-2.5 h-2.5 rounded-full flex-none" style={{ backgroundColor: tag.color }} />
+                                                    {tag.label}
+                                                </button>
+                                            ))}
+                                            <div className="border-t border-white/[0.06] mt-1 pt-1">
+                                                <button onClick={removeAnnotation}
+                                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-red-400/70 hover:text-red-400 hover:bg-white/[0.04] transition-colors">
+                                                    <X className="w-3 h-3" /> Remove annotation
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                             {/* Suggestion mode indicator */}
                             {suggestionMode && (
                                 <span className="text-[9px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">SUGGESTING</span>
@@ -1378,6 +1519,81 @@ export default function ForgeEditor() {
                 )}
             </AnimatePresence>
 
+            {/* ── Compile / Manuscript Assembly Modal ── */}
+            <AnimatePresence>
+                {showCompileModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        onClick={() => setShowCompileModal(false)}>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-deep-space border border-white/[0.1] rounded-xl shadow-2xl p-6 w-[520px] max-h-[80vh] overflow-y-auto"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-display text-white flex items-center gap-2"><PackageCheck className="w-5 h-5 text-starforge-gold" /> Compile Manuscript</h3>
+                                <button onClick={() => setShowCompileModal(false)} className="text-text-secondary hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            <p className="text-[10px] text-text-secondary mb-4">Choose which chapters to include and their order. Only selected chapters will be exported.</p>
+                            {/* Select All / None */}
+                            <div className="flex gap-2 mb-3">
+                                <button onClick={() => setCompileSelection(cs => cs.map(s => ({ ...s, included: true })))}
+                                    className="px-2 py-0.5 text-[10px] rounded bg-white/[0.04] text-text-secondary hover:text-white">Select All</button>
+                                <button onClick={() => setCompileSelection(cs => cs.map(s => ({ ...s, included: false })))}
+                                    className="px-2 py-0.5 text-[10px] rounded bg-white/[0.04] text-text-secondary hover:text-white">Select None</button>
+                            </div>
+                            {/* Chapter List */}
+                            <div className="space-y-1 mb-5 max-h-64 overflow-y-auto">
+                                {compileSelection.map((sel, idx) => {
+                                    const ch = chapters.find(c => c.id === sel.id);
+                                    if (!ch) return null;
+                                    return (
+                                        <div key={sel.id} className={`flex items-center gap-2 px-3 py-2 rounded border transition-colors ${sel.included ? 'border-starforge-gold/20 bg-starforge-gold/5' : 'border-white/[0.04] bg-white/[0.01] opacity-50'}`}>
+                                            <input type="checkbox" checked={sel.included}
+                                                onChange={() => setCompileSelection(cs => cs.map((s, i) => i === idx ? { ...s, included: !s.included } : s))}
+                                                className="accent-starforge-gold" />
+                                            <span className="text-xs text-white flex-1 truncate">{ch.title}</span>
+                                            <span className="text-[9px] text-text-secondary flex-none">{(ch.wordCount || 0).toLocaleString()}w</span>
+                                            <button onClick={() => {
+                                                if (idx === 0) return;
+                                                setCompileSelection(cs => { const n = [...cs]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; });
+                                            }} className="p-0.5 text-text-secondary hover:text-white disabled:opacity-20" disabled={idx === 0} title="Move up">
+                                                <ChevronRight className="w-3 h-3 -rotate-90" />
+                                            </button>
+                                            <button onClick={() => {
+                                                if (idx === compileSelection.length - 1) return;
+                                                setCompileSelection(cs => { const n = [...cs]; [n[idx], n[idx + 1]] = [n[idx + 1], n[idx]]; return n; });
+                                            }} className="p-0.5 text-text-secondary hover:text-white disabled:opacity-20" disabled={idx === compileSelection.length - 1} title="Move down">
+                                                <ChevronRight className="w-3 h-3 rotate-90" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {/* Format Picker */}
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className="text-[10px] text-text-secondary uppercase tracking-wider">Format</span>
+                                {(['docx', 'md', 'txt'] as const).map(f => (
+                                    <button key={f} onClick={() => setCompileFormat(f)}
+                                        className={`px-3 py-1.5 text-xs rounded border transition-colors ${compileFormat === f ? 'border-starforge-gold/40 bg-starforge-gold/10 text-starforge-gold' : 'border-white/[0.06] text-text-secondary hover:text-white'}`}>
+                                        .{f}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Summary & Export */}
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] text-text-secondary">
+                                    {compileChapters.length} of {compileSelection.length} chapters · {compileChapters.reduce((a, c) => a + (c.wordCount || 0), 0).toLocaleString()} words
+                                </p>
+                                <button onClick={handleCompileExport}
+                                    disabled={compileChapters.length === 0}
+                                    className="px-4 py-2 rounded-lg bg-starforge-gold/20 text-starforge-gold hover:bg-starforge-gold/30 transition-colors text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed">
+                                    Compile & Export
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* ── Keyboard Shortcuts Modal ── */}
             <AnimatePresence>
                 {showShortcuts && (
@@ -1581,6 +1797,25 @@ export default function ForgeEditor() {
         }
         .forge-reading-mode {
           background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,10,20,0.3) 100%);
+        }
+        /* Annotation tooltips */
+        .forge-annotation { position: relative; }
+        .forge-annotation:hover::after {
+          content: attr(data-annotation-type);
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(10,10,20,0.95);
+          color: attr(data-annotation-color);
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 10px;
+          white-space: nowrap;
+          pointer-events: none;
+          z-index: 50;
+          border: 1px solid rgba(255,255,255,0.1);
+          text-transform: capitalize;
         }
       `}</style>
         </div>
