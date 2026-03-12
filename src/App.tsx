@@ -65,6 +65,7 @@ const EditorBridge = lazy(() => import('./pages/EditorBridge'));
 const RevisionRounds = lazy(() => import('./pages/RevisionRounds'));
 const ManuscriptInbox = lazy(() => import('./pages/ManuscriptInbox'));
 const EditorBetaManager = lazy(() => import('./pages/EditorBetaManager'));
+const DeletedScenesVault = lazy(() => import('./pages/DeletedScenesVault'));
 
 // Author tools (protected)
 const Submissions = lazy(() => import('./pages/Submissions'));
@@ -247,6 +248,11 @@ export default function App() {
             <Route path="editor-beta-manager" element={
               <ProtectedRoute allowedRoles={['author', 'admin']}>
                 <EditorBetaManager />
+              </ProtectedRoute>
+            } />
+            <Route path="deleted-scenes" element={
+              <ProtectedRoute allowedRoles={['author', 'admin']}>
+                <DeletedScenesVault />
               </ProtectedRoute>
             } />
             <Route path="royalty-calculator" element={

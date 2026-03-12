@@ -49,6 +49,7 @@ const AUTHOR_TOOLS: ToolCard[] = [
 
 const EDITORIAL_TOOLS: ToolCard[] = [
     { label: 'Manuscript Pipeline', description: 'Track manuscripts through stages', href: '/manuscript-pipeline', icon: BarChart3, color: 'text-violet-400', bgColor: 'bg-violet-400/10' },
+    { label: 'Deleted Scenes Vault', description: 'Archived cuts & bonus content', href: '/deleted-scenes', icon: BarChart3, color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
     { label: 'Beta Campaign', description: 'Run beta reading campaigns', href: '/beta-campaign', icon: Users, color: 'text-rose-400', bgColor: 'bg-rose-400/10' },
     { label: 'Editor Bridge', description: 'Collaborate with your editor', href: '/editor-bridge', icon: MessageCircle, color: 'text-emerald-400', bgColor: 'bg-emerald-400/10' },
     { label: 'Revision Rounds', description: 'Track revision cycles', href: '/revision-rounds', icon: GitBranch, color: 'text-amber-400', bgColor: 'bg-amber-400/10' },

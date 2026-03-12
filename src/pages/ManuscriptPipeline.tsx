@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { collection, onSnapshot, query, orderBy, doc, updateDoc, addDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -85,6 +86,7 @@ function deadlineLabel(d?: string): string {
 
 export default function ManuscriptPipeline() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
     const [selectedManuscript, setSelectedManuscript] = useState<string | null>(null);
     const [filterStage, setFilterStage] = useState<PipelineStage | 'all'>('all');
@@ -581,7 +583,8 @@ export default function ManuscriptPipeline() {
                                                                             <ArrowRight className="w-3 h-3" /> Advance to {STAGES[stageIdx(ms.currentStage) + 1]?.label}
                                                                         </button>
                                                                     )}
-                                                                    <button className="w-full text-left px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
+                                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/forge-editor/${ms.id}`); }}
+                                                                        className="w-full text-left px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
                                                                         <Eye className="w-3 h-3" /> View in Editor
                                                                     </button>
                                                                 </div>

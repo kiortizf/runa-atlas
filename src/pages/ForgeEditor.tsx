@@ -48,6 +48,8 @@ import ThreadTracker from '../components/editor/ThreadTracker';
 import DiplomaticCuts from '../components/editor/DiplomaticCuts';
 import PacingAnalyzer from '../components/editor/PacingAnalyzer';
 import StructuralArchitect from '../components/editor/StructuralArchitect';
+import AnalysisReport from '../components/editor/AnalysisReport';
+import { useCuts } from '../hooks/useCuts';
 import { useAuth } from '../contexts/AuthContext';
 
 // ── Annotation Tag Definitions ──
@@ -126,7 +128,7 @@ export default function ForgeEditor() {
     const [newTitle, setNewTitle] = useState('');
     const [editingTitle, setEditingTitle] = useState<string | null>(null);
     const [editTitleValue, setEditTitleValue] = useState('');
-    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments' | 'bible' | 'xray' | 'compress' | 'threads' | 'cuts' | 'pacing' | 'structure'>('notes');
+    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments' | 'bible' | 'xray' | 'compress' | 'threads' | 'cuts' | 'pacing' | 'structure' | 'report'>('notes');
     const [notesValue, setNotesValue] = useState('');
     const notesDirtyRef = useRef(false);
     const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1488,10 +1490,10 @@ export default function ForgeEditor() {
                                     ))}
                                 </div>
                                 <div className="flex border-t border-white/[0.04]">
-                                    {([['xray','🧬'],['compress','✂️'],['threads','🧵'],['cuts','💬'],['pacing','📊'],['structure','🏗️']] as const).map(([tab, icon]) => (
+                                    {([['report','📋'],['xray','🧬'],['compress','✂️'],['threads','🧵'],['cuts','💬'],['pacing','📊'],['structure','🏗️']] as const).map(([tab, icon]) => (
                                         <button key={tab} onClick={() => setInspectorTab(tab as any)}
-                                            className={`flex-1 py-1.5 text-[10px] transition-colors relative ${inspectorTab === tab ? 'text-purple-400 border-b border-purple-400 bg-purple-500/5' : 'text-text-secondary hover:text-white'}`}
-                                            title={tab === 'xray' ? 'Narrative X-Ray' : tab === 'compress' ? 'Compression Engine' : tab === 'threads' ? 'Thread Tracker' : tab === 'cuts' ? 'Diplomatic Cuts' : tab === 'pacing' ? 'Pacing Analyzer' : 'Structural Architect'}>
+                                            className={`flex-1 py-1.5 text-[10px] transition-colors relative ${inspectorTab === tab ? (tab === 'report' ? 'text-starforge-gold border-b border-starforge-gold bg-starforge-gold/5' : 'text-purple-400 border-b border-purple-400 bg-purple-500/5') : 'text-text-secondary hover:text-white'}`}
+                                            title={tab === 'report' ? 'Analysis Report' : tab === 'xray' ? 'Narrative X-Ray' : tab === 'compress' ? 'Compression Engine' : tab === 'threads' ? 'Thread Tracker' : tab === 'cuts' ? 'Diplomatic Cuts' : tab === 'pacing' ? 'Pacing Analyzer' : 'Structural Architect'}>
                                             {icon}
                                         </button>
                                     ))}
@@ -1752,7 +1754,8 @@ export default function ForgeEditor() {
                                     <NarrativeXRay manuscriptId={manuscriptId} chapters={chapters.map(c => ({ id: c.id, title: c.title, content: c.content, plainText: c.plainText }))} />
                                 )}
                                 {inspectorTab === 'compress' && (
-                                    <CompressionEngine chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
+                                    <CompressionEngine chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} 
+                                        onCreateCut={() => setInspectorTab('cuts')} />
                                 )}
                                 {inspectorTab === 'threads' && (
                                     <ThreadTracker manuscriptId={manuscriptId} chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
@@ -1765,6 +1768,9 @@ export default function ForgeEditor() {
                                 )}
                                 {inspectorTab === 'structure' && (
                                     <StructuralArchitect chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
+                                )}
+                                {inspectorTab === 'report' && (
+                                    <AnalysisReport manuscriptId={manuscriptId} chapters={chapters.map(c => ({ id: c.id, title: c.title, content: c.content, plainText: c.plainText }))} totalWords={totalWords} targetWords={activeManuscript?.targetWords} />
                                 )}
                             </div>
                         </motion.div>
