@@ -60,6 +60,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const BetaReaderHub = lazy(() => import('./pages/BetaReaderHub'));
 const ForBetaReaders = lazy(() => import('./pages/ForBetaReaders'));
 const BetaReaderApply = lazy(() => import('./pages/BetaReaderApply'));
+const ARCReaderApply = lazy(() => import('./pages/ARCReaderApply'));
 const ManuscriptPipeline = lazy(() => import('./pages/ManuscriptPipeline'));
 const BetaCampaign = lazy(() => import('./pages/BetaCampaign'));
 const EditorBridge = lazy(() => import('./pages/EditorBridge'));
@@ -224,6 +225,11 @@ export default function App() {
             <Route path="beta-reader-apply" element={
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
                 <BetaReaderApply />
+              </ProtectedRoute>
+            } />
+            <Route path="arc-apply" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <ARCReaderApply />
               </ProtectedRoute>
             } />
             <Route path="manuscript-pipeline" element={

@@ -140,6 +140,48 @@ export const NDA_TEMPLATES: Record<string, NDATemplate> = {
     legalNotice: `By signing below, you confirm your agreement to this Confidentiality Agreement. This electronic signature is legally binding under applicable law.`,
     signatureBlock: `I, {{SIGNER_NAME}}, hereby execute this Author Platform Confidentiality Agreement and agree to be bound by its terms.`,
   },
+
+  // ═══════════════════════════════════════════
+  // ARC READER NDA
+  // ═══════════════════════════════════════════
+  arc_reader: {
+    id: 'arc_reader',
+    title: 'ARC Reader Confidentiality & Review Agreement',
+    version: '1.0.0',
+    effectiveDate: '2026-03-12',
+    sections: [
+      {
+        heading: 'Parties',
+        body: `This Confidentiality & Review Agreement ("Agreement") is entered into as of {{DATE}} by and between:\n\n**Disclosing Party:** ${COMPANY} ("Company"), and\n\n**Receiving Party:** {{SIGNER_NAME}} ({{SIGNER_EMAIL}}) ("ARC Reader").`,
+      },
+      {
+        heading: '1. Advance Reader Copy Terms',
+        body: `An Advance Reader Copy ("ARC") is a pre-publication copy of a book provided for the sole purpose of generating honest reviews prior to or on the publication date.\n\nThe ARC Reader agrees to:\n\n(a) Not distribute, share, resell, upload, or otherwise disseminate the ARC to any third party;\n(b) Not reproduce, screenshot, photograph, or copy any portion of the ARC;\n(c) Keep the contents of the ARC confidential until the publication date or until the Company authorizes public discussion;\n(d) Treat the ARC as a pre-release preview that may contain minor differences from the final published edition.`,
+      },
+      {
+        heading: '2. Review Commitment',
+        body: `The ARC Reader commits to:\n\n(a) Post an honest review on at least one public platform (e.g., Amazon, Goodreads, BookTok, Bookstagram, personal blog, or podcast) within 14 days of the publication date;\n(b) Disclose that the review copy was received free of charge in accordance with FTC guidelines (16 CFR Part 255);\n(c) Provide an honest assessment — ${COMPANY} does not require or expect positive reviews;\n(d) Notify ${COMPANY} once the review has been posted, including a link where applicable.`,
+      },
+      {
+        heading: '3. Pre-Publication Embargo',
+        body: `The ARC Reader agrees not to publish any review, summary, spoiler, quote, or discussion of the ARC content before the date specified by ${COMPANY} ("Embargo Date"). The Embargo Date will be communicated at the time the ARC is provided.\n\nBrief "currently reading" or "can't wait" social media posts without plot spoilers are permitted.`,
+      },
+      {
+        heading: '4. Intellectual Property',
+        body: `The ARC remains the intellectual property of the author and ${COMPANY}. Receipt of an ARC does not grant any rights, license, or ownership interest in the work. All copyright protections under applicable law remain in full effect.`,
+      },
+      {
+        heading: '5. Electronic Signature & Legal Framework',
+        body: `This Agreement is executed electronically under the authority of the ESIGN Act (15 U.S.C. §7001–7031), the Uniform Electronic Transactions Act (UETA), and where applicable, EU eIDAS Regulation (EU No 910/2014). Secured via ECDSA P-256 digital signature with SHA-256 document hashing.`,
+      },
+      {
+        heading: '6. Governing Law',
+        body: `This Agreement shall be governed by the laws of ${JURISDICTION}. The confidentiality obligations remain in effect until the work is publicly available through authorized publication.`,
+      },
+    ],
+    legalNotice: `By signing below, you confirm that you have read, understood, and agree to be bound by all terms of this ARC Reader Confidentiality & Review Agreement. This electronic signature is legally binding under the ESIGN Act, UETA, and EU eIDAS Regulation.`,
+    signatureBlock: `I, {{SIGNER_NAME}}, hereby affirm that I have read and understood the terms of this ARC Reader Confidentiality & Review Agreement and commit to posting an honest review in accordance with the terms above.`,
+  },
 };
 
 /**
