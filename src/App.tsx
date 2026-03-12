@@ -68,6 +68,7 @@ const RevisionRounds = lazy(() => import('./pages/RevisionRounds'));
 const ManuscriptInbox = lazy(() => import('./pages/ManuscriptInbox'));
 const EditorBetaManager = lazy(() => import('./pages/EditorBetaManager'));
 const DeletedScenesVault = lazy(() => import('./pages/DeletedScenesVault'));
+const ReaderCircleDetail = lazy(() => import('./pages/ReaderCircleDetail'));
 
 // Author tools (protected)
 const Submissions = lazy(() => import('./pages/Submissions'));
@@ -159,6 +160,9 @@ export default function App() {
             } />
             <Route path="book-clubs" element={
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><BookClubs /></ProtectedRoute>
+            } />
+            <Route path="circle/:id" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><ReaderCircleDetail /></ProtectedRoute>
             } />
             <Route path="wishlist" element={
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}><Wishlist /></ProtectedRoute>
