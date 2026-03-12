@@ -7,42 +7,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-// ── Demo Data ──
-const STREAK_DATA = {
-    currentStreak: 12,
-    longestStreak: 28,
-    totalSessions: 147,
-    totalWords: 284600,
-};
+// Data loaded from Firestore
+let _streakData = { currentStreak: 0, longestStreak: 0, totalSessions: 0, totalWords: 0 };
+let _weeklyLog: any[] = [];
+let _milestones: any[] = [];
+let _achievements: any[] = [];
 
-const WEEKLY_LOG = [
-    { day: 'Mon', words: 1200, goal: 1000, completed: true },
-    { day: 'Tue', words: 850, goal: 1000, completed: false },
-    { day: 'Wed', words: 1500, goal: 1000, completed: true },
-    { day: 'Thu', words: 0, goal: 1000, completed: false },
-    { day: 'Fri', words: 1100, goal: 1000, completed: true },
-    { day: 'Sat', words: 2200, goal: 1000, completed: true },
-    { day: 'Sun', words: 0, goal: 1000, completed: false },
-];
-
-const MILESTONES = [
-    { id: 1, label: 'First 10,000 words', target: 10000, current: 10000, completed: true },
-    { id: 2, label: 'First Draft Complete', target: 80000, current: 94200, completed: true },
-    { id: 3, label: 'Second Draft', target: 80000, current: 42000, completed: false },
-    { id: 4, label: '100 writing sessions', target: 100, current: 147, completed: true, unit: 'sessions' },
-    { id: 5, label: '30-day streak', target: 30, current: 12, completed: false, unit: 'days' },
-];
-
-const ACHIEVEMENTS = [
-    { icon: '🔥', label: 'Fire Starter', desc: '7-day writing streak', earned: true },
-    { icon: '📚', label: 'Chapter Master', desc: 'Write 10 chapters', earned: true },
-    { icon: '⚡', label: 'Speed Daemon', desc: '2,000 words in one session', earned: true },
-    { icon: '🌅', label: 'Early Bird', desc: '10 morning writing sessions', earned: false },
-    { icon: '🏆', label: 'Marathon Runner', desc: '30-day writing streak', earned: false },
-    { icon: '💎', label: 'Word Smith', desc: '100,000 total words', earned: true },
-    { icon: '🌙', label: 'Night Owl', desc: '10 sessions after midnight', earned: false },
-    { icon: '🎯', label: 'Perfect Week', desc: 'Hit daily goal 7 days straight', earned: false },
-];
 
 export default function WritingGoals() {
     const { user } = useAuth();
@@ -53,11 +23,11 @@ export default function WritingGoals() {
     const [sprintWords, setSprintWords] = useState(0);
     const [activeTab, setActiveTab] = useState<'goals' | 'sprints' | 'achievements'>('goals');
 
-    const todayWords = WEEKLY_LOG[4].words; // Simulate "today" as Friday
+    const todayWords = _weeklyLog[4].words; // Simulate "today" as Friday
     const goalProgress = Math.min(100, (todayWords / dailyGoal) * 100);
-    const weekTotal = WEEKLY_LOG.reduce((sum, d) => sum + d.words, 0);
+    const weekTotal = _weeklyLog.reduce((sum, d) => sum + d.words, 0);
     const weekGoal = dailyGoal * 7;
-    const daysCompleted = WEEKLY_LOG.filter(d => d.completed).length;
+    const daysCompleted = _weeklyLog.filter(d => d.completed).length;
 
     return (
         <div className="bg-void-black min-h-screen py-24">
@@ -73,7 +43,7 @@ export default function WritingGoals() {
                     <div className="flex items-center gap-3 bg-starforge-gold/10 border border-starforge-gold/20 rounded-lg px-4 py-2">
                         <Flame className="w-5 h-5 text-starforge-gold" />
                         <div>
-                            <p className="text-lg font-bold text-starforge-gold">{STREAK_DATA.currentStreak}</p>
+                            <p className="text-lg font-bold text-starforge-gold">{_streakData.currentStreak}</p>
                             <p className="text-[9px] text-white/30 uppercase">Day Streak</p>
                         </div>
                     </div>
@@ -148,7 +118,7 @@ export default function WritingGoals() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 items-end h-32">
-                                    {WEEKLY_LOG.map((d, i) => {
+                                    {_weeklyLog.map((d, i) => {
                                         const height = dailyGoal > 0 ? Math.min(100, (d.words / dailyGoal) * 100) : 0;
                                         return (
                                             <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -173,7 +143,7 @@ export default function WritingGoals() {
                                 className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
                                 <h2 className="text-sm text-white font-semibold mb-4">Milestones</h2>
                                 <div className="space-y-4">
-                                    {MILESTONES.map(m => {
+                                    {_milestones.map(m => {
                                         const pct = Math.min(100, (m.current / m.target) * 100);
                                         return (
                                             <div key={m.id} className="flex items-center gap-4">
@@ -203,10 +173,10 @@ export default function WritingGoals() {
                         {/* Sidebar Stats */}
                         <div className="space-y-6">
                             {[
-                                { icon: Flame, label: 'Current Streak', value: `${STREAK_DATA.currentStreak} days`, color: 'text-orange-400' },
-                                { icon: Trophy, label: 'Longest Streak', value: `${STREAK_DATA.longestStreak} days`, color: 'text-starforge-gold' },
-                                { icon: PenTool, label: 'Total Sessions', value: STREAK_DATA.totalSessions.toString(), color: 'text-aurora-teal' },
-                                { icon: BookOpen, label: 'Total Words', value: `${(STREAK_DATA.totalWords / 1000).toFixed(0)}k`, color: 'text-cosmic-purple' },
+                                { icon: Flame, label: 'Current Streak', value: `${_streakData.currentStreak} days`, color: 'text-orange-400' },
+                                { icon: Trophy, label: 'Longest Streak', value: `${_streakData.longestStreak} days`, color: 'text-starforge-gold' },
+                                { icon: PenTool, label: 'Total Sessions', value: _streakData.totalSessions.toString(), color: 'text-aurora-teal' },
+                                { icon: BookOpen, label: 'Total Words', value: `${(_streakData.totalWords / 1000).toFixed(0)}k`, color: 'text-cosmic-purple' },
                             ].map((stat, i) => (
                                 <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
                                     className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-5 flex items-center gap-4">
@@ -284,7 +254,7 @@ export default function WritingGoals() {
                 {activeTab === 'achievements' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {ACHIEVEMENTS.map((a, i) => (
+                        {_achievements.map((a, i) => (
                             <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
                                 className={`p-5 rounded-lg border text-center transition-all
                   ${a.earned ? 'bg-starforge-gold/[0.04] border-starforge-gold/20' : 'bg-white/[0.01] border-white/[0.04] opacity-40'}`}>

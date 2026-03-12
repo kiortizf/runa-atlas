@@ -54,47 +54,9 @@ const CATEGORIES = [
     { id: 'sexual', label: 'Sexual Content', icon: Flame },
 ];
 
-const BOOKS: BookWithWarnings[] = [
-    {
-        id: 'b1', title: 'The Obsidian Crown', author: 'Elara Vance',
-        cover: 'https://picsum.photos/seed/obsidian-compass/80/120',
-        totalWarnings: 8, verifiedWarnings: 7, communityContributors: 42,
-        overallIntensity: 'heavy',
-        warnings: [
-            { id: 'w1', category: 'Violence', icon: Swords, color: '#ef4444', detail: 'War violence and battle sequences', intensity: 4, chapters: 'Ch. 3, 7, 12, 18', verifiedBy: 38, accuracy: 94, isSpoiler: false },
-            { id: 'w2', category: 'Death / Loss', icon: Skull, color: '#a855f7', detail: 'Death of a major character', intensity: 5, chapters: 'Ch. 15', verifiedBy: 41, accuracy: 98, isSpoiler: true },
-            { id: 'w3', category: 'Trauma / Abuse', icon: Brain, color: '#f97316', detail: 'Depiction of childhood emotional neglect', intensity: 3, chapters: 'Ch. 2, 5', verifiedBy: 35, accuracy: 92, isSpoiler: false },
-            { id: 'w4', category: 'Mental Health', icon: Heart, color: '#ec4899', detail: 'Grief processing and PTSD symptoms', intensity: 3, chapters: 'Ch. 9–14', verifiedBy: 30, accuracy: 89, isSpoiler: false },
-            { id: 'w5', category: 'Gore / Body Horror', icon: Droplets, color: '#dc2626', detail: 'Graphic magical transformation scenes', intensity: 4, chapters: 'Ch. 7, 22', verifiedBy: 36, accuracy: 91, isSpoiler: false },
-        ],
-    },
-    {
-        id: 'b2', title: 'Bones of Tomorrow', author: 'Kael Thornwood',
-        cover: 'https://picsum.photos/seed/bones-compass/80/120',
-        totalWarnings: 5, verifiedWarnings: 5, communityContributors: 28,
-        overallIntensity: 'moderate',
-        warnings: [
-            { id: 'w6', category: 'Violence', icon: Swords, color: '#ef4444', detail: 'Sci-fi combat sequences', intensity: 3, chapters: 'Ch. 4, 8, 16', verifiedBy: 25, accuracy: 96, isSpoiler: false },
-            { id: 'w7', category: 'Mental Health', icon: Heart, color: '#ec4899', detail: 'Depersonalization and identity crisis themes', intensity: 3, chapters: 'Ch. 6–12', verifiedBy: 22, accuracy: 88, isSpoiler: false },
-            { id: 'w8', category: 'Death / Loss', icon: Skull, color: '#a855f7', detail: 'Off-page deaths referenced', intensity: 2, chapters: 'Ch. 1, 14', verifiedBy: 27, accuracy: 95, isSpoiler: false },
-        ],
-    },
-    {
-        id: 'b3', title: 'The Glass Meridian', author: 'Sera Nighthollow',
-        cover: 'https://picsum.photos/seed/glass-compass/80/120',
-        totalWarnings: 3, verifiedWarnings: 3, communityContributors: 19,
-        overallIntensity: 'mild',
-        warnings: [
-            { id: 'w9', category: 'Mental Health', icon: Heart, color: '#ec4899', detail: 'Anxiety and self-doubt themes throughout', intensity: 2, chapters: 'Throughout', verifiedBy: 18, accuracy: 93, isSpoiler: false },
-            { id: 'w10', category: 'Trauma / Abuse', icon: Brain, color: '#f97316', detail: 'Emotional manipulation between characters', intensity: 2, chapters: 'Ch. 5, 9', verifiedBy: 16, accuracy: 87, isSpoiler: false },
-        ],
-    },
-];
+const BOOKS: BookWithWarnings[] = [];
 
-const USER_PREFERENCES = {
-    hidden: ['sexual'] as string[],
-    sensitivity: { violence: 3, death: 4, trauma: 2, 'mental-health': 5, gore: 1, sexual: 1 },
-};
+const USER_PREFERENCES = { hidden: [] as string[], sensitivity: {} as Record<string, number> };
 
 export default function ContentCompass() {
     const { user } = useAuth();
@@ -116,7 +78,7 @@ export default function ContentCompass() {
         return () => unsub();
     }, []);
 
-    const currentBook = books.find(b => b.id === selectedBook) || books[0];
+    const currentBook = books.find(b => b.id === selectedBook) || books[0] || null;
 
     const intensityBg = {
         mild: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -126,14 +88,6 @@ export default function ContentCompass() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {!user && (
-                <div className="bg-gradient-to-r from-emerald-500/10 to-starforge-gold/5 border-b border-emerald-500/10">
-                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-emerald-400 font-semibold">Demo Mode</span> — Sign in to save your content preferences and get warnings for your library.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold uppercase tracking-wider border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">
@@ -205,6 +159,7 @@ export default function ContentCompass() {
                     {/* ═══ Main Content ═══ */}
                     <div className="lg:col-span-3">
                         <AnimatePresence mode="wait">
+                            {currentBook ? (
                             <motion.div key={currentBook.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                                 {/* Book Header */}
                                 <div className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl mb-6 flex items-center justify-between">
@@ -359,6 +314,9 @@ export default function ContentCompass() {
                                     </div>
                                 </div>
                             </motion.div>
+                            ) : (
+                            <div className="p-10 text-center text-text-secondary text-sm">No books with content warnings available.</div>
+                            )}
                         </AnimatePresence>
                     </div>
                 </div>

@@ -46,66 +46,7 @@ interface FeedbackItem {
     authorResponse?: string;
 }
 
-const MANUSCRIPTS: Manuscript[] = [
-    {
-        id: 'm1', title: 'Wrath & Reverie', author: 'Elara Vance', authorAvatar: '📖',
-        genre: 'Dark Fantasy', wordCount: '94,000', deadline: 'Mar 28, 2026', daysLeft: 17,
-        status: 'active', progress: 62, chaptersRead: 15, totalChapters: 24,
-        feedbackSubmitted: 8, feedbackRequired: 12,
-        cover: 'https://picsum.photos/seed/wrath-beta/120/170',
-        synopsis: 'The sequel to The Obsidian Crown. When the throne shatters, magic demands a blood price no one expected to pay.',
-        tags: ['Sequel', 'Priority', 'NDA Required'],
-        priority: 'high',
-    },
-    {
-        id: 'm2', title: 'The Hollow Garden', author: 'Sera Nighthollow', authorAvatar: '🌙',
-        genre: 'Magical Realism', wordCount: '67,000', deadline: 'Apr 12, 2026', daysLeft: 32,
-        status: 'active', progress: 28, chaptersRead: 5, totalChapters: 18,
-        feedbackSubmitted: 3, feedbackRequired: 9,
-        cover: 'https://picsum.photos/seed/hollow-beta/120/170',
-        synopsis: 'A greenhouse keeper discovers that her plants are growing memories — and some of them aren\'t hers.',
-        tags: ['Debut', 'Sensitivity Read'],
-        priority: 'normal',
-    },
-    {
-        id: 'm3', title: 'Signal to Noise', author: 'Kael Thornwood', authorAvatar: '🌲',
-        genre: 'Sci-Fi', wordCount: '82,000', deadline: 'Feb 28, 2026', daysLeft: -11,
-        status: 'overdue', progress: 45, chaptersRead: 8, totalChapters: 20,
-        feedbackSubmitted: 4, feedbackRequired: 10,
-        cover: 'https://picsum.photos/seed/signal-beta/120/170',
-        synopsis: 'A radio telescope operator receives a transmission from a civilization that died 10,000 years ago — but the signal is live.',
-        tags: ['Hard Sci-Fi'],
-        priority: 'high',
-    },
-    {
-        id: 'm4', title: 'Bone Lace', author: 'Althea Priory', authorAvatar: '🏛️',
-        genre: 'Gothic Horror', wordCount: '71,000', deadline: 'Jan 15, 2026', daysLeft: 0,
-        status: 'completed', progress: 100, chaptersRead: 16, totalChapters: 16,
-        feedbackSubmitted: 8, feedbackRequired: 8,
-        cover: 'https://picsum.photos/seed/bone-beta/120/170',
-        synopsis: 'In a house that breathes, a dressmaker sews gowns from human bone — and her clients keep coming back.',
-        tags: ['Body Horror', 'Completed'],
-        priority: 'low',
-    },
-];
-
-const RECENT_FEEDBACK: FeedbackItem[] = [
-    { id: 'f1', manuscript: 'Wrath & Reverie', chapter: 14, type: 'pacing', content: 'The battle sequence in 14 drags slightly — the interspersed flashbacks break momentum. Consider consolidating the memory reveal to chapter 13.', timestamp: '2h ago', authorResponse: 'Great catch! I\'ll condense the flashbacks. Thank you.' },
-    { id: 'f2', manuscript: 'Wrath & Reverie', chapter: 12, type: 'character', content: 'Seraphine\'s motivation feels unclear here. Why does she trust Maren after the betrayal? One line of internal justification would fix it.', timestamp: '1d ago' },
-    { id: 'f3', manuscript: 'The Hollow Garden', chapter: 4, type: 'prose', content: 'The greenhouse description in the opening paragraph is gorgeous. "Light filtered through leaves like stained glass in a chapel for the living." — this is the book\'s voice at its best.', timestamp: '2d ago' },
-    { id: 'f4', manuscript: 'Bone Lace', chapter: 16, type: 'overall', content: 'Final chapter lands perfectly. The revelation about the house being alive all along was foreshadowed beautifully from chapter 3. Chilling and satisfying ending.', timestamp: '1w ago', authorResponse: 'This feedback made my week. Thank you for reading the whole thing.' },
-];
-
-const BETA_STATS = {
-    totalRead: 12,
-    feedbackGiven: 87,
-    authorsHelped: 8,
-    avgRating: 4.8,
-    streak: 14,
-    tier: 'Trusted Reader',
-    nextTier: 'Elite Reviewer',
-    tierProgress: 72,
-};
+const BETA_STATS = { totalRead: 0, feedbackGiven: 0, authorsHelped: 0, avgRating: 0, streak: 0, tier: '', nextTier: '', tierProgress: 0 };
 
 const FEEDBACK_TYPES = [
     { id: 'overall', label: 'Overall', icon: Star, color: '#f59e0b' },
@@ -118,10 +59,11 @@ const FEEDBACK_TYPES = [
 
 export default function BetaReaderHub() {
     const [activeTab, setActiveTab] = useState<'queue' | 'feedback' | 'stats'>('queue');
-    const [expandedManuscript, setExpandedManuscript] = useState<string | null>('m1');
+    const [expandedManuscript, setExpandedManuscript] = useState<string | null>(null);
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'overdue'>('all');
-    const [manuscripts, setManuscripts] = useState<Manuscript[]>(MANUSCRIPTS);
-    const [feedback, setFeedback] = useState<FeedbackItem[]>(RECENT_FEEDBACK);
+    const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+    const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
@@ -130,16 +72,15 @@ export default function BetaReaderHub() {
             const unsubMs = onSnapshot(
                 query(collection(db, 'beta_manuscripts'), where('readerId', '==', user.uid)),
                 (snap) => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Manuscript));
-                    if (data.length > 0) setManuscripts(data);
+                    setManuscripts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Manuscript)));
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             const unsubFb = onSnapshot(
                 query(collection(db, 'beta_feedback'), where('readerId', '==', user.uid), orderBy('createdAt', 'desc')),
                 (snap) => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackItem));
-                    if (data.length > 0) setFeedback(data);
+                    setFeedback(snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackItem)));
                 },
                 () => { }
             );
@@ -196,7 +137,7 @@ export default function BetaReaderHub() {
                     {/* Tabs */}
                     <div className="flex items-center gap-6">
                         {[
-                            { id: 'queue' as const, label: 'Manuscript Queue', icon: FileText, count: MANUSCRIPTS.filter(m => m.status !== 'completed').length },
+                            { id: 'queue' as const, label: 'Manuscript Queue', icon: FileText, count: manuscripts.filter(m => m.status !== 'completed').length },
                             { id: 'feedback' as const, label: 'Feedback Log', icon: MessageCircle, count: feedback.length },
                             { id: 'stats' as const, label: 'My Stats', icon: BarChart3 },
                         ].map(tab => (

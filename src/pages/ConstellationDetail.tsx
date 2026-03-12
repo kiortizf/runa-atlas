@@ -92,26 +92,10 @@ function MiniStarMap({ books, color }: { books: Book[]; color: string }) {
     );
 }
 
-// ─── Seed Data ──────────────────────────────────────────────
-const SEED_CONSTELLATIONS: Record<string, Constellation> = {
-    c1: { id: 'c1', name: 'Voices of the Diaspora', description: 'Stories exploring cultural displacement, belonging, and the search for home across worlds. These narratives weave together the threads of migration, identity, and the echoes of homelands left behind.', color: '#d4a853', curator: 'Editorial Team', status: 'Active', icon: '🌍' },
-    c2: { id: 'c2', name: 'Queer Futures', description: 'LGBTQ+ speculative fiction imagining worlds beyond binaries, where love and identity transcend the limits of the present.', color: '#ec4899', curator: 'Editorial Team', status: 'Active', icon: '🏳️‍🌈' },
-    c3: { id: 'c3', name: 'Ancestral Magic', description: 'Stories rooted in non-European mythologies and magical traditions, drawing power from the wells of ancestral memory.', color: '#a855f7', curator: 'Editorial Team', status: 'Active', icon: '✨' },
-    c4: { id: 'c4', name: 'Climate Requiem', description: 'Cli-fi and environmental narratives from the edge of tomorrow, exploring humanity\'s relationship with a changing planet.', color: '#2dd4bf', curator: 'Editorial Team', status: 'Active', icon: '🌊' },
-};
+// Data loaded from Firestore
+let _seedConstellations: Record<string, Constellation> = {};
+let _seedBooks: Record<string, Book[]> = {};
 
-const SEED_BOOKS: Record<string, Book[]> = {
-    c1: [{ id: 'b4', title: 'Wound of the World', author: 'Tomás Gutiérrez', cover: 'https://picsum.photos/seed/wound/600/900', codemark: '🌙 Dark Fantasy', synopsis: 'A grief-stricken healer discovers her blood can close the rifts opening between dimensions.', price: 22.99, constellationId: 'c1', themes: ['grief', 'healing', 'diaspora'], connections: ['b1', 'b5'] }],
-    c2: [
-        { id: 'b3', title: 'Salt & Starlight', author: 'Amara Osei', cover: 'https://picsum.photos/seed/salt/600/900', codemark: '💜 Queer Romance', synopsis: 'Two rival mechanics on a deep-space mining colony find themselves forced to cooperate when their station is sabotaged.', price: 16.99, constellationId: 'c2', themes: ['love', 'survival', 'queerness'], connections: ['b2'] },
-        { id: 'b6', title: 'Binary Stars', author: 'River Chen', cover: 'https://picsum.photos/seed/binary/600/900', codemark: '💜 Queer Romance', synopsis: 'A non-binary astrophysicist and a trans poet navigate love across parallel timelines.', price: 15.99, constellationId: 'c2', themes: ['love', 'identity', 'science'], connections: ['b3', 'b5'] },
-    ],
-    c3: [
-        { id: 'b1', title: 'The Obsidian Crown', author: 'Elara Vance', cover: 'https://picsum.photos/seed/obsidian/600/900', codemark: '🗡️ Epic Fantasy', synopsis: 'A disgraced queen must reclaim her stolen throne from a rival who wields ancient, forbidden blood magic.', price: 24.99, constellationId: 'c3', themes: ['power', 'identity', 'mythology'], connections: ['b2', 'b4'] },
-        { id: 'b5', title: 'The Roots Remember', author: 'Priya Sharma', cover: 'https://picsum.photos/seed/roots/600/900', codemark: '✨ Magical Realism', synopsis: 'When an ancient banyan tree begins to speak, a village is forced to confront colonial wounds buried beneath its soil.', price: 18.99, constellationId: 'c3', themes: ['colonialism', 'nature', 'mythology'], connections: ['b4', 'b6'] },
-    ],
-    c4: [{ id: 'b2', title: 'Neon Requiem', author: 'Kai Nakamura', cover: 'https://picsum.photos/seed/neon/600/900', codemark: '⚔️ Speculative Fiction', synopsis: 'In a flooded Tokyo of 2089, a deaf hacker uncovers a conspiracy that links dying coral reefs to corporate AI.', price: 19.99, constellationId: 'c4', themes: ['technology', 'identity', 'environment'], connections: ['b1', 'b3'] }],
-};
 
 // ─── Page Component ─────────────────────────────────────────
 export default function ConstellationDetail() {
@@ -133,17 +117,17 @@ export default function ConstellationDetail() {
                     setBooks(booksSnap.docs.map(d => ({ id: d.id, ...d.data() } as Book)));
                 } else {
                     // Fallback to seed data
-                    const seed = SEED_CONSTELLATIONS[id];
+                    const seed = _seedConstellations[id];
                     if (seed) {
                         setConstellation(seed);
-                        setBooks(SEED_BOOKS[id] || []);
+                        setBooks(_seedBooks[id] || []);
                     }
                 }
             } catch (error) {
                 handleFirestoreError(error, OperationType.GET, `constellations/${id}`);
                 // Fall back to seed
-                const seed = SEED_CONSTELLATIONS[id!];
-                if (seed) { setConstellation(seed); setBooks(SEED_BOOKS[id!] || []); }
+                const seed = _seedConstellations[id!];
+                if (seed) { setConstellation(seed); setBooks(_seedBooks[id!] || []); }
             } finally {
                 setLoading(false);
             }

@@ -5,55 +5,31 @@ import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestor
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const LIBRARY_BOOKS = [
-  {
-    id: '1',
-    title: 'The Obsidian Crown',
-    author: 'Elara Vance',
-    cover: 'https://picsum.photos/seed/obsidian/400/600',
-    format: 'Ebook',
-    progress: 45,
-    purchasedAt: '2026-01-15',
-    editionType: 'Standard'
-  },
-  {
-    id: '2',
-    title: 'Neon Requiem',
-    author: 'Jax Thorne',
-    cover: 'https://picsum.photos/seed/neon/400/600',
-    format: 'Audiobook',
-    progress: 12,
-    purchasedAt: '2026-02-28',
-    editionType: 'Standard'
-  },
-  {
-    id: '4',
-    title: 'Star-Crossed Circuits',
-    author: 'Leo Vance',
-    cover: 'https://picsum.photos/seed/circuits/400/600',
-    format: 'Ebook',
-    progress: 100,
-    purchasedAt: '2025-11-10',
-    editionType: 'Interactive'
-  }
-];
+interface LibraryBook {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  format: string;
+  progress: number;
+  purchasedAt: string;
+  editionType: string;
+}
 
-const WISHLIST = [
-  {
-    id: '3',
-    title: 'Whispers of the Deep',
-    author: 'Marina Solis',
-    cover: 'https://picsum.photos/seed/whispers/400/600',
-    price: '$24.99',
-    format: 'Hardcover',
-    editionType: 'Signed'
-  }
-];
+interface WishlistItem {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  price: string;
+  format: string;
+  editionType: string;
+}
 
 export default function Library() {
   const [activeTab, setActiveTab] = useState('library');
-  const [libraryBooks, setLibraryBooks] = useState(LIBRARY_BOOKS);
-  const [wishlist, setWishlist] = useState(WISHLIST);
+  const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
 
   useEffect(() => {
     const auth = getAuth();
@@ -62,16 +38,14 @@ export default function Library() {
       const unsubLib = onSnapshot(
         query(collection(db, 'user_libraries'), where('userId', '==', user.uid)),
         (snap) => {
-          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof LIBRARY_BOOKS[0]));
-          if (data.length > 0) setLibraryBooks(data);
+          setLibraryBooks(snap.docs.map(d => ({ id: d.id, ...d.data() } as LibraryBook)));
         },
         () => { }
       );
       const unsubWish = onSnapshot(
         query(collection(db, 'user_wishlists'), where('userId', '==', user.uid)),
         (snap) => {
-          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof WISHLIST[0]));
-          if (data.length > 0) setWishlist(data);
+          setWishlist(snap.docs.map(d => ({ id: d.id, ...d.data() } as WishlistItem)));
         },
         () => { }
       );

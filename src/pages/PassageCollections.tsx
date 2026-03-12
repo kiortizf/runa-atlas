@@ -40,156 +40,8 @@ interface Collection {
     featured?: boolean;
 }
 
-const COLLECTIONS: Collection[] = [
-    {
-        id: 'c1',
-        title: 'Lines That Destroyed Me',
-        description: 'The passages that made me physically put the book down. Emotional devastation, curated.',
-        curator: 'star_reader_42',
-        curatorAvatar: '🌟',
-        visibility: 'public',
-        passageCount: 23,
-        followers: 312,
-        coverGradient: 'from-rose-600/30 via-red-900/30 to-void-black',
-        tags: ['emotional', 'prose', 'gut-punch'],
-        featured: true,
-        passages: [
-            {
-                id: 'p1',
-                text: '"Magic is not a gift. It is a wound the universe has learned to sing through."',
-                book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'The Marrow Gate',
-                savedBy: 1247, reactions: [{ emoji: '💀', count: 89 }, { emoji: '✨', count: 156 }, { emoji: '😭', count: 67 }],
-            },
-            {
-                id: 'p2',
-                text: '"I didn\'t follow you to save you. I followed because the world is less interesting when you\'re not in it."',
-                book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'Bonds of Fire',
-                savedBy: 2034, reactions: [{ emoji: '😭', count: 312 }, { emoji: '❤️', count: 245 }, { emoji: '🥺', count: 178 }],
-                note: 'Kael to Elara. This is not a romance line — it\'s a thesis on why we need other people.',
-            },
-            {
-                id: 'p3',
-                text: '"She had been so busy being brave that she forgot bravery was supposed to be temporary."',
-                book: 'The Glass Meridian', author: 'Sera Nighthollow', chapter: 'Coastlines of Grief',
-                savedBy: 892, reactions: [{ emoji: '😭', count: 134 }, { emoji: '💔', count: 98 }],
-            },
-            {
-                id: 'p4',
-                text: '"The bones remember what the living choose to forget. That is their burden and their gift."',
-                book: 'Bones of Tomorrow', author: 'Kael Thornwood', chapter: 'The Reading',
-                savedBy: 567, reactions: [{ emoji: '✨', count: 89 }, { emoji: '💀', count: 45 }],
-            },
-        ],
-    },
-    {
-        id: 'c2',
-        title: 'Magic Systems I Wish Were Real',
-        description: 'The most original, beautiful, terrifying magic systems I\'ve ever encountered in fiction.',
-        curator: 'fantasy_scholar',
-        curatorAvatar: '🧙',
-        visibility: 'public',
-        passageCount: 18,
-        followers: 245,
-        coverGradient: 'from-violet-600/30 via-purple-900/30 to-void-black',
-        tags: ['worldbuilding', 'magic', 'fantasy'],
-        passages: [
-            {
-                id: 'p5',
-                text: '"The Marrow System worked like this: you reached into the bones of a dead god, and if your grief was sincere enough, the bones would reach back."',
-                book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'The Dust of Ages',
-                savedBy: 1891, reactions: [{ emoji: '🤯', count: 267 }, { emoji: '✨', count: 198 }],
-                note: 'The entire magic system explained in one perfect sentence. Grief as fuel.',
-            },
-            {
-                id: 'p6',
-                text: '"Memory is matter. Everything you\'ve ever remembered has weight, density, half-life. The memory of your mother\'s voice weighs approximately 0.3 grams."',
-                book: 'Bones of Tomorrow', author: 'Kael Thornwood', chapter: 'Extraction Protocol',
-                savedBy: 743, reactions: [{ emoji: '🤯', count: 112 }, { emoji: '💀', count: 67 }],
-            },
-        ],
-    },
-    {
-        id: 'c3',
-        title: 'One-Liners That Go Hard',
-        description: 'No context needed. These lines hit on their own.',
-        curator: 'prose_hunter',
-        curatorAvatar: '🔍',
-        visibility: 'public',
-        passageCount: 34,
-        followers: 567,
-        coverGradient: 'from-amber-600/30 via-orange-900/30 to-void-black',
-        tags: ['prose', 'one-liners', 'quotable'],
-        featured: true,
-        passages: [
-            {
-                id: 'p7',
-                text: '"The city had teeth, and it used them at night."',
-                book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'A City of Ash',
-                savedBy: 1456, reactions: [{ emoji: '🔥', count: 234 }, { emoji: '💀', count: 156 }],
-            },
-            {
-                id: 'p8',
-                text: '"She weaponized her silence the way other people weaponized knives — with precision and no warning."',
-                book: 'Ironvein Rising', author: 'Marcus Rivera', chapter: 'The Surgeon',
-                savedBy: 923, reactions: [{ emoji: '🔥', count: 178 }, { emoji: '⚡', count: 134 }],
-            },
-            {
-                id: 'p9',
-                text: '"We are all haunted houses. The question is whether you keep the lights on."',
-                book: 'The Hollow Garden', author: 'Althea Priory', chapter: 'Root System',
-                savedBy: 678, reactions: [{ emoji: '✨', count: 145 }, { emoji: '😭', count: 89 }],
-            },
-        ],
-    },
-    {
-        id: 'c4',
-        title: 'World-Building That Made Me Stop and Stare',
-        description: 'Setting descriptions so vivid they should be illegal.',
-        curator: 'cartographer_',
-        curatorAvatar: '🗺️',
-        visibility: 'public',
-        passageCount: 15,
-        followers: 189,
-        coverGradient: 'from-emerald-600/30 via-green-900/30 to-void-black',
-        tags: ['worldbuilding', 'setting', 'description'],
-        passages: [
-            {
-                id: 'p10',
-                text: '"The Ash Quarter breathed. Not metaphorically — the walls expanded and contracted on a twelve-hour cycle, as if the district itself had lungs. Locals set their clocks by it."',
-                book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'A City of Ash',
-                savedBy: 534, reactions: [{ emoji: '🤯', count: 89 }, { emoji: '✨', count: 67 }],
-            },
-        ],
-    },
-    {
-        id: 'c5',
-        title: 'Villain Monologues That Made Me Reconsider',
-        description: 'Antagonists who had a point and I hate that they did.',
-        curator: 'midnight_ink',
-        curatorAvatar: '🖋️',
-        visibility: 'public',
-        passageCount: 11,
-        followers: 278,
-        coverGradient: 'from-slate-600/30 via-gray-900/30 to-void-black',
-        tags: ['villains', 'morality', 'monologue'],
-        passages: [],
-    },
-];
 
-const TRENDING_PASSAGES: Passage[] = [
-    {
-        id: 'tp1',
-        text: '"Her blood was the key. Of course it was. It always was, in the old stories, the ones that ended badly."',
-        book: 'The Obsidian Crown', author: 'Elara Vance', chapter: 'Bones of the Forgotten',
-        savedBy: 3401, reactions: [{ emoji: '🔥', count: 456 }, { emoji: '✨', count: 312 }, { emoji: '💀', count: 189 }],
-    },
-    {
-        id: 'tp2',
-        text: '"The future is not a destination. It is a wound in time that has not yet learned to scar."',
-        book: 'Bones of Tomorrow', author: 'Kael Thornwood', chapter: 'The Signal',
-        savedBy: 1678, reactions: [{ emoji: '🤯', count: 234 }, { emoji: '✨', count: 156 }],
-    },
-];
+
 
 export default function PassageCollections() {
     const { user } = useAuth();
@@ -198,14 +50,15 @@ export default function PassageCollections() {
     const [savedPassages, setSavedPassages] = useState<Set<string>>(new Set(['p1', 'p2', 'p7']));
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
-    const [collections, setCollections] = useState(COLLECTIONS);
+    const [collections, setCollections] = useState<Collection[]>([]);
+    const [trendingPassages, setTrendingPassages] = useState<Passage[]>([]);
 
     useEffect(() => {
         const unsub = onSnapshot(
             query(collection(db, 'passage_collections'), orderBy('saves', 'desc')),
             (snap) => {
-                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (data.length > 0) setCollections(data as typeof COLLECTIONS);
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Collection));
+                setCollections(data);
             },
             () => { }
         );
@@ -220,18 +73,10 @@ export default function PassageCollections() {
         });
     };
 
-    const activeCollection = COLLECTIONS.find(c => c.id === openCollection);
+    const activeCollection = collections.find(c => c.id === openCollection);
 
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {!user && (
-                <div className="bg-gradient-to-r from-starforge-gold/10 to-violet-500/5 border-b border-starforge-gold/10">
-                    <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-starforge-gold font-semibold">Demo Mode</span> — Sign in to save passages and create your own collections.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-starforge-gold/10 text-starforge-gold text-[10px] font-semibold uppercase tracking-wider border border-starforge-gold/20 rounded hover:bg-starforge-gold/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-6xl mx-auto px-6 py-6">
@@ -245,9 +90,15 @@ export default function PassageCollections() {
                                 <p className="text-xs text-text-secondary">Curate your favorite lines. Share your literary obsessions.</p>
                             </div>
                         </div>
+                        {user ? (
                         <button className="px-4 py-2 bg-starforge-gold/10 text-starforge-gold text-sm border border-starforge-gold/20 rounded-lg hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
                             <Plus className="w-4 h-4" /> New Collection
                         </button>
+                        ) : (
+                        <a href="/portal" className="px-4 py-2 bg-starforge-gold/10 text-starforge-gold text-sm border border-starforge-gold/20 rounded-lg hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
+                            Sign In to Create
+                        </a>
+                        )}
                     </div>
 
                     {/* Tabs */}
@@ -277,7 +128,7 @@ export default function PassageCollections() {
                             <div className="mb-10">
                                 <h2 className="text-xs uppercase tracking-widest text-text-secondary mb-4">Featured Collections</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {COLLECTIONS.filter(c => c.featured).map(col => (
+                                    {collections.filter(c => c.featured).map(col => (
                                         <CollectionCard key={col.id} collection={col} onClick={() => setOpenCollection(col.id)} />
                                     ))}
                                 </div>
@@ -287,7 +138,7 @@ export default function PassageCollections() {
                             <div>
                                 <h2 className="text-xs uppercase tracking-widest text-text-secondary mb-4">All Collections</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {COLLECTIONS.filter(c => !c.featured).map(col => (
+                                    {collections.filter(c => !c.featured).map(col => (
                                         <CollectionCard key={col.id} collection={col} onClick={() => setOpenCollection(col.id)} />
                                     ))}
                                 </div>
@@ -344,7 +195,7 @@ export default function PassageCollections() {
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                {[...TRENDING_PASSAGES, ...COLLECTIONS.flatMap(c => c.passages)]
+                                {[...trendingPassages, ...collections.flatMap(c => c.passages)]
                                     .sort((a, b) => b.savedBy - a.savedBy)
                                     .slice(0, 10)
                                     .map((passage, idx) => (
@@ -376,7 +227,7 @@ export default function PassageCollections() {
                                     <div className="mt-12 max-w-2xl mx-auto">
                                         <h4 className="text-xs uppercase tracking-widest text-text-secondary mb-4 text-left">Your Saved Passages</h4>
                                         <div className="space-y-3">
-                                            {COLLECTIONS.flatMap(c => c.passages)
+                                            {collections.flatMap(c => c.passages)
                                                 .filter(p => savedPassages.has(p.id))
                                                 .map((passage, idx) => (
                                                     <PassageCard key={passage.id} passage={passage} idx={idx}

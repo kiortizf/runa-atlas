@@ -10,6 +10,7 @@ import {
     Users, BarChart3, Sparkles, ChevronRight, Target,
     Award, Clock, Bookmark, ArrowRight
 } from 'lucide-react';
+import AuthGatedCTA from '../components/AuthGatedCTA';
 
 // ═══════════════════════════════════════════
 // BOOK DNA — Your Taste Profile
@@ -34,51 +35,14 @@ interface RecentBook {
 }
 
 const TASTE_AXES: TasteAxis[] = [
-    { id: 'darkness', label: 'Tone', value: 78, leftLabel: 'Light', rightLabel: 'Dark', icon: Moon, color: '#a78bfa' },
-    { id: 'pacing', label: 'Pacing', value: 55, leftLabel: 'Slow Burn', rightLabel: 'Breakneck', icon: Zap, color: '#f97316' },
-    { id: 'worldbuilding', label: 'Worldbuilding', value: 88, leftLabel: 'Minimal', rightLabel: 'Immersive', icon: Mountain, color: '#10b981' },
-    { id: 'character', label: 'Focus', value: 65, leftLabel: 'Plot-Driven', rightLabel: 'Character-Driven', icon: Users, color: '#3b82f6' },
-    { id: 'prose', label: 'Prose Style', value: 82, leftLabel: 'Clean', rightLabel: 'Lyrical', icon: Feather, color: '#8b5cf6' },
-    { id: 'romance', label: 'Romance Heat', value: 42, leftLabel: 'None', rightLabel: 'Central', icon: Heart, color: '#f43f5e' },
-    { id: 'morality', label: 'Moral Ambiguity', value: 85, leftLabel: 'Clear-Cut', rightLabel: 'Morally Grey', icon: Shield, color: '#6b7280' },
-    { id: 'intensity', label: 'Intensity', value: 68, leftLabel: 'Cozy', rightLabel: 'Visceral', icon: Flame, color: '#ef4444' },
-];
-
-const DNA_PROFILE = {
-    username: 'star_reader_42',
-    personality: 'The Obsidian Scholar',
-    booksAnalyzed: 47,
-    lastUpdated: '2 hours ago',
-    topTraits: ['Deep Worldbuilding Addict', 'Morally Grey Connoisseur', 'Prose Snob', 'Dark Tone Seeker'],
-    genomeStrength: 94, // how well-defined the profile is
-};
-
-const GENRE_AFFINITY = [
-    { genre: 'Dark Fantasy', affinity: 95, books: 16 },
-    { genre: 'Sci-Fi', affinity: 78, books: 11 },
-    { genre: 'Literary Fiction', affinity: 72, books: 9 },
-    { genre: 'Gothic Horror', affinity: 68, books: 5 },
-    { genre: 'Magical Realism', affinity: 65, books: 6 },
-];
-
-const RECENT_BOOKS: RecentBook[] = [
-    { title: 'The Obsidian Crown', author: 'Elara Vance', rating: 5, dnaImpact: '+Dark, +Worldbuilding, +Prose', cover: 'https://picsum.photos/seed/obsidian-dna/100/150' },
-    { title: 'Bones of Tomorrow', author: 'Kael Thornwood', rating: 4, dnaImpact: '+Intensity, +Morality, +Pacing', cover: 'https://picsum.photos/seed/bones-dna/100/150' },
-    { title: 'The Glass Meridian', author: 'Sera Nighthollow', rating: 5, dnaImpact: '+Prose, +Romance, +Character', cover: 'https://picsum.photos/seed/glass-dna/100/150' },
-    { title: 'Ironvein Rising', author: 'Marcus Rivera', rating: 3, dnaImpact: '+Pacing, -Worldbuilding, -Prose', cover: 'https://picsum.photos/seed/iron-dna/100/150' },
-];
-
-const SIMILAR_READERS = [
-    { name: 'midnight_ink', avatar: '🖋️', match: 89, sharedBooks: 12 },
-    { name: 'prose_hunter', avatar: '🔍', match: 84, sharedBooks: 9 },
-    { name: 'the_archivist', avatar: '📚', match: 78, sharedBooks: 7 },
-];
-
-const AUTHOR_MATCHES = [
-    { name: 'Elara Vance', match: 97, genre: 'Dark Fantasy', avatar: '📖' },
-    { name: 'Sera Nighthollow', match: 88, genre: 'Magical Realism', avatar: '🌙' },
-    { name: 'Kael Thornwood', match: 82, genre: 'Sci-Fi', avatar: '🌲' },
-    { name: 'Althea Priory', match: 76, genre: 'Gothic Horror', avatar: '🏛️' },
+    { id: 'darkness', label: 'Tone', value: 0, leftLabel: 'Light', rightLabel: 'Dark', icon: Moon, color: '#a78bfa' },
+    { id: 'pacing', label: 'Pacing', value: 0, leftLabel: 'Slow Burn', rightLabel: 'Breakneck', icon: Zap, color: '#f97316' },
+    { id: 'worldbuilding', label: 'Worldbuilding', value: 0, leftLabel: 'Minimal', rightLabel: 'Immersive', icon: Mountain, color: '#10b981' },
+    { id: 'character', label: 'Focus', value: 0, leftLabel: 'Plot-Driven', rightLabel: 'Character-Driven', icon: Users, color: '#3b82f6' },
+    { id: 'prose', label: 'Prose Style', value: 0, leftLabel: 'Clean', rightLabel: 'Lyrical', icon: Feather, color: '#8b5cf6' },
+    { id: 'romance', label: 'Romance Heat', value: 0, leftLabel: 'None', rightLabel: 'Central', icon: Heart, color: '#f43f5e' },
+    { id: 'morality', label: 'Moral Ambiguity', value: 0, leftLabel: 'Clear-Cut', rightLabel: 'Morally Grey', icon: Shield, color: '#6b7280' },
+    { id: 'intensity', label: 'Intensity', value: 0, leftLabel: 'Cozy', rightLabel: 'Visceral', icon: Flame, color: '#ef4444' },
 ];
 
 // ═══ SVG Radar Chart ═══
@@ -152,36 +116,85 @@ function RadarChart({ axes }: { axes: TasteAxis[] }) {
 export default function BookDNA() {
     const { user } = useAuth();
     const [activeSection, setActiveSection] = useState<'overview' | 'axes' | 'evolution'>('overview');
+    const [dnaProfile, setDnaProfile] = useState<any>(null);
+    const [genreAffinity, setGenreAffinity] = useState<any[]>([]);
+    const [recentBooks, setRecentBooks] = useState<RecentBook[]>([]);
+    const [similarReaders, setSimilarReaders] = useState<any[]>([]);
+    const [authorMatches, setAuthorMatches] = useState<any[]>([]);
+    const [tasteAxes, setTasteAxes] = useState<TasteAxis[]>(TASTE_AXES);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                doc(db, 'users', user.uid),
+                doc(db, 'users', u.uid),
                 (snap) => {
-                    if (snap.exists() && snap.data().readingDna) {
-                        // Reading DNA data available from Firestore
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (data.readingDna) {
+                            if (data.readingDna.profile) setDnaProfile(data.readingDna.profile);
+                            if (data.readingDna.genreAffinity) setGenreAffinity(data.readingDna.genreAffinity);
+                            if (data.readingDna.recentBooks) setRecentBooks(data.readingDna.recentBooks);
+                            if (data.readingDna.similarReaders) setSimilarReaders(data.readingDna.similarReaders);
+                            if (data.readingDna.authorMatches) setAuthorMatches(data.readingDna.authorMatches);
+                            if (data.readingDna.tasteAxes) setTasteAxes(data.readingDna.tasteAxes);
+                        }
                     }
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
         return () => unsubAuth();
     }, []);
 
+    const hasData = dnaProfile !== null || genreAffinity.length > 0 || recentBooks.length > 0;
+
+    // State 1: Not logged in → full-page CTA
+    if (!loading && !user) {
+        return (
+            <div className="min-h-screen bg-void-black text-white">
+                <AuthGatedCTA
+                    icon={Dna}
+                    title="Your Reading Identity, Decoded"
+                    subtitle="Book DNA builds a unique taste profile from every book you read and rate. Discover your reading personality, genre affinities, and find authors who match your vibe."
+                    ctaText="Sign In to Build Your DNA"
+                    accentColor="violet"
+                />
+            </div>
+        );
+    }
+
+    // State 2: Logged in but no data → encouraging CTA
+    if (!loading && user && !hasData) {
+        return (
+            <div className="min-h-screen bg-void-black text-white">
+                <AuthGatedCTA
+                    icon={Dna}
+                    title="Your DNA Is Waiting"
+                    subtitle="Start reading and rating books to build your unique taste profile. The more you read, the sharper your DNA becomes — revealing your reading personality, genre affinities, and compatible authors."
+                    ctaText="Browse the Catalog"
+                    ctaLink="/catalog"
+                    accentColor="violet"
+                >
+                    <div className="flex items-center justify-center gap-4 text-xs text-text-secondary">
+                        <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-violet-400" /> Read books</span>
+                        <span className="text-white/10">→</span>
+                        <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-violet-400" /> Rate them</span>
+                        <span className="text-white/10">→</span>
+                        <span className="flex items-center gap-1.5"><Dna className="w-3.5 h-3.5 text-violet-400" /> DNA unlocks</span>
+                    </div>
+                </AuthGatedCTA>
+            </div>
+        );
+    }
+
+    // State 3: Logged in with data → full experience
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {/* Demo Banner */}
-            {!user && (
-                <div className="bg-gradient-to-r from-violet-500/10 to-starforge-gold/5 border-b border-violet-500/10">
-                    <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-violet-400 font-semibold">Demo Mode</span> — This is a sample profile. Sign in to build your personal Book DNA.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-violet-500/10 text-violet-400 text-[10px] font-semibold uppercase tracking-wider border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-6xl mx-auto px-6 py-6">
@@ -194,20 +207,20 @@ export default function BookDNA() {
                                 <h1 className="text-xl font-semibold text-white flex items-center gap-2">
                                     Book DNA
                                     <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 bg-violet-500/10 text-violet-400 rounded border border-violet-500/20">
-                                        {DNA_PROFILE.booksAnalyzed} books analyzed
+                                        {dnaProfile?.booksAnalyzed ?? 0} books analyzed
                                     </span>
                                 </h1>
-                                <p className="text-xs text-text-secondary">Your reading identity, visualized. Updated {DNA_PROFILE.lastUpdated}.</p>
+                                <p className="text-xs text-text-secondary">Your reading identity, visualized. Updated {dnaProfile?.lastUpdated ?? '—'}.</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 text-xs">
                             <span className="text-text-secondary">Profile Strength:</span>
                             <div className="w-24 h-2 bg-white/[0.06] rounded-full overflow-hidden">
-                                <motion.div initial={{ width: 0 }} animate={{ width: `${DNA_PROFILE.genomeStrength}%` }}
+                                <motion.div initial={{ width: 0 }} animate={{ width: `${dnaProfile?.genomeStrength ?? 0}%` }}
                                     transition={{ duration: 1, delay: 0.3 }}
                                     className="h-full bg-violet-400 rounded-full" />
                             </div>
-                            <span className="text-violet-400 font-semibold">{DNA_PROFILE.genomeStrength}%</span>
+                            <span className="text-violet-400 font-semibold">{dnaProfile?.genomeStrength ?? 0}%</span>
                         </div>
                     </div>
                 </div>
@@ -223,9 +236,9 @@ export default function BookDNA() {
                         </div>
                         <div>
                             <p className="text-[10px] uppercase tracking-widest text-violet-400/60 mb-1">Your Reading Personality</p>
-                            <h2 className="text-2xl font-display text-white tracking-wide">{DNA_PROFILE.personality}</h2>
+                            <h2 className="text-2xl font-display text-white tracking-wide">{dnaProfile?.personality ?? 'Loading...'}</h2>
                             <div className="flex gap-2 mt-2">
-                                {DNA_PROFILE.topTraits.map(t => (
+                                {(dnaProfile?.topTraits ?? []).map(t => (
                                     <span key={t} className="text-[9px] px-2 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-text-secondary">{t}</span>
                                 ))}
                             </div>
@@ -242,12 +255,12 @@ export default function BookDNA() {
                         <div className="sticky top-24">
                             <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-semibold">Taste Genome</h3>
                             <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-xl flex items-center justify-center">
-                                <RadarChart axes={TASTE_AXES} />
+                                <RadarChart axes={tasteAxes} />
                             </div>
 
                             {/* Quick legend */}
                             <div className="mt-4 space-y-2">
-                                {TASTE_AXES.map(axis => {
+                                {tasteAxes.map(axis => {
                                     const Icon = axis.icon;
                                     return (
                                         <div key={axis.id} className="flex items-center gap-3">
@@ -272,7 +285,7 @@ export default function BookDNA() {
                         <div>
                             <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-semibold">Genre Affinity</h3>
                             <div className="space-y-3">
-                                {GENRE_AFFINITY.map((g, idx) => (
+                                {genreAffinity.map((g, idx) => (
                                     <motion.div key={g.genre} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.1 }}
                                         className="flex items-center gap-4 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
@@ -298,7 +311,7 @@ export default function BookDNA() {
                         <div>
                             <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-semibold">Author DNA Matches</h3>
                             <div className="grid grid-cols-2 gap-3">
-                                {AUTHOR_MATCHES.map((author, idx) => (
+                                {authorMatches.map((author, idx) => (
                                     <motion.div key={author.name} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.2 + idx * 0.1 }}
                                         className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:border-violet-500/20 transition-colors cursor-pointer group">
@@ -326,7 +339,7 @@ export default function BookDNA() {
                         <div>
                             <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-semibold">Readers With Similar DNA</h3>
                             <div className="space-y-2">
-                                {SIMILAR_READERS.map((reader, idx) => (
+                                {similarReaders.map((reader, idx) => (
                                     <motion.div key={reader.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                         transition={{ delay: 0.3 + idx * 0.1 }}
                                         className="flex items-center gap-4 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:border-violet-500/20 transition-colors cursor-pointer">
@@ -346,7 +359,7 @@ export default function BookDNA() {
                         <div>
                             <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-semibold">DNA Evolution — Recent Reads</h3>
                             <div className="space-y-2">
-                                {RECENT_BOOKS.map((book, idx) => (
+                                {recentBooks.map((book, idx) => (
                                     <motion.div key={book.title} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.2 + idx * 0.08 }}
                                         className="flex items-center gap-4 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">

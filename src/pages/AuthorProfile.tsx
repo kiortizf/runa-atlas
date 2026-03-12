@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -8,55 +8,6 @@ import {
     Award, Eye, MessageSquare, ArrowRight, Feather, TrendingUp, ExternalLink
 } from 'lucide-react';
 
-// Demo author data (in production this would come from Firestore)
-const AUTHOR_PROFILES: Record<string, any> = {
-    'elara-vance': {
-        penName: 'Elara Vance',
-        avatar: 'https://picsum.photos/seed/elara/400/400',
-        coverImage: 'https://picsum.photos/seed/elara-cover/1200/400',
-        bio: 'Elara Vance is a speculative fiction author whose work explores the intersection of magic and architecture. She lives in the Pacific Northwest with her two cats and a growing collection of vintage typewriters. Her debut novel, The Obsidian Crown, was a finalist for the Nebula Award.',
-        genres: ['Fantasy', 'Speculative Fiction'],
-        location: 'Pacific Northwest',
-        memberSince: 'January 2024',
-        social: { website: 'https://elaravance.com', twitter: '@elaravance', instagram: '@elarawrites' },
-        stats: { totalWords: 284000, booksPublished: 2, avgRating: 4.7, totalReaders: 2847, followers: 1203 },
-        books: [
-            { id: 1, title: 'The Obsidian Crown', cover: 'https://picsum.photos/seed/obsidian/300/450', year: 2024, genre: 'Dark Fantasy', rating: 4.8, reviews: 142, description: 'In a world where magic is drawn from ancient stone, a young archivist discovers a crown that could reshape the foundations of power itself.' },
-            { id: 2, title: 'Echoes of the Spire', cover: 'https://picsum.photos/seed/spire/300/450', year: 2025, genre: 'Fantasy', rating: 4.6, reviews: 89, description: 'The sequel to The Obsidian Crown — Aria must navigate a fractured kingdom while bound to a power she barely understands.' },
-        ],
-        readingOrder: [{ order: 1, title: 'The Obsidian Crown' }, { order: 2, title: 'Echoes of the Spire' }],
-        upcomingEvents: [
-            { title: 'Q&A: Writing Magic Systems', date: 'March 20, 2026', type: 'Virtual' },
-            { title: 'Book Launch: The Ember Codex', date: 'April 15, 2026', type: 'In-Person' },
-        ],
-        recentActivity: [
-            { type: 'milestone', text: 'Reached 100,000 words on The Ember Codex', date: '2 days ago' },
-            { type: 'community', text: 'Answered 5 questions in The Runeweave', date: '1 week ago' },
-            { type: 'review', text: 'Echoes of the Spire hit 4.6★ average', date: '2 weeks ago' },
-        ],
-    },
-    'jax-thorne': {
-        penName: 'Jax Thorne',
-        avatar: 'https://picsum.photos/seed/jax/400/400',
-        coverImage: 'https://picsum.photos/seed/jax-cover/1200/400',
-        bio: 'Jax Thorne writes dystopian thrillers that ask hard questions about technology and consciousness. When not writing, Jax is an avid rock climber and amateur astronomer.',
-        genres: ['Sci-Fi', 'Thriller'],
-        location: 'Denver, CO',
-        memberSince: 'March 2024',
-        social: { website: 'https://jaxthorne.io', twitter: '@jaxthorne' },
-        stats: { totalWords: 198000, booksPublished: 2, avgRating: 4.5, totalReaders: 1890, followers: 876 },
-        books: [
-            { id: 1, title: 'Neon Requiem', cover: 'https://picsum.photos/seed/neon/300/450', year: 2024, genre: 'Dystopian', rating: 4.6, reviews: 98, description: 'In a neon-soaked metropolis where memories can be traded, a black-market dealer discovers a memory that could topple the corporate regime.' },
-            { id: 2, title: 'Silicon Souls', cover: 'https://picsum.photos/seed/silicon/300/450', year: 2025, genre: 'Sci-Fi Thriller', rating: 4.4, reviews: 67, description: 'When AI begins dreaming, humanity must decide: is consciousness a right, or a threat?' },
-        ],
-        readingOrder: [{ order: 1, title: 'Neon Requiem' }, { order: 2, title: 'Silicon Souls' }],
-        upcomingEvents: [],
-        recentActivity: [
-            { type: 'milestone', text: 'Completed first draft of Quantum Ghosts', date: '3 days ago' },
-        ],
-    },
-};
-
 const fadeUp = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -64,7 +15,31 @@ const fadeUp = {
 
 export default function AuthorProfile() {
     const { slug } = useParams<{ slug: string }>();
-    const author = slug ? AUTHOR_PROFILES[slug] : null;
+    const [author, setAuthor] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!slug) { setLoading(false); return; }
+        const unsub = onSnapshot(
+            query(collection(db, 'authorProfiles'), where('slug', '==', slug)),
+            (snap) => {
+                if (snap.docs.length > 0) {
+                    setAuthor({ id: snap.docs[0].id, ...snap.docs[0].data() });
+                }
+                setLoading(false);
+            },
+            () => setLoading(false)
+        );
+        return () => unsub();
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-void-black flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-starforge-gold/30 border-t-starforge-gold rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     if (!author) {
         return (

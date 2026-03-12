@@ -53,57 +53,11 @@ type WorldEntry = {
 };
 
 // ─── Seed Data ──────────────────────────────────────
-const SEED_PROJECTS: ForgeProject[] = [
-    {
-        id: 'fp1', type: 'anthology_vote', title: 'Summer 2027 Anthology Theme',
-        description: 'Shape our next anthology. Vote for the theme that calls to you, and the winning concept will become the foundation for our open submissions call.',
-        options: [
-            { id: 'o1', label: 'Solarpunk Myths', votes: 312, description: 'Hopeful futures rooted in ancient mythologies' },
-            { id: 'o2', label: 'Haunted Algorithms', votes: 189, description: 'Ghost stories for the digital age' },
-            { id: 'o3', label: 'Queer Time Travel', votes: 267, description: 'LGBTQ+ stories that bend the timeline' },
-            { id: 'o4', label: 'Decolonized Galaxies', votes: 401, description: 'Space opera without empire' },
-        ],
-        totalVotes: 1169, deadline: Timestamp.fromDate(new Date('2027-06-15')), status: 'active',
-    },
-    {
-        id: 'fp2', type: 'cover_reveal', title: 'Cover Vote: "The Obsidian Crown"',
-        description: 'Three cover concepts from our art team. The community picks which one ships.',
-        options: [
-            { id: 'c1', label: 'Gilded Throne', imageUrl: 'https://picsum.photos/seed/cover1/400/600', votes: 542, description: 'Dark gold with architectural motifs' },
-            { id: 'c2', label: 'Shattered Crown', imageUrl: 'https://picsum.photos/seed/cover2/400/600', votes: 378, description: 'Abstract fracture pattern in deep purple' },
-            { id: 'c3', label: 'Blood Rune', imageUrl: 'https://picsum.photos/seed/cover3/400/600', votes: 291, description: 'Crimson rune symbol on black' },
-        ],
-        totalVotes: 1211, deadline: Timestamp.fromDate(new Date('2027-05-01')), status: 'active', bookId: 'b1',
-    },
-    {
-        id: 'fp3', type: 'story_poll', title: 'Salt & Starlight: Sequel Direction',
-        description: 'Author Amara Osei is planning the sequel. Which storyline do you want to see explored?',
-        options: [
-            { id: 's1', label: 'The Saboteur\'s Origin', votes: 198, description: 'Follow the antagonist\'s backstory' },
-            { id: 's2', label: 'New Colony, New Dangers', votes: 334, description: 'The crew relocates to a frontier colony' },
-            { id: 's3', label: 'The Mining War', votes: 256, description: 'Corporate warfare over deep-space resources' },
-        ],
-        totalVotes: 788, deadline: Timestamp.fromDate(new Date('2027-07-01')), status: 'active', bookId: 'b3',
-    },
-];
+let _seedProjects: any[] = [];
 
-const SEED_FANFICTION: FanFiction[] = [
-    { id: 'ff1', title: 'The Crown Bearer\'s Lament', authorName: 'stargazer_42', authorId: 'u1', bookTitle: 'The Obsidian Crown', bookId: 'b1', excerpt: 'The throne room was empty when she arrived, but the walls still hummed with the memory of old magic...', content: '', wordCount: 4200, likes: 87, tags: ['dark fantasy', 'character study', 'prequel'], status: 'published', createdAt: Timestamp.fromDate(new Date('2027-02-14')) },
-    { id: 'ff2', title: 'Neon Lullaby', authorName: 'cyber_dreamer', authorId: 'u2', bookTitle: 'Neon Requiem', bookId: 'b2', excerpt: 'In the underwater district, there was a bar where the AI consciousnesses gathered to forget...', content: '', wordCount: 2800, likes: 124, tags: ['cyberpunk', 'world expansion', 'short fiction'], status: 'published', createdAt: Timestamp.fromDate(new Date('2027-03-01')) },
-    { id: 'ff3', title: 'Roots That Speak', authorName: 'mythweaver', authorId: 'u3', bookTitle: 'The Roots Remember', bookId: 'b5', excerpt: 'The old gardener had always known the banyan could talk. She just never expected it to argue...', content: '', wordCount: 6100, likes: 203, tags: ['magical realism', 'comedy', 'companion piece'], status: 'published', createdAt: Timestamp.fromDate(new Date('2027-01-20')) },
-    { id: 'ff4', title: 'Binary Dawn', authorName: 'quantum_pen', authorId: 'u4', bookTitle: 'Binary Stars', bookId: 'b6', excerpt: 'In the timeline where they never met, the universe was noticeably dimmer...', content: '', wordCount: 3500, likes: 156, tags: ['queer romance', 'alternate timeline', 'bittersweet'], status: 'published', createdAt: Timestamp.fromDate(new Date('2027-02-28')) },
-];
+let _seedFanfiction: any[] = [];
 
-const SEED_WORLD_ENTRIES: WorldEntry[] = [
-    { id: 'w1', title: 'The Marrow System', category: 'Magic', bookTitle: 'The Obsidian Crown', bookId: 'b1', content: 'Magic in the world of The Obsidian Crown is drawn from the marrow of fallen gods. Each deity who fell during the Sundering left behind a reservoir of raw magical energy embedded in the earth. Practitioners called "Marrow-Singers" can extract and shape this power, though prolonged use causes calcite deposits to form in their bones.\n\nThere are five known schools of Marrow-Singing, each corresponding to one of the fallen deities: Ignis (fire, transformation), Petra (earth, fortification), Ventus (air, divination), Aqua (water, healing), and Umbra (shadow, concealment). The sixth school, Vita, is forbidden. Its practitioners are called Bone-Weavers, and they can reshape living tissue at the cost of their own calcification.', contributors: ['Editorial Team', 'stargazer_42', 'lore_keeper'], lastEdited: Timestamp.fromDate(new Date('2027-02-10')), approved: true },
-    { id: 'w2', title: 'Neon Tokyo 2089', category: 'Setting', bookTitle: 'Neon Requiem', bookId: 'b2', content: 'Following the Great Flood of 2071, Tokyo was rebuilt as a vertical city. The upper levels bask in sunlight and clean air, while the Undertow (the flooded lower levels) houses black markets, illegal AI sanctuaries, and communities of "Drowners" who adapted to the water with cybernetic gills.\n\nThe city is divided into five Tiers: Tier 1 (Sky Gardens), Tier 2 (Corporate), Tier 3 (Residential), Tier 4 (Industrial), and Tier 5 (The Undertow). Movement between tiers requires biometric scans and social credit verification. The Undertow operates outside this system entirely.', contributors: ['Editorial Team', 'cyber_dreamer'], lastEdited: Timestamp.fromDate(new Date('2027-03-05')), approved: true },
-    { id: 'w3', title: 'The Banyan Network', category: 'Flora', bookTitle: 'The Roots Remember', bookId: 'b5', content: 'The banyan trees in Priya Sharma\'s world are not individual organisms. They are nodes in a vast mycorrhizal network that spans the entire subcontinent. This network retains memories of every event that has occurred near its roots, dating back thousands of years. When a tree "speaks," it is relaying archived sensory data.', contributors: ['Editorial Team', 'mythweaver', 'rootreader'], lastEdited: Timestamp.fromDate(new Date('2027-01-15')), approved: true },
-    { id: 'w4', title: 'Elara Windsong', category: 'Character', bookTitle: 'The Obsidian Crown', bookId: 'b1', content: 'A former scholar of the Athenaeum who discovers the Ember Codex hidden in the restricted archives. Trained as a historian rather than a practitioner, Elara has no formal magical education, making her interaction with the Marrow System unpredictable and dangerous. Her mother was a Bone-Weaver executed by the Order of the Eclipse, a fact Elara only discovers partway through the story.', contributors: ['Editorial Team'], lastEdited: Timestamp.fromDate(new Date('2027-03-01')), approved: true },
-    { id: 'w5', title: 'Cybernetic Gills (Drowner Tech)', category: 'Technology', bookTitle: 'Neon Requiem', bookId: 'b2', content: 'First-generation gills were crude filtration membranes grafted onto the ribcage, allowing 30 minutes of underwater breathing. By 2089, fifth-gen gills are fully integrated respiratory augments that extract dissolved oxygen from water indefinitely. Side effects include chronic dry-skin syndrome on the surface and a dependency on humidity levels above 60%. The technology was developed by Dr. Yuki Tanaka at the Undertow Free Clinic using open-source biotech.', contributors: ['Editorial Team', 'cyber_dreamer', 'neon_fan'], lastEdited: Timestamp.fromDate(new Date('2027-02-20')), approved: true },
-    { id: 'w6', title: 'The Sundering', category: 'History', bookTitle: 'The Obsidian Crown', bookId: 'b1', content: 'The catastrophic fall of the old gods approximately 3,000 years before the events of the novel. Seven deities warred over the right to reshape the mortal world. All seven fell, their divine essence (marrow) seeping into the earth. The resulting magical contamination created the Marrow Veins: underground rivers of raw magical energy that reshape geography and spawn magical creatures. The Order of the Eclipse was founded specifically to control access to these veins.', contributors: ['Editorial Team', 'stargazer_42'], lastEdited: Timestamp.fromDate(new Date('2027-01-28')), approved: true },
-    { id: 'w7', title: 'The Keeper\'s Garden', category: 'Setting', bookTitle: 'The Roots Remember', bookId: 'b5', content: 'A hidden temple-garden maintained by a lineage of women called Keepers, who have tended the oldest banyan in the network for over 800 years. The garden exists in a state of temporal flux: different sections experience time at different speeds. The center of the garden, where the Mother Root grows, is said to exist outside of time entirely. Visitors have reportedly entered and exited years later with no memory of the passage of time.', contributors: ['Editorial Team', 'mythweaver'], lastEdited: Timestamp.fromDate(new Date('2027-02-15')), approved: true },
-    { id: 'w8', title: 'Timeline Anchors', category: 'Magic', bookTitle: 'Binary Stars', bookId: 'b6', content: 'In the universe of Binary Stars, certain individuals are "anchored" to specific moments in time. They experience normal linear time but can feel the pull of their anchor moment constantly, like gravity. When two anchored individuals fall in love across different timelines, their anchors can synchronize, creating brief windows where both timelines overlap. These overlaps are visible as aurora-like phenomena and last anywhere from seconds to hours.', contributors: ['Editorial Team', 'quantum_pen'], lastEdited: Timestamp.fromDate(new Date('2027-03-08')), approved: true },
-];
+let _seedWorldEntries: any[] = [];
 
 // ─── Component ──────────────────────────────────────
 export default function Forge() {
@@ -136,18 +90,18 @@ export default function Forge() {
     useEffect(() => {
         const unsub1 = onSnapshot(collection(db, 'forgeProjects'), (snap) => {
             const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as ForgeProject));
-            setProjects(docs.length > 0 ? docs : SEED_PROJECTS);
-        }, () => setProjects(SEED_PROJECTS));
+            setProjects(docs.length > 0 ? docs : _seedProjects);
+        }, () => setProjects(_seedProjects));
 
         const unsub2 = onSnapshot(query(collection(db, 'fanfiction'), orderBy('likes', 'desc')), (snap) => {
             const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as FanFiction));
-            setFanfiction(docs.length > 0 ? docs : SEED_FANFICTION);
-        }, () => setFanfiction(SEED_FANFICTION));
+            setFanfiction(docs.length > 0 ? docs : _seedFanfiction);
+        }, () => setFanfiction(_seedFanfiction));
 
         const unsub3 = onSnapshot(query(collection(db, 'worldbuilding'), orderBy('title')), (snap) => {
             const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WorldEntry));
-            setWorldEntries(docs.length > 0 ? docs : SEED_WORLD_ENTRIES);
-        }, () => setWorldEntries(SEED_WORLD_ENTRIES));
+            setWorldEntries(docs.length > 0 ? docs : _seedWorldEntries);
+        }, () => setWorldEntries(_seedWorldEntries));
 
         return () => { unsub1(); unsub2(); unsub3(); };
     }, []);

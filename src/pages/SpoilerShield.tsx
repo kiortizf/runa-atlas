@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -35,90 +35,13 @@ interface Reply {
     likes: number;
 }
 
-const BOOK = {
-    title: 'The Obsidian Crown',
-    author: 'Elara Vance',
-    totalChapters: 24,
-    cover: 'https://picsum.photos/seed/obsidian/400/600',
-};
-
-const CHAPTERS = Array.from({ length: 24 }, (_, i) => ({
-    num: i + 1,
-    title: [
-        'The Dust of Ages', 'The Ember Codex', 'Bones of the Forgotten', 'A City of Ash',
-        'The Marrow Gate', 'Fire and Memory', 'The Weight of Crowns', 'Bonds of Fire',
-        'The Iron Archive', 'Vessels of Light', 'What the Dead Know', 'The Burning Court',
-        'A Storm of Glass', 'The Hollow Saints', 'Roots and Ruin', 'The Second Breath',
-        'Tides of Obsidian', 'The Naming Rite', 'Blood and Geometry', 'The Final Veil',
-        'Ascension', 'The Crown Descends', 'What Remains', 'Epilogue: Stars and Dust',
-    ][i],
-    discussions: Math.floor(Math.random() * 30) + 3,
-}));
-
-const SEED_DISCUSSIONS: Discussion[] = [
-    {
-        id: 'd1', chapterNum: 1, author: 'star_reader_42', avatar: '🌟',
-        text: 'The way Elara describes the library in the opening paragraph gave me chills. "The library smelled of old paper and forgotten dreams" — that line alone sold me on this entire book.',
-        timestamp: '2 hours ago', likes: 47, spoilerLevel: 'safe', tags: ['prose', 'atmosphere'],
-        replies: [
-            { id: 'r1', author: 'midnight_ink', avatar: '🖋️', text: 'Same! The synesthesia between smell and emotional state is so well done. It immediately tells you this is a world where objects have memory.', timestamp: '1 hour ago', likes: 12 },
-            { id: 'r2', author: 'the_chronicler', avatar: '📖', text: 'I love that it\'s not "dusty old library" cliché. "Forgotten dreams" implies the books themselves had agency.', timestamp: '45 min ago', likes: 8 },
-        ],
-    },
-    {
-        id: 'd2', chapterNum: 1, author: 'prose_hunter', avatar: '🔍',
-        text: 'Can we talk about the magic system introduction? "Magic drawn from the bones of fallen gods" — the Marrow System is already the most original magic system I\'ve read in years. The implications of a necromantic-adjacent magic that isn\'t evil-coded are huge.',
-        timestamp: '5 hours ago', likes: 83, spoilerLevel: 'safe', tags: ['magic system', 'worldbuilding'],
-        replies: [
-            { id: 'r3', author: 'fantasy_scholar', avatar: '🧙', text: 'The fact that it\'s called the "Marrow System" and not something flashy says everything about the tone. This is body horror magic and I am HERE for it.', timestamp: '4 hours ago', likes: 31 },
-        ],
-    },
-    {
-        id: 'd3', chapterNum: 2, author: 'the_archivist', avatar: '📚',
-        text: 'The Watchers! When they appeared in the alley I literally gasped. The way they\'re described as having "the wrong number of shadows" is so unsettling. Vance is incredibly good at making you feel dread without over-explaining.',
-        timestamp: '1 day ago', likes: 61, spoilerLevel: 'mild', tags: ['antagonists', 'horror'],
-        replies: [
-            { id: 'r4', author: 'dark_pages', avatar: '🌑', text: 'The shadow detail is genius because it works on multiple levels — literally wrong AND metaphorically suggesting they exist in multiple planes simultaneously.', timestamp: '20 hours ago', likes: 19 },
-        ],
-    },
-    {
-        id: 'd4', chapterNum: 3, author: 'bones_and_dust', avatar: '💀',
-        text: '"Her blood was the key. Of course it was. It always was, in the old stories, the ones that ended badly." This meta-awareness without breaking immersion is PEAK fantasy writing. She knows the tropes and weaponizes them.',
-        timestamp: '3 days ago', likes: 112, spoilerLevel: 'safe', tags: ['prose', 'meta-narrative'],
-        replies: [],
-    },
-    {
-        id: 'd5', chapterNum: 4, author: 'city_walker', avatar: '🏙️',
-        text: 'The entire Ash Quarter sequence feels like a love letter to Gormenghast and New Weird fiction. The architecture that "breathes" and the streets that rearrange themselves at night — I need a full map of this city.',
-        timestamp: '2 days ago', likes: 45, spoilerLevel: 'safe', tags: ['worldbuilding', 'setting'],
-        replies: [
-            { id: 'r5', author: 'cartographer_', avatar: '🗺️', text: 'Someone in the world wiki is actually building a map! Check The Forge.', timestamp: '1 day ago', likes: 14 },
-        ],
-    },
-    {
-        id: 'd6', chapterNum: 5, author: 'theory_crafter', avatar: '🧠',
-        text: '[THEORY] The Marrow Gate isn\'t just a gate — it\'s a test. Notice how the inscription changes depending on who reads it? I think the gate is sentient and selects its travelers based on their relationship with death.',
-        timestamp: '12 hours ago', likes: 94, spoilerLevel: 'mild', tags: ['theory', 'magic system'],
-        replies: [
-            { id: 'r6', author: 'pattern_seeker', avatar: '🔮', text: 'This tracks. The inscription Elara reads mentions "the weight you carry" while the scholar reference mentions "the weight you refuse." Same gate, different reading.', timestamp: '8 hours ago', likes: 27 },
-            { id: 'r7', author: 'rune_reader', avatar: '✨', text: 'Adding to this: re-read Ch.3 where she first touches the gate material. It\'s described as "warm, like holding a hand." It IS alive.', timestamp: '6 hours ago', likes: 22 },
-        ],
-    },
-    {
-        id: 'd7', chapterNum: 8, author: 'heartbreak_hotel', avatar: '💔',
-        text: 'I need to talk about the Kael scene. When he says "I didn\'t follow you to save you. I followed because the world is less interesting when you\'re not in it." I had to put the book down. That\'s not a romance line, that\'s a thesis statement about companionship.',
-        timestamp: '6 hours ago', likes: 156, spoilerLevel: 'heavy', tags: ['characters', 'romance', 'emotional'],
-        replies: [
-            { id: 'r8', author: 'quietly_crying', avatar: '😭', text: 'This line WRECKED me. It\'s so much better than "I love you" because it\'s about curiosity and fascination, not possession.', timestamp: '5 hours ago', likes: 43 },
-        ],
-    },
-    {
-        id: 'd8', chapterNum: 12, author: 'endgame_theorist', avatar: '♟️',
-        text: 'The Burning Court reveal changes EVERYTHING about chapters 1-4. Go back and re-read the library scene knowing what the Court actually is. The "forgotten dreams" aren\'t metaphorical. They\'re literal trapped consciousnesses.',
-        timestamp: '4 days ago', likes: 201, spoilerLevel: 'heavy', tags: ['theory', 're-read', 'mind-blown'],
-        replies: [],
-    },
-];
+interface SpoilerBook {
+    title: string;
+    author: string;
+    totalChapters: number;
+    cover: string;
+    chapters: { num: number; title: string; discussions: number }[];
+}
 
 export default function SpoilerShield() {
     const { user } = useAuth();
@@ -131,7 +54,23 @@ export default function SpoilerShield() {
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
     const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
     const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
-    const [discussions, setDiscussions] = useState<Discussion[]>(SEED_DISCUSSIONS);
+    const [discussions, setDiscussions] = useState<Discussion[]>([]);
+    const [book, setBook] = useState<SpoilerBook>({ title: '', author: '', totalChapters: 0, cover: '', chapters: [] });
+
+    // Load book + chapters from Firestore
+    useEffect(() => {
+        const unsub = onSnapshot(collection(db, 'spoiler_books'), (snap) => {
+            if (snap.docs.length > 0) {
+                const data = snap.docs[0].data() as SpoilerBook;
+                setBook({ ...data, chapters: data.chapters || [] });
+            }
+        }, () => { });
+        return () => unsub();
+    }, []);
+
+    // Computed values from Firestore-loaded book
+    const BOOK = book;
+    const CHAPTERS = book.chapters;
 
     useEffect(() => {
         const unsub = onSnapshot(
@@ -190,14 +129,6 @@ export default function SpoilerShield() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {!user && (
-                <div className="bg-gradient-to-r from-aurora-teal/10 to-starforge-gold/5 border-b border-aurora-teal/10">
-                    <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-aurora-teal font-semibold">Demo Mode</span> — Sign in to track your reading progress and join discussions.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-aurora-teal/10 text-aurora-teal text-[10px] font-semibold uppercase tracking-wider border border-aurora-teal/20 rounded hover:bg-aurora-teal/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* ═══ Header ═══ */}
             <div className="border-b border-white/[0.06] bg-void-black/80 backdrop-blur-xl sticky top-0 z-30">
                 <div className="max-w-6xl mx-auto px-6 py-4">
@@ -332,6 +263,7 @@ export default function SpoilerShield() {
                         </div>
 
                         {/* New comment box */}
+                        {user ? (
                         <div className="mb-8 p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-aurora-teal/10 flex items-center justify-center text-sm flex-none">
@@ -356,6 +288,14 @@ export default function SpoilerShield() {
                                 </div>
                             </div>
                         </div>
+                        ) : (
+                        <div className="mb-8 p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg text-center">
+                            <p className="text-sm text-text-secondary mb-3">Sign in to join the discussion and share your thoughts</p>
+                            <a href="/portal" className="inline-flex items-center gap-2 px-5 py-2 bg-aurora-teal/10 text-aurora-teal text-xs font-semibold border border-aurora-teal/20 rounded-lg hover:bg-aurora-teal/20 transition-colors">
+                                <MessageCircle className="w-3.5 h-3.5" /> Sign In to Discuss
+                            </a>
+                        </div>
+                        )}
 
                         {/* Discussion threads */}
                         <div className="space-y-4">

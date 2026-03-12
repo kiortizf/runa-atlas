@@ -115,9 +115,19 @@ export default function AdminEditorial() {
 
     const filtered = phaseFilter === 'all' ? projects : projects.filter(p => p.phase === phaseFilter);
 
-    const isOverdue = (deadline: string) => {
-        if (!deadline) return false;
-        return new Date(deadline) < new Date();
+    const toDateString = (d: any): string => {
+        if (!d) return '';
+        if (typeof d === 'string') return d;
+        if (d instanceof Timestamp) return d.toDate().toISOString().slice(0, 10);
+        if (d instanceof Date) return d.toISOString().slice(0, 10);
+        if (d?.seconds) return new Date(d.seconds * 1000).toISOString().slice(0, 10);
+        return '';
+    };
+
+    const isOverdue = (deadline: any) => {
+        const ds = toDateString(deadline);
+        if (!ds) return false;
+        return new Date(ds) < new Date();
     };
 
     const getDate = (d: any) => {
@@ -138,7 +148,7 @@ export default function AdminEditorial() {
         const days: { day: number; projects: EditorialProject[] }[] = [];
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            days.push({ day: d, projects: projects.filter(p => p.deadline?.startsWith(dateStr)) });
+            days.push({ day: d, projects: projects.filter(p => toDateString(p.deadline).startsWith(dateStr)) });
         }
         return { year, month, firstDay, days, monthName: now.toLocaleString('default', { month: 'long' }) };
     }, [projects]);
@@ -155,9 +165,10 @@ export default function AdminEditorial() {
     const conflicts = useMemo(() => {
         const editorDeadlines: Record<string, { title: string; deadline: string }[]> = {};
         projects.forEach(p => {
-            if (p.assignedEditor && p.deadline) {
+            const ds = toDateString(p.deadline);
+            if (p.assignedEditor && ds) {
                 if (!editorDeadlines[p.assignedEditor]) editorDeadlines[p.assignedEditor] = [];
-                editorDeadlines[p.assignedEditor].push({ title: p.bookTitle, deadline: p.deadline });
+                editorDeadlines[p.assignedEditor].push({ title: p.bookTitle, deadline: ds });
             }
         });
         const result: string[] = [];
@@ -419,7 +430,7 @@ export default function AdminEditorial() {
                                     <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 bg-void-black border border-border rounded-sm">
                                         <span className={`w-1.5 h-1.5 rounded-full ${PHASE_MAP[p.phase].color.replace('text-', 'bg-')}`} />
                                         <span className="font-ui text-xs text-text-secondary truncate flex-1">{p.bookTitle}</span>
-                                        <span className="font-mono text-[9px] text-text-muted">{p.deadline}</span>
+                                        <span className="font-mono text-[9px] text-text-muted">{toDateString(p.deadline)}</span>
                                     </div>
                                 ))}
                                 {editor.projects.length === 0 && <p className="font-ui text-xs text-text-muted text-center py-2">No active projects</p>}

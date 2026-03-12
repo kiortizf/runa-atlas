@@ -188,47 +188,55 @@ export default function Dashboard() {
                             </div>
                             <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-starforge-gold/50 transition-colors" />
                         </button>
-
-                        {/* Seed Demo Data */}
-                        <button
-                            onClick={async () => {
-                                if (!user?.uid) return;
-                                setSeedStatus('loading');
-                                try {
-                                    const result = await seedAllDemoData(user.uid);
-                                    if (result.success) {
-                                        setSeedStatus('success');
-                                        setSeedMessage(`Seeded ${result.seeded.length} documents`);
-                                    } else {
-                                        setSeedStatus('error');
-                                        setSeedMessage(`${result.seeded.length} ok, ${result.errors.length} errors`);
-                                    }
-                                } catch (e: any) {
-                                    setSeedStatus('error');
-                                    setSeedMessage(e.message);
-                                }
-                                setTimeout(() => setSeedStatus('idle'), 4000);
-                            }}
-                            disabled={seedStatus === 'loading'}
-                            className="group flex items-center gap-4 p-5 bg-aurora-teal/[0.03] border border-aurora-teal/10 rounded-lg hover:border-aurora-teal/30 hover:bg-aurora-teal/[0.06] transition-all w-full text-left mt-3 disabled:opacity-50"
-                        >
-                            <div className="w-10 h-10 rounded-lg bg-aurora-teal/10 flex items-center justify-center">
-                                {seedStatus === 'loading' ? <Loader2 className="w-5 h-5 text-aurora-teal animate-spin" /> :
-                                 seedStatus === 'success' ? <CheckCircle className="w-5 h-5 text-emerald-400" /> :
-                                 seedStatus === 'error' ? <AlertCircle className="w-5 h-5 text-forge-red" /> :
-                                 <Database className="w-5 h-5 text-aurora-teal" />}
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-semibold text-white group-hover:text-aurora-teal transition-colors">
-                                    {seedStatus === 'loading' ? 'Seeding...' : seedStatus === 'success' ? 'Seeded!' : seedStatus === 'error' ? 'Seed Error' : 'Seed Demo Data'}
-                                </h3>
-                                <p className="text-[11px] text-text-secondary">
-                                    {seedMessage || 'Populate Firestore with demo data for all publisher modules'}
-                                </p>
-                            </div>
-                        </button>
                     </motion.div>
                 )}
+
+                {/* Seed Demo Data — Always visible */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                    className="mt-6"
+                >
+                    <h2 className="text-xs uppercase tracking-widest text-text-secondary font-semibold mb-4">Developer Tools</h2>
+                    <button
+                        onClick={async () => {
+                            if (!user?.uid) return;
+                            setSeedStatus('loading');
+                            try {
+                                const result = await seedAllDemoData(user.uid);
+                                if (result.success) {
+                                    setSeedStatus('success');
+                                    setSeedMessage(`Seeded ${result.seeded.length} documents`);
+                                } else {
+                                    setSeedStatus('error');
+                                    setSeedMessage(`${result.seeded.length} ok, ${result.errors.length} errors`);
+                                }
+                            } catch (e: any) {
+                                setSeedStatus('error');
+                                setSeedMessage(e.message);
+                            }
+                            setTimeout(() => setSeedStatus('idle'), 4000);
+                        }}
+                        disabled={seedStatus === 'loading'}
+                        className="group flex items-center gap-4 p-5 bg-aurora-teal/[0.03] border border-aurora-teal/10 rounded-lg hover:border-aurora-teal/30 hover:bg-aurora-teal/[0.06] transition-all w-full text-left disabled:opacity-50"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-aurora-teal/10 flex items-center justify-center">
+                            {seedStatus === 'loading' ? <Loader2 className="w-5 h-5 text-aurora-teal animate-spin" /> :
+                             seedStatus === 'success' ? <CheckCircle className="w-5 h-5 text-emerald-400" /> :
+                             seedStatus === 'error' ? <AlertCircle className="w-5 h-5 text-forge-red" /> :
+                             <Database className="w-5 h-5 text-aurora-teal" />}
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-white group-hover:text-aurora-teal transition-colors">
+                                {seedStatus === 'loading' ? 'Seeding...' : seedStatus === 'success' ? 'Seeded!' : seedStatus === 'error' ? 'Seed Error' : 'Seed Demo Data'}
+                            </h3>
+                            <p className="text-[11px] text-text-secondary">
+                                {seedMessage || 'Populate Firestore with demo data for all publisher modules'}
+                            </p>
+                        </div>
+                    </button>
+                </motion.div>
             </div>
         </div>
     );

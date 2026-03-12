@@ -74,40 +74,13 @@ const ACTION_CONFIG: Record<string, { icon: any; color: string; label: string }>
     message: { icon: MessageCircle, color: '#3b82f6', label: 'Messaged' },
 };
 
-const MANUSCRIPT = {
-    title: 'Wrath & Reverie',
-    author: 'Elara Vance',
-    genre: 'Dark Fantasy',
-    totalChapters: 24,
-    chaptersReleased: 15,
-};
+const MANUSCRIPT = { title: '', author: '', genre: '', totalChapters: 0, chaptersReleased: 0 };
 
-const ACTIVE_READERS: BetaReader[] = [
-    { id: 'br1', name: 'Taylor Park', avatar: '📗', tier: 'Trusted', dnaMatch: 94, chaptersRead: 15, totalChapters: 24, feedbackSubmitted: 12, status: 'reading', lastActive: '2h ago', invitedBy: 'author', invitedDate: 'Jan 8, 2026', nda: true, email: 'taylor.p@email.com' },
-    { id: 'br2', name: 'Nia Blackwood', avatar: '📕', tier: 'Inner Circle', dnaMatch: 91, chaptersRead: 15, totalChapters: 24, feedbackSubmitted: 14, status: 'reading', lastActive: '5h ago', invitedBy: 'author', invitedDate: 'Jan 6, 2026', nda: true, email: 'nia.b@email.com' },
-    { id: 'br3', name: 'Marcus Chen', avatar: '📘', tier: 'Trusted', dnaMatch: 87, chaptersRead: 12, totalChapters: 24, feedbackSubmitted: 8, status: 'reading', lastActive: '1d ago', invitedBy: 'editor', invitedDate: 'Jan 15, 2026', nda: true, email: 'marcus.c@email.com' },
-    { id: 'br4', name: 'Lena Ortega', avatar: '📙', tier: 'Elite', dnaMatch: 82, chaptersRead: 10, totalChapters: 24, feedbackSubmitted: 9, status: 'reviewing', lastActive: '3d ago', invitedBy: 'editor', invitedDate: 'Jan 20, 2026', nda: true, email: 'lena.o@email.com' },
-    { id: 'br5', name: 'Jordan Mills', avatar: '📓', tier: 'Trusted', dnaMatch: 79, chaptersRead: 8, totalChapters: 24, feedbackSubmitted: 4, status: 'inactive', lastActive: '12d ago', invitedBy: 'author', invitedDate: 'Jan 10, 2026', nda: false, email: 'jordan.m@email.com' },
-];
+const ACTIVE_READERS: BetaReader[] = [];
 
-const RECRUIT_CANDIDATES: RecruitCandidate[] = [
-    { id: 'rc1', name: 'Ivy Delacroix', avatar: '🌿', tier: 'Elite', dnaMatch: 93, booksRead: 24, feedbackRating: 4.9, topGenres: ['Dark Fantasy', 'Romantasy', 'Gothic'], status: 'available', lastActive: '1h ago' },
-    { id: 'rc2', name: 'Kai Nakamura', avatar: '⚡', tier: 'Trusted', dnaMatch: 88, booksRead: 18, feedbackRating: 4.7, topGenres: ['Dark Fantasy', 'Epic Fantasy', 'Sci-Fi'], status: 'available', lastActive: '3h ago' },
-    { id: 'rc3', name: 'Priya Sharma', avatar: '🔮', tier: 'Inner Circle', dnaMatch: 86, booksRead: 31, feedbackRating: 4.8, topGenres: ['Literary Fiction', 'Dark Fantasy', 'Magical Realism'], status: 'busy', lastActive: '6h ago' },
-    { id: 'rc4', name: 'Rowan Ashwick', avatar: '🍂', tier: 'Trusted', dnaMatch: 84, booksRead: 15, feedbackRating: 4.5, topGenres: ['Dark Fantasy', 'Horror', 'Mystery'], status: 'available', lastActive: '1d ago' },
-    { id: 'rc5', name: 'Zara Moonveil', avatar: '🌙', tier: 'Elite', dnaMatch: 81, booksRead: 22, feedbackRating: 4.6, topGenres: ['Dark Fantasy', 'Romantasy', 'Historical Fantasy'], status: 'invited', lastActive: '2d ago' },
-];
+const RECRUIT_CANDIDATES: RecruitCandidate[] = [];
 
-const ACTIVITY_LOG: ActivityEntry[] = [
-    { id: 'a1', action: 'nudged', actor: 'You (Editor)', actorRole: 'editor', target: 'Jordan Mills', manuscript: 'Wrath & Reverie', timestamp: '1h ago', detail: 'Gentle reminder to continue reading — hasn\'t logged in for 12 days' },
-    { id: 'a2', action: 'invited', actor: 'Elara Vance', actorRole: 'author', target: 'Taylor Park', manuscript: 'Wrath & Reverie', timestamp: '2h ago', detail: 'High DNA match (94%), Trusted tier reader' },
-    { id: 'a3', action: 'nda_signed', actor: 'System', actorRole: 'editor', target: 'Taylor Park', manuscript: 'Wrath & Reverie', timestamp: '2h ago' },
-    { id: 'a4', action: 'message', actor: 'You (Editor)', actorRole: 'editor', target: 'Nia Blackwood', manuscript: 'Wrath & Reverie', timestamp: '5h ago', detail: 'Thank you for the detailed Ch. 14 pacing notes — incredibly helpful!' },
-    { id: 'a5', action: 'invited', actor: 'You (Editor)', actorRole: 'editor', target: 'Marcus Chen', manuscript: 'Wrath & Reverie', timestamp: '6w ago', detail: 'Recruited for worldbuilding perspective — 87% DNA match' },
-    { id: 'a6', action: 'invited', actor: 'You (Editor)', actorRole: 'editor', target: 'Lena Ortega', manuscript: 'Wrath & Reverie', timestamp: '5w ago', detail: 'Elite tier, strong prose feedback history' },
-    { id: 'a7', action: 'completed', actor: 'System', actorRole: 'editor', target: 'Sage Whitmore', manuscript: 'Bone Lace', timestamp: '2w ago', detail: 'All 16 chapters read, 8 feedback notes submitted' },
-    { id: 'a8', action: 'removed', actor: 'Elara Vance', actorRole: 'author', target: 'Alex Rivera', manuscript: 'Wrath & Reverie', timestamp: '1mo ago', detail: 'Unresponsive after 30 days — mutual decision to remove' },
-];
+const ACTIVITY_LOG: ActivityEntry[] = [];
 
 export default function EditorBetaManager() {
     const [activeTab, setActiveTab] = useState<'readers' | 'recruit' | 'activity'>('readers');

@@ -183,7 +183,7 @@ export default function AdminAwards() {
   const nomsByMonth = useMemo(() => {
     const months: Record<string, { award: string; deadline: string; type: string }[]> = {};
     awards.forEach(aw => {
-      Object.entries(aw.keyDates).forEach(([type, dateStr]) => {
+      Object.entries(aw.keyDates || {}).forEach(([type, dateStr]) => {
         if (dateStr) {
           const month = dateStr.split(' ')[0] || dateStr;
           if (!months[month]) months[month] = [];
@@ -296,7 +296,7 @@ export default function AdminAwards() {
                         <div>
                           <h4 className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Key Dates</h4>
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {Object.entries(aw.keyDates).filter(([, v]) => v).map(([key, val]) => (
+                            {Object.entries(aw.keyDates || {}).filter(([, v]) => v).map(([key, val]) => (
                               <div key={key} className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.04] text-center">
                                 <p className="text-[9px] text-text-muted uppercase">{key.replace(/([A-Z])/g, ' $1')}</p>
                                 <p className="text-xs text-starforge-gold font-medium mt-0.5">{val}</p>

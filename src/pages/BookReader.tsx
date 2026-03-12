@@ -5,117 +5,9 @@ import { ChevronLeft, ChevronRight, BookOpen, Eye, EyeOff, MessageSquare, Users,
 import { useAuth } from '../contexts/AuthContext';
 import { useAnnotations, type AuthorNote, type EditorNote, type ParagraphStats } from '../hooks/useAnnotations';
 
-// ── Seed Book Data ──
-const SEED_BOOK = {
-    id: 'obsidian-crown',
-    title: 'The Obsidian Crown',
-    author: 'Elara Vance',
-    coverUrl: '',
-};
-
-const SEED_CHAPTERS: Record<string, { title: string; number: number; content: string; authorNotes: AuthorNote[]; editorNotes: EditorNote[] }> = {
-    '1': {
-        title: 'The Dust of Ages', number: 1,
-        authorNotes: [
-            { paragraphId: 'p-2', text: 'The "warmth radiating from the leather" was the first detail I wrote for the entire series. Everything grew from that single sensory image.', authorName: 'Elara Vance' },
-            { paragraphId: 'p-5', text: 'I debated whether blank pages were too cliche. My editor convinced me that the subversion comes from what happens next, not the reveal itself.', authorName: 'Elara Vance' },
-            { paragraphId: 'p-10', text: 'Ignis. Vita. Mors. These are actual Proto-Indo-European root reconstructions. I spent two weeks researching historical linguistics for three words.', authorName: 'Elara Vance' },
-        ],
-        editorNotes: [
-            { paragraphId: 'p-3', text: 'We cut 400 words of backstory from this section. The original draft explained how Elara found the library, but the mystery of her simply being there is more compelling.', editorName: 'Maren Cole' },
-            { paragraphId: 'p-8', text: 'Notice the shift from visual to olfactory imagery. This is a deliberate pacing technique: ozone and burning embers signal danger before the plot does.', editorName: 'Maren Cole' },
-        ],
-        content: `The library smelled of old paper and forgotten dreams. Elara traced the spine of the unmarked tome, feeling a strange warmth radiating from the leather.
-
-She had spent years searching for this exact volume, guided only by fragments of myths and half-remembered nursery rhymes. The Ember Codex. A book that supposedly held the key to the Marrow System, the ancient magic drawn from the bones of fallen gods.
-
-"When the stars align in the house of the serpent, the codex will awaken, and the world will burn."
-
-She shivered, pulling her cloak tighter around her shoulders. The air in the restricted section was always cold, but this chill felt different. It felt alive.
-
-She opened the book. The pages were blank.
-
-"What?" she whispered, her voice echoing in the silent hall.
-
-She flipped through the pages, her frustration mounting. Had she been wrong? Had the myths lied? Had she thrown away her position at the Athenaeum, her reputation, her family's trust, all for empty pages?
-
-Suddenly, a faint glow began to emanate from the center of the book. The blank pages seemed to absorb the dim light of her lantern, glowing with an inner fire that pulsed like a heartbeat.
-
-Words began to form, written in a language she had never seen before, yet somehow, she understood every word. The letters were not ink but light, each one burning itself into existence and leaving a faint warmth on her fingertips as she traced them.
-
-The smell of ozone and burning embers filled the air around her. The magic was old, older than the library, older than the city, older than memory itself.
-
-Ignis. Vita. Mors.
-
-Fire. Life. Death.
-
-The words burned themselves into her mind, and she knew, with terrifying certainty, that her life would never be the same. The Ember Codex had chosen its reader, and the reader could not refuse.`,
-    },
-    '2': {
-        title: 'Whispers in the Dark', number: 2,
-        authorNotes: [
-            { paragraphId: 'p-1', text: 'This chapter was originally Chapter 4. We moved it forward because the pacing needed immediate consequences after the codex opening.', authorName: 'Elara Vance' },
-            { paragraphId: 'p-6', text: 'The voice whispering "The codex is not a book. It is a key" is never identified. Readers have theories. I know who it is, but I will never confirm it.', authorName: 'Elara Vance' },
-        ],
-        editorNotes: [
-            { paragraphId: 'p-4', text: 'The repetition of "silence" is intentional. In the manuscript, Elara originally heard footsteps. The silence is scarier because it denies the reader the comfort of a identifiable threat.', editorName: 'Maren Cole' },
-        ],
-        content: `The words on the page seemed to shift and writhe as she read them. It wasn't a language she knew, not the Old Tongue, not the Scholar's Script, not any of the seventeen dialects catalogued in the Athenaeum's archives. Yet she understood it perfectly, the way you understand the language of dreams.
-
-She closed the book, her heart pounding in her chest. The glow faded, but the warmth remained, seeping into her skin, settling into her bones. She could feel it there, a second pulse beneath her own.
-
-The library was silent. Too silent. She realized she could no longer hear the distant chime of the clock tower, or the wind against the high windows, or the settling creak of old shelves. The silence was complete, like being submerged in deep water.
-
-She waited. Nothing moved. Nothing breathed. She was alone in the silence.
-
-Then, a whisper. Not a sound, exactly, but a vibration in the air, a resonance she felt in her teeth and in the newly warm marrow of her bones.
-
-"The codex is not a book. It is a key."
-
-"Who's there?" she called out, her voice trembling. The words fell flat in the dead air, absorbed by the silence as if swallowed.
-
-No answer came. But the warmth in her bones pulsed once, like an acknowledgment.
-
-She hurried out of the restricted section, the heavy tome clutched tightly to her chest. The familiar scent of old paper and dust was now tainted with the faint smell of ozone and burning embers. It clung to her like a second skin.
-
-She knew she had to leave the city. Not tomorrow. Not after dawn. Now. The Order of the Eclipse monitored every Marrow Vein within the city walls. If the codex was what she believed it was, they would have already felt its awakening, already dispatched their Seekers, already begun the hunt.
-
-Elara packed nothing. She dropped her scholar's robe on the floor of her quarters, pulled on a traveling cloak, and slipped the codex into a leather satchel. At the door, she paused, looking back at the life she was leaving.
-
-Then she stepped into the dark.`,
-    },
-    '3': {
-        title: 'The Order of the Eclipse', number: 3,
-        authorNotes: [
-            { paragraphId: 'p-2', text: 'The silver thread on their robes is woven from actual Marrow, giving the Order limited protection against magical attacks. This detail matters later.', authorName: 'Elara Vance' },
-            { paragraphId: 'p-9', text: 'The fire that cannot be extinguished is the central metaphor of the entire trilogy. Elara carries both literal and figurative fire from this point forward.', authorName: 'Elara Vance' },
-        ],
-        editorNotes: [
-            { paragraphId: 'p-5', text: 'This is a classic escalation technique: the leader speaks, draws a weapon, and steps forward. Three beats, increasing threat. We stripped out interior monologue between each beat to maintain momentum.', editorName: 'Maren Cole' },
-        ],
-        content: `They came in the dead of night, silent as shadows, three figures materializing from the darkness as if the night itself had given them form. Elara barely had time to grab the codex before her door was splintered open, the wood cracking like a bone.
-
-Three figures stood in the doorway, their faces hidden beneath dark hoods embroidered with silver thread. The symbol of the Eclipse, a dying sun consumed by a serpent's jaw, was emblazoned on their chests in thread that seemed to glow with its own faint light.
-
-"Give us the book, scholar," the leader hissed, his voice like dry leaves scraping against stone. He was tall, impossibly so, his hooded form filling the doorway. "The Eclipse has felt its awakening. You cannot hide what has been found."
-
-Elara backed away, her hand instinctively going to the small dagger hidden in her boot. "I don't know what you're talking about."
-
-"Do not lie to us. We can smell the magic on you." The leader stepped forward, drawing a long, curved blade from beneath his robes. The metal gleamed with an oily iridescence, like a beetle's wing. "The codex belongs to the Order. It has always belonged to the Order. Give it to us, and you will be permitted to live."
-
-The other two fanned out, flanking her. She was cornered. The window behind her was the only exit, a two-story drop to cobblestones.
-
-Elara did not hesitate. She threw her lantern at the leader, the glass shattering and spilling burning oil across the floor. The flames caught his robes, and he shrieked, a sound inhuman and terrible, like tearing metal.
-
-In the chaos of fire and shouting, she vaulted through the window. The glass sliced her forearm as she cleared the frame, and she hit the cobblestones hard, pain shooting through her ankle like a bolt of lightning. But she forced herself to run.
-
-Behind her, the house burned. The fire spread faster than natural flame should, feeding on the residual magic saturating the building. The Order would follow. They always did.
-
-But Elara had the codex, and now she knew its first secret: the fire within could not be extinguished. Not by water. Not by will. Not by the Order of the Eclipse.
-
-It burned because it chose to burn. And it had chosen her.`,
-    },
-};
+// Data loaded from Firestore
+let _seedBook: any = { title: '', author: '', cover: '', genre: '', rating: 0, reviews: 0, synopsis: '', pages: 0, published: '', publisher: '', isbn: '', language: '', awards: [], tags: [] };
+let _seedChapters: Record<string, { title: string; number: number; content: string; authorNotes: AuthorNote[]; editorNotes: EditorNote[] }> = {};
 
 const REACTIONS = [
     { emoji: '🔥', label: 'Fire' },
@@ -126,14 +18,7 @@ const REACTIONS = [
     { emoji: '🧠', label: 'Thought-provoking' },
 ];
 
-// ── Seed Community Highlights ──
-const SEED_COMMUNITY: Record<string, { count: number; reactions: Record<string, number>; notes: { displayName: string; note: string }[] }> = {
-    'p-0': { count: 23, reactions: { '✨': 12, '🔥': 8 }, notes: [{ displayName: 'stargazer_42', note: 'Perfect opening line. You can smell the dust.' }] },
-    'p-2': { count: 47, reactions: { '🤯': 15, '🔥': 22, '✨': 10 }, notes: [{ displayName: 'lore_keeper', note: 'The Marrow System is incredible worldbuilding.' }, { displayName: 'mythweaver', note: 'Fallen gods leaving magic in the earth... chills.' }] },
-    'p-4': { count: 12, reactions: { '😭': 5, '✨': 7 }, notes: [] },
-    'p-7': { count: 31, reactions: { '🔥': 18, '🤯': 13 }, notes: [{ displayName: 'neon_fan', note: 'The light-as-letters detail is so vivid.' }] },
-    'p-10': { count: 89, reactions: { '🔥': 45, '🤯': 30, '✨': 14 }, notes: [{ displayName: 'rootreader', note: 'Three words. Three concepts. The entire magic system in a nutshell.' }, { displayName: 'quantum_pen', note: 'I got actual chills reading this.' }, { displayName: 'cyber_dreamer', note: 'This is the line that hooked me for the whole series.' }] },
-};
+let _seedCommunity: Record<string, { count: number; reactions: Record<string, number>; notes: { displayName: string; note: string }[] }> = {};
 
 type Theme = 'dark' | 'sepia' | 'light';
 
@@ -150,8 +35,8 @@ export default function BookReader() {
     const contentRef = useRef<HTMLDivElement>(null);
 
     // State
-    const [chapter, setChapter] = useState<typeof SEED_CHAPTERS['1'] | null>(null);
-    const [book] = useState(SEED_BOOK);
+    const [chapter, setChapter] = useState<typeof _seedChapters['1'] | null>(null);
+    const [book] = useState(_seedBook);
     const [fontSize, setFontSize] = useState(18);
     const [lineHeight, setLineHeight] = useState(1.9);
     const [theme, setTheme] = useState<Theme>('dark');
@@ -185,7 +70,7 @@ export default function BookReader() {
 
     // Load chapter (seed data)
     useEffect(() => {
-        const ch = SEED_CHAPTERS[chapterId || '1'];
+        const ch = _seedChapters[chapterId || '1'];
         if (ch) setChapter(ch);
     }, [chapterId]);
 
@@ -258,7 +143,7 @@ export default function BookReader() {
     // Get merged stats (Firestore + seed)
     const getStats = (pid: string): ParagraphStats | null => {
         const firestore = paragraphStats[pid];
-        const seed = SEED_COMMUNITY[pid];
+        const seed = _seedCommunity[pid];
         if (firestore && seed) {
             return {
                 totalHighlights: firestore.totalHighlights + seed.count,
@@ -273,21 +158,21 @@ export default function BookReader() {
 
     // Get author notes for a paragraph (Firestore + seed)
     const getAuthorNotes = (pid: string): AuthorNote[] => {
-        const chapterData = SEED_CHAPTERS[chapterId || '1'];
+        const chapterData = _seedChapters[chapterId || '1'];
         const seedNotes = chapterData?.authorNotes.filter(n => n.paragraphId === pid) || [];
         const firestoreNotes = authorNotes.filter(n => n.paragraphId === pid);
         return [...seedNotes, ...firestoreNotes];
     };
 
     const getEditorNotes = (pid: string): EditorNote[] => {
-        const chapterData = SEED_CHAPTERS[chapterId || '1'];
+        const chapterData = _seedChapters[chapterId || '1'];
         const seedNotes = chapterData?.editorNotes.filter(n => n.paragraphId === pid) || [];
         const firestoreNotes = editorNotes.filter(n => n.paragraphId === pid);
         return [...seedNotes, ...firestoreNotes];
     };
 
     const t = THEMES[theme];
-    const totalChapters = Object.keys(SEED_CHAPTERS).length;
+    const totalChapters = Object.keys(_seedChapters).length;
     const chapterNum = parseInt(chapterId || '1');
     const wordCount = chapter?.content.split(/\s+/).length || 0;
     const readTime = Math.ceil(wordCount / 250);
@@ -346,7 +231,7 @@ export default function BookReader() {
                             onClick={e => e.stopPropagation()}>
                             <h3 className="text-lg font-semibold mb-4" style={{ color: t.text }}>Chapters</h3>
                             <div className="space-y-2">
-                                {Object.entries(SEED_CHAPTERS).map(([id, ch]) => (
+                                {Object.entries(_seedChapters).map(([id, ch]) => (
                                     <button key={id}
                                         onClick={() => { navigate(`/read/${bookId || 'obsidian-crown'}/${id}`); setShowToc(false); }}
                                         className="w-full text-left px-3 py-2.5 rounded-sm transition-colors flex items-center gap-3"

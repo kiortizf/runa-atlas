@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Star, ArrowRight, BookOpen, PenTool, Sparkles, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,28 +18,22 @@ interface FeaturedBook {
   genre?: string;
 }
 
-const SEED_BOOKS: FeaturedBook[] = [
-  { id: '1', title: 'The Obsidian Crown', author: 'Elara Vance', cover: 'https://picsum.photos/seed/obsidian/600/900', codemark: '🗡️ Epic Fantasy', synopsis: 'In a world where magic is drawn from the marrow of fallen gods, a young thief discovers she carries the bloodline of the architects.', editionType: 'Standard' },
-  { id: '2', title: 'Neon Requiem', author: 'Jax Thorne', cover: 'https://picsum.photos/seed/neon/600/900', codemark: '🔥 Dystopian', synopsis: 'A cybernetic detective must solve the murder of an AI consciousness before the city\'s power grid is permanently severed.', editionType: 'Standard' },
-  { id: '3', title: 'Whispers of the Deep', author: 'Marina Solis', cover: 'https://picsum.photos/seed/whispers/600/900', codemark: '🌊 Literary Fiction', synopsis: 'An exploration of grief and memory set against the backdrop of a sinking coastal town where the dead refuse to stay buried.', editionType: 'Signed' },
-  { id: '4', title: 'Star-Crossed Circuits', author: 'Leo Vance', cover: 'https://picsum.photos/seed/circuits/600/900', codemark: '💜 Queer Romance', synopsis: 'Two rival mechanics on a deep-space mining colony find themselves forced to cooperate when their station is sabotaged.', editionType: 'Interactive' },
-];
-
 export default function Home() {
   usePageSEO({
     title: 'RÜNA ATLAS PRESS',
     description: 'Independent speculative fiction publisher centering voices from marginalized communities. Explore science fiction, fantasy, horror, and magical realism across our Bohío Press and Void Noir imprints.',
   });
-  const [books, setBooks] = useState<FeaturedBook[]>(SEED_BOOKS);
+  const [books, setBooks] = useState<FeaturedBook[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onSnapshot(
       query(collection(db, 'books'), orderBy('createdAt', 'desc'), limit(4)),
       (snap) => {
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as FeaturedBook));
-        if (data.length > 0) setBooks(data);
+        setBooks(snap.docs.map(d => ({ id: d.id, ...d.data() } as FeaturedBook)));
+        setLoading(false);
       },
-      () => { /* use seed fallback */ }
+      () => setLoading(false)
     );
     return () => unsub();
   }, []);

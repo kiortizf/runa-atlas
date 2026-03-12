@@ -14,99 +14,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWritingSessions } from '../hooks/useWritingSessions';
 
 
-// ── Seed Data: Beta Reader Hub ──
-const BETA_READERS = [
-    { id: 1, name: 'Aria Chen', avatar: '🧬', genres: ['Fantasy', 'Sci-Fi'], responseTime: '3 days', rating: 4.9, feedbackStyle: 'Detailed line edits', matchScore: 97, completionRate: 98, booksRead: 23, strengths: ['Worldbuilding critique', 'Pacing analysis', 'Character arcs'], status: 'available' },
-    { id: 2, name: 'Marcus Webb', avatar: '📚', genres: ['Literary Fiction', 'Historical'], responseTime: '5 days', rating: 4.7, feedbackStyle: 'Big-picture narrative', matchScore: 92, completionRate: 95, booksRead: 18, strengths: ['Prose style', 'Theme development', 'Historical accuracy'], status: 'available' },
-    { id: 3, name: 'Luna Okafor', avatar: '🌙', genres: ['Fantasy', 'Romance'], responseTime: '2 days', rating: 4.8, feedbackStyle: 'Emotional resonance focus', matchScore: 89, completionRate: 100, booksRead: 31, strengths: ['Dialogue', 'Emotional beats', 'Romantic tension'], status: 'reading' },
-    { id: 4, name: 'Dev Patel', avatar: '🔮', genres: ['Sci-Fi', 'Thriller'], responseTime: '4 days', rating: 4.6, feedbackStyle: 'Plot structure & logic', matchScore: 85, completionRate: 91, booksRead: 15, strengths: ['Plot holes', 'Tension building', 'Tech accuracy'], status: 'available' },
-    { id: 5, name: 'Sage Blackwood', avatar: '🌿', genres: ['Fantasy', 'Young Adult'], responseTime: '6 days', rating: 4.5, feedbackStyle: 'Voice & authenticity', matchScore: 81, completionRate: 88, booksRead: 27, strengths: ['Voice', 'Representation', 'Age-appropriate content'], status: 'unavailable' },
-];
+// Data loaded from Firestore
+let _betaReaders: any[] = [];
+let _feedbackPipeline: any[] = [];
+let _manuscriptHealth: any = { title: '', overallScore: 0, wordCount: 0, chapters: 0, readability: { score: 0, grade: '', fleschKincaid: 0 }, pacing: { score: 0, fastChapters: [], slowChapters: [] }, dialogue: { ratio: 0, score: 0, avgExchangeLength: 0 }, prose: { avgSentenceLength: 0, vocabularyRichness: 0, adverbDensity: 0, passiveVoice: 0 }, chapters_data: [] };
+let _audienceData: any = { totalReaders: 0, activeReaders: 0, avgCompletionRate: 0, avgReadingTime: '0', readerDemographics: [], topHighlightedPassages: [], readingVelocity: [], sentimentTimeline: [] };
+let _revenueData: any = { totalEarnings: 0, monthlyEarnings: 0, projectedAnnual: 0, royaltyRate: 0, salesByChannel: [], monthlyRevenue: [] };
 
-const FEEDBACK_PIPELINE = [
-    { manuscript: 'The Obsidian Crown, Ch. 12-18', reader: 'Aria Chen', status: 'in-progress', dueDate: 'Mar 15', progress: 65 },
-    { manuscript: 'The Obsidian Crown, Ch. 1-11', reader: 'Luna Okafor', status: 'completed', dueDate: 'Mar 2', progress: 100 },
-    { manuscript: 'Ember Codex Outline', reader: 'Marcus Webb', status: 'pending', dueDate: 'Mar 20', progress: 0 },
-    { manuscript: 'Short Story: "The Last Cartographer"', reader: 'Dev Patel', status: 'completed', dueDate: 'Feb 28', progress: 100 },
-];
-
-// ── Seed Data: Manuscript Intelligence ──
-const MANUSCRIPT_HEALTH = {
-    title: 'The Obsidian Crown',
-    overallScore: 87,
-    wordCount: 94200,
-    chapters: 24,
-    readability: { score: 72, grade: 'Grade 8-9', fleschKincaid: 8.3 },
-    pacing: { score: 91, fastChapters: [3, 7, 14, 19], slowChapters: [9, 16] },
-    dialogue: { ratio: 38, score: 85, avgExchangeLength: 4.2 },
-    prose: { avgSentenceLength: 16.2, vocabularyRichness: 78, adverbDensity: 2.1, passiveVoice: 8 },
-    chapters_data: [
-        { num: 1, title: 'The Dust of Ages', words: 3200, pacing: 82, dialogue: 22, tension: 45, health: 88 },
-        { num: 2, title: 'Whispers in the Dark', words: 4100, pacing: 78, dialogue: 35, tension: 62, health: 85 },
-        { num: 3, title: 'The Order of Eclipse', words: 3800, pacing: 95, dialogue: 42, tension: 88, health: 94 },
-        { num: 4, title: 'Flight from Athenaeum', words: 4500, pacing: 88, dialogue: 31, tension: 75, health: 90 },
-        { num: 5, title: 'The Desert Crossing', words: 3600, pacing: 65, dialogue: 18, tension: 40, health: 72 },
-        { num: 6, title: 'Oasis of Whispers', words: 3900, pacing: 71, dialogue: 45, tension: 55, health: 78 },
-        { num: 7, title: 'The Marrow Awakens', words: 5200, pacing: 96, dialogue: 28, tension: 92, health: 95 },
-        { num: 8, title: 'Bonds of Fire', words: 4200, pacing: 82, dialogue: 52, tension: 68, health: 86 },
-    ],
-};
-
-// ── Seed Data: Audience Insights ──
-const AUDIENCE_DATA = {
-    totalReaders: 2847,
-    activeReaders: 1203,
-    avgCompletionRate: 78,
-    avgReadingTime: '4.2 hrs',
-    readerDemographics: [
-        { label: '18-24', percent: 22 }, { label: '25-34', percent: 38 }, { label: '35-44', percent: 24 },
-        { label: '45-54', percent: 11 }, { label: '55+', percent: 5 },
-    ],
-    topHighlightedPassages: [
-        { chapter: 1, paragraph: 'Ignis. Vita. Mors.', highlights: 89, reactions: 142 },
-        { chapter: 3, paragraph: 'The fire within could not be extinguished...', highlights: 67, reactions: 98 },
-        { chapter: 7, paragraph: 'The marrow remembered what the mind forgot.', highlights: 54, reactions: 76 },
-    ],
-    readingVelocity: [
-        { chapter: 1, avgMinutes: 12, dropoff: 2 },
-        { chapter: 2, avgMinutes: 15, dropoff: 5 },
-        { chapter: 3, avgMinutes: 11, dropoff: 1 },
-        { chapter: 4, avgMinutes: 14, dropoff: 3 },
-        { chapter: 5, avgMinutes: 18, dropoff: 8 },
-        { chapter: 6, avgMinutes: 16, dropoff: 4 },
-        { chapter: 7, avgMinutes: 10, dropoff: 1 },
-        { chapter: 8, avgMinutes: 13, dropoff: 2 },
-    ],
-    sentimentTimeline: [
-        { chapter: 1, curiosity: 82, tension: 45, wonder: 68, joy: 20, sadness: 15 },
-        { chapter: 2, curiosity: 70, tension: 62, wonder: 55, joy: 10, sadness: 30 },
-        { chapter: 3, curiosity: 45, tension: 88, wonder: 40, joy: 5, sadness: 20 },
-        { chapter: 4, curiosity: 60, tension: 75, wonder: 50, joy: 25, sadness: 15 },
-        { chapter: 5, curiosity: 55, tension: 40, wonder: 72, joy: 45, sadness: 10 },
-        { chapter: 6, curiosity: 65, tension: 55, wonder: 60, joy: 30, sadness: 25 },
-        { chapter: 7, curiosity: 40, tension: 92, wonder: 85, joy: 15, sadness: 35 },
-        { chapter: 8, curiosity: 75, tension: 68, wonder: 70, joy: 40, sadness: 20 },
-    ],
-};
-
-// ── Seed Data: Revenue ──
-const REVENUE_DATA = {
-    totalEarnings: 12480,
-    monthlyEarnings: 2340,
-    projectedAnnual: 28080,
-    royaltyRate: 70,
-    salesByChannel: [
-        { channel: 'Direct (runaatlaspress.com)', sales: 342, revenue: 5814, percent: 47 },
-        { channel: 'Amazon Kindle', sales: 289, revenue: 3468, percent: 28 },
-        { channel: 'Apple Books', sales: 156, revenue: 1872, percent: 15 },
-        { channel: 'Print-on-Demand', sales: 78, revenue: 1326, percent: 10 },
-    ],
-    monthlyRevenue: [
-        { month: 'Jul', revenue: 1200 }, { month: 'Aug', revenue: 1450 }, { month: 'Sep', revenue: 1100 },
-        { month: 'Oct', revenue: 1800 }, { month: 'Nov', revenue: 2100 }, { month: 'Dec', revenue: 2800 },
-        { month: 'Jan', revenue: 1950 }, { month: 'Feb', revenue: 2340 }, { month: 'Mar', revenue: 1740 },
-    ],
-};
 
 type Tab = 'analytics' | 'beta' | 'manuscript' | 'audience' | 'revenue';
 
@@ -415,7 +329,7 @@ function WritingAnalytics() {
 // TAB 2: Beta Reader Hub
 // ════════════════════════════════════════════════════════
 function BetaReaderHub() {
-    const [selectedReader, setSelectedReader] = useState<typeof BETA_READERS[0] | null>(null);
+    const [selectedReader, setSelectedReader] = useState<typeof _betaReaders[0] | null>(null);
 
     return (
         <div className="space-y-8">
@@ -425,7 +339,7 @@ function BetaReaderHub() {
                     <Activity className="w-4 h-4 text-starforge-gold" /> Feedback Pipeline
                 </h3>
                 <div className="space-y-3">
-                    {FEEDBACK_PIPELINE.map((item, i) => (
+                    {_feedbackPipeline.map((item, i) => (
                         <div key={i} className="flex items-center gap-4 p-3 rounded-sm bg-white/[0.02] border border-white/[0.04]">
                             <div className={`w-2 h-2 rounded-full ${item.status === 'completed' ? 'bg-emerald-400' : item.status === 'in-progress' ? 'bg-starforge-gold animate-pulse' : 'bg-white/20'}`} />
                             <div className="flex-1 min-w-0">
@@ -450,7 +364,7 @@ function BetaReaderHub() {
                     <span className="text-[10px] text-text-secondary font-normal normal-case tracking-normal ml-2">Ranked by compatibility with your writing style</span>
                 </h3>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {BETA_READERS.map(reader => {
+                    {_betaReaders.map(reader => {
                         const isExpanded = selectedReader?.id === reader.id;
                         return (
                             <div key={reader.id}
@@ -508,7 +422,7 @@ function BetaReaderHub() {
 // TAB 3: Manuscript Intelligence
 // ════════════════════════════════════════════════════════
 function ManuscriptIntelligence() {
-    const ms = MANUSCRIPT_HEALTH;
+    const ms = _manuscriptHealth;
     return (
         <div className="space-y-8">
             {/* Overall Score */}
@@ -639,7 +553,7 @@ function ManuscriptIntelligence() {
 // TAB 4: Audience Insights
 // ════════════════════════════════════════════════════════
 function AudienceInsights() {
-    const a = AUDIENCE_DATA;
+    const a = _audienceData;
     return (
         <div className="space-y-8">
             {/* Top Stats */}
@@ -757,7 +671,7 @@ function AudienceInsights() {
 // TAB 5: Revenue & Reach
 // ════════════════════════════════════════════════════════
 function RevenueReach() {
-    const r = REVENUE_DATA;
+    const r = _revenueData;
     return (
         <div className="space-y-8">
             {/* Top Stats */}

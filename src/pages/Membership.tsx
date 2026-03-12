@@ -24,16 +24,10 @@ const COLOR_MAP: Record<number, { color: string; bg: string; border: string; but
   2: { color: 'text-queer-purple', bg: 'bg-queer-purple/10', border: 'border-queer-purple/30', button: 'bg-queer-purple text-white hover:bg-white hover:text-void-black' },
 };
 
-const SEED_TIERS: MembershipTier[] = [
-  { id: 'stargazer', name: 'Stargazer', price: 5, description: 'Support our mission and get early access to news.', features: ['Monthly newsletter with exclusive updates', 'Early access to new release announcements', 'Vote on community polls (anthology themes)', '10% discount on all ebooks'], order: 0 },
-  { id: 'navigator', name: 'Navigator', price: 15, description: 'Dive deeper into the Runeweave with serialized content.', features: ['Everything in Stargazer', 'Full access to all Serialized Releases', 'Behind-the-scenes author diaries', 'Join Reader Circles (Beta reading)', '15% discount on all physical books'], popular: true, order: 1 },
-  { id: 'architect', name: 'Architect', price: 50, description: 'The ultimate collector\'s tier for true patrons of the forge.', features: ['Everything in Navigator', 'One signed hardcover sent quarterly', 'Exclusive collector\'s editions access', 'Direct Q&A sessions with authors', 'Name in the acknowledgments of anthologies'], order: 2 },
-];
-
 export default function Membership() {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-  const [tiers, setTiers] = useState<MembershipTier[]>(SEED_TIERS);
+  const [tiers, setTiers] = useState<MembershipTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [currentSub, setCurrentSub] = useState<UserSubscription | null>(null);
@@ -52,7 +46,7 @@ export default function Membership() {
       collection(db, 'membership_tiers'),
       (snap) => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as MembershipTier));
-        if (data.length > 0) setTiers(data.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+        setTiers(data.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
         setLoading(false);
       },
       (err) => { handleFirestoreError(err, OperationType.LIST, 'membership_tiers'); setLoading(false); }

@@ -31,76 +31,10 @@ type EventItem = {
     recordingUrl?: string;
 };
 
-// ─── Seed Data ──────────────────────────────────────
-const SEED_EVENTS: EventItem[] = [
-    {
-        id: 'ev1', title: 'Author Fireside: Dark Fantasy Worldbuilding',
-        description: 'Elara Vance discusses the art of building mythological magic systems with live audience Q&A.',
-        longDescription: 'Join us for an intimate evening with Elara Vance as she walks through her creative process for The Obsidian Crown. Learn how she drew from real mythologies to create the Marrow System, see early concept art, and ask your burning questions. This session will be recorded and available to Navigator+ members.',
-        date: Timestamp.fromDate(new Date('2027-04-18T19:00:00')),
-        endDate: Timestamp.fromDate(new Date('2027-04-18T20:30:00')),
-        location: 'Virtual (Zoom)', type: 'Q&A', status: 'upcoming',
-        capacity: 200, rsvpCount: 134, rsvpList: [],
-        streamUrl: 'https://zoom.us/j/example', isFree: false, ticketPrice: 5,
-        speakers: [{ name: 'Elara Vance', image: 'https://picsum.photos/seed/elara/200/200', role: 'Author' }],
-        tags: ['worldbuilding', 'dark fantasy', 'craft'], seriesName: 'Monthly Fireside',
-    },
-    {
-        id: 'ev2', title: 'Book Launch: The Roots Remember',
-        description: 'Celebrate the publication of Priya Sharma\'s debut novel with readings, conversation, and a community Q&A.',
-        longDescription: 'Rüna Atlas Press proudly presents the launch of The Roots Remember by Priya Sharma. This virtual event includes a live reading of the opening chapter, a conversation between Priya and editorial director about the book\'s journey from submission to publication, and an open Q&A. Signed copies available through our store.',
-        date: Timestamp.fromDate(new Date('2027-04-25T18:00:00')),
-        endDate: Timestamp.fromDate(new Date('2027-04-25T19:30:00')),
-        location: 'Virtual (StreamYard)', type: 'Release', status: 'upcoming',
-        capacity: 500, rsvpCount: 289, rsvpList: [],
-        isFree: true,
-        speakers: [
-            { name: 'Priya Sharma', image: 'https://picsum.photos/seed/priya/200/200', role: 'Author' },
-        ],
-        tags: ['book launch', 'magical realism', 'debut'], seriesName: 'Book Launches',
-    },
-    {
-        id: 'ev3', title: 'Workshop: Writing Queer Characters in Speculative Fiction',
-        description: 'A craft workshop on authenticity, avoiding tropes, and centering queer joy in fantastical settings.',
-        longDescription: 'River Chen leads this interactive craft workshop. Participants will complete writing prompts, receive live feedback, and leave with a toolkit for centering queer experience in speculative fiction without reducing characters to their identities. Limited to 30 participants for intimate discussion.',
-        date: Timestamp.fromDate(new Date('2027-05-10T15:00:00')),
-        endDate: Timestamp.fromDate(new Date('2027-05-10T17:00:00')),
-        location: 'Virtual (Zoom)', type: 'Workshop', status: 'upcoming',
-        capacity: 30, rsvpCount: 22, rsvpList: [],
-        isFree: false, ticketPrice: 25,
-        speakers: [{ name: 'River Chen', image: 'https://picsum.photos/seed/river/200/200', role: 'Workshop Leader' }],
-        tags: ['craft', 'queer fiction', 'workshop'], seriesName: 'Craft Series',
-    },
-    {
-        id: 'ev4', title: 'Panel: Climate Fiction and the End of the World',
-        description: 'A panel discussion on cli-fi, hope, and writing about environmental catastrophe responsibly.',
-        date: Timestamp.fromDate(new Date('2027-03-20T19:00:00')),
-        location: 'Virtual (YouTube Live)', type: 'Panel', status: 'past',
-        capacity: 1000, rsvpCount: 567, rsvpList: [],
-        isFree: true,
-        speakers: [
-            { name: 'Kai Nakamura', image: 'https://picsum.photos/seed/kai/200/200', role: 'Panelist' },
-        ],
-        tags: ['climate fiction', 'panel', 'environment'],
-        recordingUrl: 'https://youtube.com/example',
-    },
-    {
-        id: 'ev5', title: 'Community Reading: Neon Requiem Chapters 1-5',
-        description: 'Join fellow readers for a guided discussion of the opening chapters.',
-        date: Timestamp.fromDate(new Date('2027-04-12T20:00:00')),
-        endDate: Timestamp.fromDate(new Date('2027-04-12T21:00:00')),
-        location: 'Virtual (Discord)', type: 'Reading', status: 'upcoming',
-        capacity: 50, rsvpCount: 31, rsvpList: [],
-        isFree: true,
-        speakers: [],
-        tags: ['book club', 'discussion', 'neon requiem'], seriesName: 'Community Reads',
-    },
-];
-
-// ─── Component ──────────────────────────────────────
 export default function Events() {
     const { user, signIn } = useAuth();
-    const [events, setEvents] = useState<EventItem[]>(SEED_EVENTS);
+    const [events, setEvents] = useState<EventItem[]>([]);
+    const [loading, setLoading] = useState(true);
     const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
     const [rsvpdEvents, setRsvpdEvents] = useState<string[]>([]);
     const [filterType, setFilterType] = useState<string>('all');
@@ -108,10 +42,21 @@ export default function Events() {
 
     // Load from Firestore
     useEffect(() => {
-        const unsub = onSnapshot(query(collection(db, 'events'), orderBy('date', 'desc')), (snap) => {
-            const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem));
-            if (docs.length > 0) setEvents(docs);
-        }, () => { });
+        const unsub = onSnapshot(collection(db, 'events'), (snap) => {
+            const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem));
+            console.log('[Events] loaded from Firestore:', all.length);
+            // Sort by date descending client-side
+            all.sort((a, b) => {
+                const dateA = a.date?.toDate?.()?.getTime() || 0;
+                const dateB = b.date?.toDate?.()?.getTime() || 0;
+                return dateB - dateA;
+            });
+            setEvents(all);
+            setLoading(false);
+        }, (error) => {
+            console.error('[Events] Firestore error:', error);
+            setLoading(false);
+        });
         return () => unsub();
     }, []);
 

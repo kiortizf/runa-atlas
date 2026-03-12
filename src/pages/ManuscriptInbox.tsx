@@ -46,98 +46,39 @@ const STATUS_CONFIG: Record<InboxStatus, { color: string; label: string; bg: str
     ready_to_advance: { color: '#22c55e', label: 'Ready to Advance', bg: 'bg-emerald-500/10' },
 };
 
-const INBOX_ITEMS: InboxItem[] = [
-    {
-        id: 'i1', title: 'Wrath & Reverie', author: 'Elara Vance', genre: 'Dark Fantasy', wordCount: '94,000',
-        submittedDate: 'Oct 12, 2025', status: 'under_review', priority: 'high',
-        cover: 'https://picsum.photos/seed/wrath-inbox/60/80',
-        synopsis: 'The sequel to The Obsidian Crown. When the throne shatters, magic demands a blood price no one expected to pay.',
-        betaReaderCount: 5, betaFeedbackSummary: 'Strong character work. Pacing issue in Ch. 14 — 3/5 flags. Twist in Ch. 10 universally praised.',
-        betaSentiment: 'Mostly Positive', revisionRound: 2, lastUpdate: '2h ago',
-        actionNeeded: 'Review R2 author revisions for Ch. 12b and Ch. 20',
-        tags: ['Sequel', 'Priority', 'Has Beta Feedback']
-    },
-    {
-        id: 'i2', title: 'The Hollow Garden', author: 'Sera Nighthollow', genre: 'Magical Realism', wordCount: '67,000',
-        submittedDate: 'Jan 5, 2026', status: 'under_review', priority: 'normal',
-        cover: 'https://picsum.photos/seed/hollow-inbox/60/80',
-        synopsis: 'A botanical illustrator discovers her grandmother\'s garden grows memories — and some of them aren\'t hers.',
-        betaReaderCount: 0, revisionRound: 0, lastUpdate: '1d ago',
-        actionNeeded: 'Complete initial developmental read (60% through)',
-        tags: ['Debut Author']
-    },
-    {
-        id: 'i3', title: 'Signal to Noise', author: 'Kael Thornwood', genre: 'Sci-Fi', wordCount: '82,000',
-        submittedDate: 'Aug 22, 2025', status: 'revision_needed', priority: 'urgent',
-        cover: 'https://picsum.photos/seed/signal-inbox/60/80',
-        synopsis: 'In a future where silence is currency, a deaf coder discovers she can hear the frequency that controls the world.',
-        betaReaderCount: 4, betaFeedbackSummary: 'Worldbuilding praised. Plot structure in Act III needs work. Character voices distinct.',
-        betaSentiment: 'Mixed', revisionRound: 2, lastUpdate: '3d ago',
-        actionNeeded: 'Author revision overdue by 2 weeks — follow up',
-        tags: ['R2 Overdue', 'Has Beta Feedback']
-    },
-    {
-        id: 'i4', title: 'Bone Lace', author: 'Althea Priory', genre: 'Gothic Horror', wordCount: '71,000',
-        submittedDate: 'May 1, 2025', status: 'ready_to_advance', priority: 'normal',
-        cover: 'https://picsum.photos/seed/bone-inbox/60/80',
-        synopsis: 'When a taxidermist inherits a Victorian house, she discovers the previous owner\'s collection is still alive.',
-        betaReaderCount: 3, betaFeedbackSummary: 'Universally positive. Atmospheric prose highlighted. Strong debut voice.',
-        betaSentiment: 'Very Positive', revisionRound: 1, lastUpdate: '5h ago',
-        actionNeeded: 'Advance to copyedit — all R1 notes resolved',
-        tags: ['Ready for Copyedit']
-    },
-    {
-        id: 'i5', title: 'The Cartography of Grief', author: 'Min-Ji Song', genre: 'Literary Fiction', wordCount: '58,000',
-        submittedDate: 'Mar 1, 2026', status: 'new', priority: 'normal',
-        cover: 'https://picsum.photos/seed/carto-inbox/60/80',
-        synopsis: 'A mapmaker charts the geography of her mother\'s dementia, tracing boundaries between memory and invention.',
-        betaReaderCount: 0, revisionRound: 0, lastUpdate: 'Just now',
-        actionNeeded: 'Initial assessment — assign editor and schedule developmental read',
-        tags: ['New', 'Unassigned']
-    },
-    {
-        id: 'i6', title: 'Ash & Anthem', author: 'Devon Cross', genre: 'Epic Fantasy', wordCount: '118,000',
-        submittedDate: 'Feb 15, 2026', status: 'awaiting_beta', priority: 'normal',
-        cover: 'https://picsum.photos/seed/ash-inbox/60/80',
-        synopsis: 'A revolution told in four voices, where the anthem of the oppressed becomes the spell that unravels an empire.',
-        betaReaderCount: 0, revisionRound: 0, lastUpdate: '1w ago',
-        actionNeeded: 'Recruit beta readers — Book DNA suggests overlap with Wrath & Reverie audience',
-        tags: ['Awaiting Beta', 'High Word Count']
-    },
-];
-
-const STATS = {
-    total: INBOX_ITEMS.length,
-    needsAction: INBOX_ITEMS.filter(i => i.priority === 'urgent' || i.priority === 'high').length,
-    inReview: INBOX_ITEMS.filter(i => i.status === 'under_review').length,
-    awaitingBeta: INBOX_ITEMS.filter(i => i.status === 'awaiting_beta').length,
-    readyToAdvance: INBOX_ITEMS.filter(i => i.status === 'ready_to_advance').length,
-};
-
 export default function ManuscriptInbox() {
+    const [items, setItems] = useState<InboxItem[]>([]);
     const [filterStatus, setFilterStatus] = useState<InboxStatus | 'all'>('all');
-    const [expandedItem, setExpandedItem] = useState<string | null>('i1');
+    const [expandedItem, setExpandedItem] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<'priority' | 'date' | 'status'>('priority');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                query(collection(db, 'manuscripts'), where('editorId', '==', user.uid)),
+                query(collection(db, 'manuscripts'), where('editorId', '==', u.uid)),
                 (snap) => {
-                    if (snap.docs.length > 0) {
-                        // Manuscript inbox data available from Firestore
-                    }
+                    setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as InboxItem)));
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
         return () => unsubAuth();
     }, []);
 
-    const filtered = filterStatus === 'all' ? INBOX_ITEMS : INBOX_ITEMS.filter(i => i.status === filterStatus);
+    const stats = {
+        total: items.length,
+        needsAction: items.filter(i => i.priority === 'urgent' || i.priority === 'high').length,
+        inReview: items.filter(i => i.status === 'under_review').length,
+        awaitingBeta: items.filter(i => i.status === 'awaiting_beta').length,
+        readyToAdvance: items.filter(i => i.status === 'ready_to_advance').length,
+    };
+
+    const filtered = filterStatus === 'all' ? items : items.filter(i => i.status === filterStatus);
     const sorted = [...filtered].sort((a, b) => {
         if (sortBy === 'priority') {
             const p = { urgent: 0, high: 1, normal: 2 };
@@ -175,11 +116,11 @@ export default function ManuscriptInbox() {
                     {/* Stats */}
                     <div className="flex items-center gap-6 text-xs">
                         {[
-                            { label: 'Total', value: STATS.total, color: 'text-white' },
-                            { label: 'Needs Action', value: STATS.needsAction, color: 'text-red-400' },
-                            { label: 'In Review', value: STATS.inReview, color: 'text-violet-400' },
-                            { label: 'Awaiting Beta', value: STATS.awaitingBeta, color: 'text-amber-400' },
-                            { label: 'Ready to Advance', value: STATS.readyToAdvance, color: 'text-emerald-400' },
+                            { label: 'Total', value: stats.total, color: 'text-white' },
+                            { label: 'Needs Action', value: stats.needsAction, color: 'text-red-400' },
+                            { label: 'In Review', value: stats.inReview, color: 'text-violet-400' },
+                            { label: 'Awaiting Beta', value: stats.awaitingBeta, color: 'text-amber-400' },
+                            { label: 'Ready to Advance', value: stats.readyToAdvance, color: 'text-emerald-400' },
                         ].map(s => (
                             <div key={s.label} className="flex items-center gap-2">
                                 <span className={`font-semibold ${s.color}`}>{s.value}</span>

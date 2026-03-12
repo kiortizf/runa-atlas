@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface NewsItem {
@@ -14,34 +14,34 @@ interface NewsItem {
   slug?: string;
 }
 
-const SEED_NEWS: NewsItem[] = [
-  { id: '1', title: 'Rüna Atlas Acquires "The Silicon Throne" Trilogy', date: 'October 15, 2026', category: 'Acquisitions', excerpt: 'We are thrilled to announce the acquisition of a groundbreaking new cyberpunk trilogy by debut author Kaelen Vance. The first book is slated for release in Fall 2027.' },
-  { id: '2', title: 'Open Call for Short Story Anthology: "Echoes of the Void"', date: 'September 28, 2026', category: 'Submissions', excerpt: 'Our next anthology will focus on stories of deep space exploration and the psychological impact of the void. Submissions open November 1st.' },
-  { id: '3', title: 'Marina Solis Nominated for the Nebula Award', date: 'September 10, 2026', category: 'Awards', excerpt: 'Congratulations to Marina Solis, whose novel "Whispers of the Deep" has been nominated for this year\'s Nebula Award for Best Novel.' },
-  { id: '4', title: 'Starforge Membership Program Launches', date: 'August 22, 2026', category: 'Company News', excerpt: 'Join our new membership program to get early access to releases, exclusive serials, and behind-the-scenes content from our authors.' },
-];
-
 export default function News() {
-  const [news, setNews] = useState<NewsItem[]>(SEED_NEWS);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onSnapshot(
-      query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(20)),
+      query(
+        collection(db, 'posts'),
+        where('type', '==', 'announcement'),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+      ),
       (snap) => {
         const data = snap.docs.map(d => {
           const raw = d.data();
           return {
             id: d.id,
             title: raw.title || '',
-            date: raw.date || raw.createdAt?.toDate?.()?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) || '',
-            category: raw.category || 'News',
+            date: raw.publishDate?.toDate?.()?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) || raw.createdAt?.toDate?.()?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) || '',
+            category: (raw.tags?.[0] || 'News').charAt(0).toUpperCase() + (raw.tags?.[0] || 'news').slice(1),
             excerpt: raw.excerpt || raw.content?.substring(0, 200) || '',
             slug: raw.slug,
           } as NewsItem;
         });
-        if (data.length > 0) setNews(data);
+        setNews(data);
+        setLoading(false);
       },
-      () => { /* use seed */ }
+      () => setLoading(false)
     );
     return () => unsub();
   }, []);

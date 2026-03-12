@@ -1,63 +1,55 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { BookOpen, ArrowRight, Globe, Twitter, Instagram, Users, Star, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { usePageSEO } from '../hooks/usePageSEO';
 
-interface Author {
+interface AuthorProfile {
   id: string;
   name: string;
-  image: string;
+  penName?: string;
+  avatar?: string;
+  coverImage?: string;
   bio: string;
-  books: string[];
+  genres?: string[];
+  books?: string[];
   slug?: string;
   status?: string;
+  social?: {
+    website?: string;
+    twitter?: string;
+    instagram?: string;
+  };
+  website?: string;
+  twitter?: string;
+  stats?: {
+    followers?: number;
+    totalReaders?: number;
+    avgRating?: number;
+  };
 }
-
-const SEED_AUTHORS: Author[] = [
-  {
-    id: '1', name: 'Elara Vance', image: 'https://picsum.photos/seed/elara/400/400',
-    bio: 'Elara Vance is a speculative fiction author whose work explores the intersection of magic and architecture. She lives in the Pacific Northwest with her two cats and a growing collection of vintage typewriters.',
-    books: ['The Obsidian Crown', 'Echoes of the Spire']
-  },
-  {
-    id: '2', name: 'Jax Thorne', image: 'https://picsum.photos/seed/jax/400/400',
-    bio: 'Jax Thorne writes dystopian thrillers that ask hard questions about technology and consciousness. When not writing, Jax is an avid rock climber and amateur astronomer.',
-    books: ['Neon Requiem', 'Silicon Souls']
-  },
-  {
-    id: '3', name: 'Marina Solis', image: 'https://picsum.photos/seed/marina/400/400',
-    bio: 'Marina Solis weaves literary fiction with magical realism, drawing heavily from her coastal upbringing. Her work has been nominated for several prestigious awards.',
-    books: ['Whispers of the Deep', 'The Saltwater Archives']
-  },
-  {
-    id: '4', name: 'Leo Vance', image: 'https://picsum.photos/seed/leo/400/400',
-    bio: 'Leo Vance is known for his character-driven queer romances set against sweeping sci-fi backdrops. He believes that love is the most powerful force in the universe.',
-    books: ['Star-Crossed Circuits', 'Orbiting You']
-  }
-];
 
 export default function Authors() {
   usePageSEO({
     title: 'Authors',
     description: 'Meet the brilliant minds forging constellations of voice at RÜNA ATLAS PRESS. Discover the creators behind our speculative fiction, dark fantasy, and literary works.',
   });
-  const [authors, setAuthors] = useState<Author[]>(SEED_AUTHORS);
+  const [authors, setAuthors] = useState<AuthorProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const q = query(collection(db, 'authorProfiles'), orderBy('name', 'asc'));
     const unsub = onSnapshot(
-      collection(db, 'authors'),
+      q,
       (snap) => {
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Author));
-        // Only use Firestore data if it exists; keep seed data as fallback
-        if (data.length > 0) setAuthors(data.filter(a => a.status !== 'inactive'));
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AuthorProfile));
+        setAuthors(data.filter(a => a.status !== 'inactive'));
         setLoading(false);
       },
       (err) => {
-        handleFirestoreError(err, OperationType.LIST, 'authors');
+        handleFirestoreError(err, OperationType.LIST, 'authorProfiles');
         setLoading(false);
       }
     );
@@ -90,44 +82,126 @@ export default function Authors() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {authors.map((author, idx) => (
-            <motion.div
-              key={author.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-surface border border-border p-8 rounded-sm flex flex-col md:flex-row gap-8 hover:border-starforge-gold/50 transition-colors"
-            >
-              <div className="w-32 h-32 md:w-48 md:h-48 shrink-0 rounded-full overflow-hidden border-2 border-starforge-gold/30 mx-auto md:mx-0">
-                <img src={author.image} alt={author.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-              <div className="flex flex-col justify-center text-center md:text-left">
-                <h2 className="font-heading text-2xl text-text-primary font-semibold mb-2">{author.name}</h2>
-                <p className="font-body text-text-secondary mb-6 text-sm leading-relaxed">{author.bio}</p>
-                
-                {author.books && author.books.length > 0 && (
-                  <div>
-                    <h3 className="font-ui text-xs font-semibold uppercase tracking-wider text-starforge-gold mb-3 flex items-center justify-center md:justify-start gap-2">
-                      <BookOpen className="w-4 h-4" /> Published Works
-                    </h3>
-                    <ul className="space-y-1">
-                      {author.books.map((book, i) => (
-                        <li key={i} className="font-ui text-sm text-text-muted">{book}</li>
-                      ))}
-                    </ul>
+          {authors.map((author, idx) => {
+            const socialWeb = author.social?.website || author.website;
+            const socialTw = author.social?.twitter || author.twitter;
+            const socialIg = author.social?.instagram;
+            return (
+              <motion.div
+                key={author.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-surface border border-border rounded-xl overflow-hidden hover:border-starforge-gold/50 transition-colors group"
+              >
+                {/* Cover Image Banner */}
+                {author.coverImage && (
+                  <div className="h-32 overflow-hidden relative">
+                    <img src={author.coverImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
                   </div>
                 )}
-                
-                <div className="mt-6">
-                  <Link to={author.slug ? `/author/${author.slug}` : '/catalog'} className="inline-flex items-center gap-2 font-ui text-xs text-text-primary hover:text-starforge-gold transition-colors uppercase tracking-wider">
-                    {author.slug ? 'View Profile' : 'View in Catalog'} <ArrowRight className="w-3 h-3" />
-                  </Link>
+
+                <div className={`p-8 flex flex-col md:flex-row gap-8 ${author.coverImage ? '-mt-12 relative z-10' : ''}`}>
+                  {/* Avatar */}
+                  <div className="w-32 h-32 md:w-40 md:h-40 shrink-0 rounded-full overflow-hidden border-3 border-starforge-gold/30 mx-auto md:mx-0 shadow-lg shadow-black/40">
+                    {author.avatar ? (
+                      <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = `<div class="w-full h-full bg-starforge-gold/10 flex items-center justify-center"><span class="font-display text-4xl md:text-6xl text-starforge-gold/60">${author.name.charAt(0)}</span></div>`; }} />
+                    ) : (
+                      <div className="w-full h-full bg-starforge-gold/10 flex items-center justify-center">
+                        <span className="font-display text-4xl md:text-6xl text-starforge-gold/60">{author.name.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex flex-col justify-center text-center md:text-left flex-1 min-w-0">
+                    <h2 className="font-heading text-2xl text-text-primary font-semibold mb-1">{author.penName || author.name}</h2>
+
+                    {/* Genre badges */}
+                    {author.genres && author.genres.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-3 justify-center md:justify-start">
+                        {author.genres.map((g, i) => (
+                          <span key={i} className="font-ui text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-starforge-gold/10 text-starforge-gold/80 border border-starforge-gold/20">{g}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="font-body text-text-secondary mb-4 text-sm leading-relaxed line-clamp-3">{author.bio}</p>
+
+                    {/* Stats row */}
+                    {author.stats && (
+                      <div className="flex gap-4 mb-4 justify-center md:justify-start">
+                        {author.stats.followers != null && (
+                          <div className="flex items-center gap-1.5 text-text-muted">
+                            <Users className="w-3.5 h-3.5" />
+                            <span className="font-mono text-xs">{(author.stats.followers / 1000).toFixed(1)}k</span>
+                          </div>
+                        )}
+                        {author.stats.totalReaders != null && (
+                          <div className="flex items-center gap-1.5 text-text-muted">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            <span className="font-mono text-xs">{(author.stats.totalReaders / 1000).toFixed(0)}k readers</span>
+                          </div>
+                        )}
+                        {author.stats.avgRating != null && (
+                          <div className="flex items-center gap-1.5 text-starforge-gold/80">
+                            <Star className="w-3.5 h-3.5" />
+                            <span className="font-mono text-xs">{author.stats.avgRating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Published Works */}
+                    {author.books && author.books.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="font-ui text-xs font-semibold uppercase tracking-wider text-starforge-gold mb-2 flex items-center justify-center md:justify-start gap-2">
+                          <BookOpen className="w-3.5 h-3.5" /> Published Works
+                        </h3>
+                        <ul className="space-y-0.5">
+                          {author.books.map((book, i) => (
+                            <li key={i} className="font-ui text-xs text-text-muted">{book}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Footer: Social + View Profile */}
+                    <div className="flex items-center gap-4 pt-3 border-t border-border/50 justify-center md:justify-start">
+                      {socialWeb && (
+                        <a href={socialWeb} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-starforge-gold transition-colors" title="Website">
+                          <Globe className="w-4 h-4" />
+                        </a>
+                      )}
+                      {socialTw && (
+                        <a href={`https://twitter.com/${socialTw.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-starforge-gold transition-colors" title="Twitter">
+                          <Twitter className="w-4 h-4" />
+                        </a>
+                      )}
+                      {socialIg && (
+                        <a href={`https://instagram.com/${socialIg.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-starforge-gold transition-colors" title="Instagram">
+                          <Instagram className="w-4 h-4" />
+                        </a>
+                      )}
+                      <div className="flex-1" />
+                      <Link to={author.slug ? `/author/${author.slug}` : '/catalog'} className="inline-flex items-center gap-2 font-ui text-xs text-text-primary hover:text-starforge-gold transition-colors uppercase tracking-wider">
+                        View Profile <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
+
+        {authors.length === 0 && !loading && (
+          <div className="text-center py-20">
+            <p className="font-ui text-text-muted text-lg">No authors found yet.</p>
+          </div>
+        )}
       </div>
     </div>
   );

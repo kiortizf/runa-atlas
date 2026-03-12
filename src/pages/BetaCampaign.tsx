@@ -45,60 +45,42 @@ interface FeedbackSummary {
 }
 
 const CAMPAIGN = {
-    title: 'Wrath & Reverie',
+    title: '',
     status: 'active' as const,
-    startDate: 'Jan 10, 2026',
-    deadline: 'Mar 28, 2026',
-    chaptersReleased: 15,
-    totalChapters: 24,
-    activeBetaReaders: 5,
-    totalFeedback: 47,
+    startDate: '',
+    deadline: '',
+    chaptersReleased: 0,
+    totalChapters: 0,
+    activeBetaReaders: 0,
+    totalFeedback: 0,
 };
-
-const BETA_READERS: BetaReader[] = [
-    { id: 'br1', name: 'Taylor Park', avatar: '📗', tier: 'Trusted', dnaMatch: 94, chaptersRead: 15, feedbackSubmitted: 12, status: 'reading', lastActive: '2h ago' },
-    { id: 'br2', name: 'Nia Blackwood', avatar: '📕', tier: 'Inner Circle', dnaMatch: 91, chaptersRead: 15, feedbackSubmitted: 14, status: 'reading', lastActive: '5h ago' },
-    { id: 'br3', name: 'Marcus Chen', avatar: '📘', tier: 'Trusted', dnaMatch: 87, chaptersRead: 12, feedbackSubmitted: 8, status: 'reading', lastActive: '1d ago' },
-    { id: 'br4', name: 'Lena Ortega', avatar: '📙', tier: 'Elite', dnaMatch: 82, chaptersRead: 10, feedbackSubmitted: 9, status: 'reviewing', lastActive: '3d ago' },
-    { id: 'br5', name: 'Jordan Mills', avatar: '📓', tier: 'Trusted', dnaMatch: 79, chaptersRead: 8, feedbackSubmitted: 4, status: 'reading', lastActive: '2d ago' },
-];
-
-const CHAPTERS: ChapterRelease[] = [
-    { chapter: 1, title: 'The Shattered Throne', releaseDate: 'Jan 10', status: 'released', readBy: 5, feedbackCount: 5, questions: ['Does the opening hook you immediately?', 'Is the world context clear without the first book?'] },
-    { chapter: 2, title: 'Blood in the Garden', releaseDate: 'Jan 12', status: 'released', readBy: 5, feedbackCount: 4, questions: ['Is Seraphine\'s grief believable?'] },
-    { chapter: 3, title: 'The Hollow Court', releaseDate: 'Jan 15', status: 'released', readBy: 5, feedbackCount: 5, questions: [] },
-    { chapter: 10, title: 'The Mirror Room', releaseDate: 'Feb 14', status: 'released', readBy: 5, feedbackCount: 3, questions: ['Does the twist land?', 'Were you able to predict it?'] },
-    { chapter: 14, title: 'Battle of the Veil', releaseDate: 'Mar 1', status: 'released', readBy: 4, feedbackCount: 3, questions: ['Is the pacing right for the battle?', 'Do the flashbacks interrupt momentum?'] },
-    { chapter: 15, title: 'Aftermath', releaseDate: 'Mar 5', status: 'released', readBy: 3, feedbackCount: 2, questions: ['Does the emotional fallout feel earned?'] },
-    { chapter: 16, title: 'The Second Crown', releaseDate: 'Mar 15', status: 'scheduled', readBy: 0, feedbackCount: 0, questions: ['Is Maren\'s decision justified here?'] },
-    { chapter: 17, title: 'Into the Ash', releaseDate: 'Mar 18', status: 'scheduled', readBy: 0, feedbackCount: 0, questions: [] },
-];
-
-const FEEDBACK_SUMMARY: FeedbackSummary[] = [
-    { category: 'Character', color: '#8b5cf6', count: 14, consensus: 'Seraphine\'s arc is strong. Maren needs clearer motivation in Ch. 12-14.', sentiment: 'mixed' },
-    { category: 'Pacing', color: '#3b82f6', count: 11, consensus: 'Ch. 14 battle drags — 3/5 readers flagged flashback interruptions.', sentiment: 'needs_work' },
-    { category: 'Plot', color: '#ef4444', count: 8, consensus: 'Chapter 10 twist landed well. Foreshadowing from Ch. 3 was effective.', sentiment: 'positive' },
-    { category: 'Prose', color: '#10b981', count: 7, consensus: 'Voice is consistent. Several highlighted passages in Ch. 7 and Ch. 11.', sentiment: 'positive' },
-    { category: 'Worldbuilding', color: '#f97316', count: 4, consensus: 'Magic system expansion in Ch. 8 appreciated. One reader confused by Veil mechanics.', sentiment: 'mixed' },
-    { category: 'Overall', color: '#f59e0b', count: 3, consensus: 'Strong sequel. Ending setup for Book 3 is intriguing.', sentiment: 'positive' },
-];
 
 export default function BetaCampaign() {
     const [activeTab, setActiveTab] = useState<'overview' | 'readers' | 'chapters' | 'feedback'>('overview');
-    const [expandedChapter, setExpandedChapter] = useState<number | null>(14);
+    const [expandedChapter, setExpandedChapter] = useState<number | null>(null);
+    const [campaign, setCampaign] = useState<any>(CAMPAIGN);
+    const [betaReaders, setBetaReaders] = useState<BetaReader[]>([]);
+    const [chapters, setChapters] = useState<ChapterRelease[]>([]);
+    const [feedbackSummary, setFeedbackSummary] = useState<FeedbackSummary[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                query(collection(db, 'beta_campaigns'), where('authorId', '==', user.uid)),
+                query(collection(db, 'beta_campaigns'), where('authorId', '==', u.uid)),
                 (snap) => {
                     if (snap.docs.length > 0) {
-                        // Beta campaign data available from Firestore
+                        const data = snap.docs[0].data();
+                        if (data.campaign) setCampaign(data.campaign);
+                        if (data.readers) setBetaReaders(data.readers);
+                        if (data.chapters) setChapters(data.chapters);
+                        if (data.feedbackSummary) setFeedbackSummary(data.feedbackSummary);
                     }
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
@@ -120,10 +102,10 @@ export default function BetaCampaign() {
                             </div>
                             <div>
                                 <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-                                    Beta Campaign: {CAMPAIGN.title}
+                                    Beta Campaign: {campaign.title}
                                     <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20">Active</span>
                                 </h1>
-                                <p className="text-xs text-text-secondary">{CAMPAIGN.startDate} — {CAMPAIGN.deadline} · {CAMPAIGN.chaptersReleased}/{CAMPAIGN.totalChapters} chapters released</p>
+                                <p className="text-xs text-text-secondary">{campaign.startDate} — {campaign.deadline} · {campaign.chaptersReleased}/{campaign.totalChapters} chapters released</p>
                             </div>
                         </div>
                         <button className="px-4 py-2 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
@@ -134,9 +116,9 @@ export default function BetaCampaign() {
                     <div className="flex items-center gap-6">
                         {[
                             { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
-                            { id: 'readers' as const, label: 'Beta Readers', icon: Users, count: CAMPAIGN.activeBetaReaders },
-                            { id: 'chapters' as const, label: 'Chapter Releases', icon: BookOpen, count: CAMPAIGN.chaptersReleased },
-                            { id: 'feedback' as const, label: 'Aggregate Feedback', icon: MessageCircle, count: CAMPAIGN.totalFeedback },
+                            { id: 'readers' as const, label: 'Beta Readers', icon: Users, count: campaign.activeBetaReaders },
+                            { id: 'chapters' as const, label: 'Chapter Releases', icon: BookOpen, count: campaign.chaptersReleased },
+                            { id: 'feedback' as const, label: 'Aggregate Feedback', icon: MessageCircle, count: campaign.totalFeedback },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 pb-3 text-sm border-b-2 transition-colors
@@ -158,9 +140,9 @@ export default function BetaCampaign() {
                             {/* Stats Grid */}
                             <div className="grid grid-cols-4 gap-4 mb-8">
                                 {[
-                                    { label: 'Beta Readers', value: CAMPAIGN.activeBetaReaders, icon: Users, color: '#f59e0b' },
-                                    { label: 'Chapters Released', value: `${CAMPAIGN.chaptersReleased}/${CAMPAIGN.totalChapters}`, icon: BookOpen, color: '#8b5cf6' },
-                                    { label: 'Total Feedback', value: CAMPAIGN.totalFeedback, icon: MessageCircle, color: '#3b82f6' },
+                                    { label: 'Beta Readers', value: campaign.activeBetaReaders, icon: Users, color: '#f59e0b' },
+                                    { label: 'Chapters Released', value: `${campaign.chaptersReleased}/${campaign.totalChapters}`, icon: BookOpen, color: '#8b5cf6' },
+                                    { label: 'Total Feedback', value: campaign.totalFeedback, icon: MessageCircle, color: '#3b82f6' },
                                     { label: 'Avg Completion', value: '68%', icon: BarChart3, color: '#10b981' },
                                 ].map((stat, idx) => (
                                     <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -177,7 +159,7 @@ export default function BetaCampaign() {
                             <div className="mb-8">
                                 <h3 className="text-xs uppercase tracking-widest text-text-secondary font-semibold mb-4">Feedback Consensus</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {FEEDBACK_SUMMARY.map((fb, idx) => (
+                                    {feedbackSummary.map((fb, idx) => (
                                         <motion.div key={fb.category} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                             transition={{ delay: 0.2 + idx * 0.06 }}
                                             className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
@@ -201,7 +183,7 @@ export default function BetaCampaign() {
                             <div>
                                 <h3 className="text-xs uppercase tracking-widest text-text-secondary font-semibold mb-4">Reader Progress</h3>
                                 <div className="space-y-2">
-                                    {BETA_READERS.map(r => (
+                                    {betaReaders.map(r => (
                                         <div key={r.id} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                                             <span className="text-lg flex-none">{r.avatar}</span>
                                             <div className="flex-1 min-w-0">
@@ -212,9 +194,9 @@ export default function BetaCampaign() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden max-w-[200px]">
-                                                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(r.chaptersRead / CAMPAIGN.totalChapters) * 100}%` }} />
+                                                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(r.chaptersRead / campaign.totalChapters) * 100}%` }} />
                                                     </div>
-                                                    <span className="text-[10px] text-text-secondary">{r.chaptersRead}/{CAMPAIGN.totalChapters} ch.</span>
+                                                    <span className="text-[10px] text-text-secondary">{r.chaptersRead}/{campaign.totalChapters} ch.</span>
                                                     <span className="text-[10px] text-text-secondary ml-2">{r.feedbackSubmitted} notes</span>
                                                 </div>
                                             </div>
@@ -236,7 +218,7 @@ export default function BetaCampaign() {
                                 </button>
                             </div>
                             <div className="space-y-3">
-                                {BETA_READERS.map((r, idx) => (
+                                {betaReaders.map((r, idx) => (
                                     <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.08 }}
                                         className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-white/[0.1] transition-colors">
@@ -253,7 +235,7 @@ export default function BetaCampaign() {
                                                 </div>
                                                 <div className="flex items-center gap-4 text-[10px] text-text-secondary">
                                                     <span>DNA Match: <span className="text-aurora-teal font-semibold">{r.dnaMatch}%</span></span>
-                                                    <span>Chapters: {r.chaptersRead}/{CAMPAIGN.totalChapters}</span>
+                                                    <span>Chapters: {r.chaptersRead}/{campaign.totalChapters}</span>
                                                     <span>Feedback: {r.feedbackSubmitted} notes</span>
                                                     <span>Last active: {r.lastActive}</span>
                                                 </div>
@@ -283,7 +265,7 @@ export default function BetaCampaign() {
                                 </button>
                             </div>
                             <div className="space-y-2">
-                                {CHAPTERS.map((ch, idx) => (
+                                {chapters.map((ch, idx) => (
                                     <motion.div key={ch.chapter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05 }}
                                         className={`border rounded-xl overflow-hidden transition-all
@@ -343,10 +325,10 @@ export default function BetaCampaign() {
                         <motion.div key="feedback" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="mb-6">
                                 <h3 className="text-sm font-semibold text-white mb-1">Aggregate Beta Reader Feedback</h3>
-                                <p className="text-xs text-text-secondary">Consensus across {CAMPAIGN.activeBetaReaders} readers · {CAMPAIGN.totalFeedback} total feedback notes</p>
+                                <p className="text-xs text-text-secondary">Consensus across {campaign.activeBetaReaders} readers · {campaign.totalFeedback} total feedback notes</p>
                             </div>
                             <div className="space-y-4">
-                                {FEEDBACK_SUMMARY.map((fb, idx) => (
+                                {feedbackSummary.map((fb, idx) => (
                                     <motion.div key={fb.category} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.08 }}
                                         className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
@@ -369,11 +351,11 @@ export default function BetaCampaign() {
                                         <div className="flex items-center gap-4 mt-3 pl-11">
                                             <div className="h-1.5 flex-1 bg-white/[0.06] rounded-full overflow-hidden max-w-[300px]">
                                                 <div className="h-full rounded-full" style={{
-                                                    width: `${(fb.count / CAMPAIGN.totalFeedback) * 100}%`,
+                                                    width: `${(fb.count / campaign.totalFeedback) * 100}%`,
                                                     backgroundColor: fb.color
                                                 }} />
                                             </div>
-                                            <span className="text-[10px] text-text-secondary">{Math.round((fb.count / CAMPAIGN.totalFeedback) * 100)}% of all feedback</span>
+                                            <span className="text-[10px] text-text-secondary">{Math.round((fb.count / campaign.totalFeedback) * 100)}% of all feedback</span>
                                         </div>
                                     </motion.div>
                                 ))}

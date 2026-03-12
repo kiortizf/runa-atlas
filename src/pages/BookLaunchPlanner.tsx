@@ -36,32 +36,7 @@ const CATEGORY_ICONS: Record<string, typeof Calendar> = {
     editorial: FileText, design: Palette, marketing: Megaphone, distribution: Globe, community: Users,
 };
 
-const INITIAL_TASKS: LaunchTask[] = [
-    // Pre-Production
-    { id: '1', title: 'Final manuscript revision', phase: 'pre-production', status: 'done', dueDate: '2026-01-15', category: 'editorial', assignee: 'Author' },
-    { id: '2', title: 'Developmental edit complete', phase: 'pre-production', status: 'done', dueDate: '2026-02-01', category: 'editorial', assignee: 'Editor' },
-    { id: '3', title: 'Copy edit pass', phase: 'pre-production', status: 'done', dueDate: '2026-02-15', category: 'editorial', assignee: 'Copy Editor' },
-    { id: '4', title: 'Proofread final draft', phase: 'pre-production', status: 'in-progress', dueDate: '2026-03-01', category: 'editorial', assignee: 'Proofreader' },
-    // Production
-    { id: '5', title: 'Cover design concepts', phase: 'production', status: 'done', dueDate: '2026-02-20', category: 'design', assignee: 'Designer' },
-    { id: '6', title: 'Cover design final approval', phase: 'production', status: 'in-progress', dueDate: '2026-03-05', category: 'design', assignee: 'Author' },
-    { id: '7', title: 'Interior layout & typesetting', phase: 'production', status: 'todo', dueDate: '2026-03-10', category: 'design', assignee: 'Layout Artist' },
-    { id: '8', title: 'ISBN & metadata setup', phase: 'production', status: 'todo', dueDate: '2026-03-12', category: 'distribution' },
-    // Pre-Launch
-    { id: '9', title: 'ARC distribution to beta readers', phase: 'pre-launch', status: 'todo', dueDate: '2026-03-20', category: 'marketing', assignee: 'Author' },
-    { id: '10', title: 'Pre-order setup', phase: 'pre-launch', status: 'todo', dueDate: '2026-03-25', category: 'distribution' },
-    { id: '11', title: 'Cover reveal campaign', phase: 'pre-launch', status: 'todo', dueDate: '2026-04-01', category: 'marketing' },
-    { id: '12', title: 'Newsletter announcement', phase: 'pre-launch', status: 'todo', dueDate: '2026-04-05', category: 'marketing', assignee: 'Author' },
-    { id: '13', title: 'Runeweave community teaser', phase: 'pre-launch', status: 'todo', dueDate: '2026-04-08', category: 'community' },
-    // Launch
-    { id: '14', title: 'Launch day social media blitz', phase: 'launch', status: 'todo', dueDate: '2026-04-15', category: 'marketing' },
-    { id: '15', title: 'Author Q&A session', phase: 'launch', status: 'todo', dueDate: '2026-04-16', category: 'community', assignee: 'Author' },
-    { id: '16', title: 'Reader Circle launch event', phase: 'launch', status: 'todo', dueDate: '2026-04-17', category: 'community' },
-    // Post-Launch
-    { id: '17', title: 'Week 1 analytics review', phase: 'post-launch', status: 'todo', dueDate: '2026-04-22', category: 'marketing' },
-    { id: '18', title: 'Collect & respond to reviews', phase: 'post-launch', status: 'todo', dueDate: '2026-04-30', category: 'community', assignee: 'Author' },
-    { id: '19', title: 'Plan ongoing promo strategy', phase: 'post-launch', status: 'todo', category: 'marketing' },
-];
+const INITIAL_TASKS: LaunchTask[] = [];
 
 const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string; label: string }> = {
     'todo': { bg: 'bg-white/[0.04]', text: 'text-white/30', label: 'To Do' },

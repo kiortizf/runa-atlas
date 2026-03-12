@@ -27,101 +27,10 @@ type Annotation = {
   text: string;
 };
 
-// Seed annotations mapped to paragraph indices
-const SEED_ANNOTATIONS: Record<number, Annotation[]> = {
-  1: [
-    { paragraphIndex: 2, authorName: 'Elara Vance', text: 'The "warmth radiating from the leather" was the first detail I wrote for the entire series. Everything grew from that one sensory image.' },
-    { paragraphIndex: 6, authorName: 'Elara Vance', text: 'I rewrote the nursery rhyme about thirty times. In earlier drafts, the Ember Codex was called the Bone Codex, which felt too heavy. "Ember" carries both warmth and destruction.' },
-    { paragraphIndex: 14, authorName: 'Elara Vance', text: 'The blank pages were inspired by a real experience. I once opened a very old book in a Portuguese archive and the ink had entirely faded. The pages looked blank but held ghost impressions under UV light.' },
-    { paragraphIndex: 18, authorName: 'Elara Vance', text: 'Ignis. Vita. Mors. I wanted the magic to feel ancient and earned, not flashy. Latin felt right because the Marrow System draws from real-world mythological traditions.' },
-  ],
-  2: [
-    { paragraphIndex: 2, authorName: 'Elara Vance', text: 'The codex speaking directly to Elara was a late addition. My editor pushed me to make the book feel sentient earlier in the story, which completely changed the dynamic.' },
-    { paragraphIndex: 8, authorName: 'Elara Vance', text: 'The smell of ozone and burning embers. I wanted readers to feel the magic physically before understanding it intellectually. The body knows before the mind does.' },
-  ],
-};
+// Data loaded from Firestore
+let _seedAnnotations: Record<number, Annotation[]> = {};
+let _seedContent: Record<number, { title: string; content: string }> = {};
 
-// Seed content
-const SEED_CONTENT: Record<number, { title: string; content: string }> = {
-  1: {
-    title: 'The Dust of Ages',
-    content: `# The Dust of Ages
-
-The library smelled of old paper and forgotten dreams. Elara traced the spine of the unmarked tome, feeling a strange warmth radiating from the leather.
-
-She had spent years searching for this exact volume, guided only by fragments of myths and half-remembered nursery rhymes. The Ember Codex.
-
-> "When the stars align in the house of the serpent, the codex will awaken, and the world will burn."
-
-She shivered, pulling her cloak tighter around her shoulders. The air in the restricted section was always cold, but this chill felt different. It felt alive.
-
-## A Discovery
-
-She opened the book. The pages were blank.
-
-"What?" she whispered, her voice echoing in the silent hall.
-
-She flipped through the pages, her frustration mounting. Had she been wrong? Had the myths lied?
-
----
-
-Suddenly, a faint glow began to emanate from the center of the book. The blank pages seemed to absorb the dim light of her lantern, glowing with an inner fire.
-
-Words began to form, written in a language she had never seen before, yet somehow, she understood every word.
-
-### The First Incantation
-
-*Ignis. Vita. Mors.*
-
-Fire. Life. Death.
-
-The words burned themselves into her mind, and she knew, with terrifying certainty, that her life would never be the same.`,
-  },
-  2: {
-    title: 'Whispers in the Dark',
-    content: `# Whispers in the Dark
-
-The words on the page seemed to shift and writhe as she read them. It wasn't a language she knew, but she understood it perfectly.
-
-She closed the book, her heart pounding in her chest. The glow faded, but the warmth remained, seeping into her skin.
-
-> "The codex is not a book. It is a key."
-
-The voice was a mere whisper, echoing in the empty library. Elara spun around, her lantern swinging wildly, casting long, dancing shadows.
-
-"Who's there?" she called out, her voice trembling slightly.
-
-Silence answered her.
-
----
-
-She hurried out of the restricted section, the heavy tome clutched tightly to her chest. The familiar scent of old paper and dust was now tainted with the faint smell of ozone and burning embers.
-
-She knew she had to leave the city. The Order would be looking for the codex, and they would not stop until they found it.`,
-  },
-  3: {
-    title: 'The Order of the Eclipse',
-    content: `# The Order of the Eclipse
-
-They came in the dead of night, silent as shadows. Elara barely had time to grab the codex before her door was splintered open.
-
-Three figures stood in the doorway, their faces hidden beneath dark hoods. The symbol of the Eclipse was emblazoned on their chests in silver thread.
-
-"Give us the book, scholar," the leader hissed, his voice like dry leaves scraping against stone.
-
-Elara backed away, her hand instinctively going to the small dagger hidden in her boot. "I don't know what you're talking about."
-
-> "Do not lie to us. We can smell the magic on you."
-
-The leader stepped forward, drawing a long, curved blade. The metal gleamed in the moonlight filtering through the window.
-
----
-
-Elara didn't hesitate. She threw her lantern at the leader, the glass shattering and spilling burning oil across the floor.
-
-In the ensuing chaos, she bolted for the window, throwing herself out into the cold night air. She hit the ground rolling, the codex clutched tightly to her chest, and ran.`,
-  },
-};
 
 export default function EpisodeReader() {
   const { slug, num } = useParams<{ slug: string; num: string }>();
@@ -154,7 +63,7 @@ export default function EpisodeReader() {
               setEpisode(eps.find(e => e.number === epNum) || null);
             } else if (slug === 'the-ember-codex' || slug === 'seed-1') {
               // Use seed content
-              const seedEps = Object.entries(SEED_CONTENT).map(([n, data]) => ({
+              const seedEps = Object.entries(_seedContent).map(([n, data]) => ({
                 id: `ep${n}`, number: parseInt(n), title: data.title, content: data.content,
               }));
               setEpisodes(seedEps);
@@ -164,7 +73,7 @@ export default function EpisodeReader() {
           },
           () => {
             if (slug === 'the-ember-codex' || slug === 'seed-1') {
-              const seedEps = Object.entries(SEED_CONTENT).map(([n, data]) => ({
+              const seedEps = Object.entries(_seedContent).map(([n, data]) => ({
                 id: `ep${n}`, number: parseInt(n), title: data.title, content: data.content,
               }));
               setEpisodes(seedEps);
@@ -177,7 +86,7 @@ export default function EpisodeReader() {
         return () => epUnsub();
       } else if (slug === 'the-ember-codex' || slug === 'seed-1') {
         setJourney({ id: 'seed-1', slug: 'the-ember-codex', title: 'The Ember Codex', totalEpisodes: 8 });
-        const seedEps = Object.entries(SEED_CONTENT).map(([n, data]) => ({
+        const seedEps = Object.entries(_seedContent).map(([n, data]) => ({
           id: `ep${n}`, number: parseInt(n), title: data.title, content: data.content,
         }));
         setEpisodes(seedEps);
@@ -190,7 +99,7 @@ export default function EpisodeReader() {
     }, () => {
       if (slug === 'the-ember-codex' || slug === 'seed-1') {
         setJourney({ id: 'seed-1', slug: 'the-ember-codex', title: 'The Ember Codex', totalEpisodes: 8 });
-        const seedEps = Object.entries(SEED_CONTENT).map(([n, data]) => ({
+        const seedEps = Object.entries(_seedContent).map(([n, data]) => ({
           id: `ep${n}`, number: parseInt(n), title: data.title, content: data.content,
         }));
         setEpisodes(seedEps);
@@ -293,7 +202,7 @@ export default function EpisodeReader() {
           {renderContent(episode.content)}
 
           {/* Annotations Layer */}
-          {showAnnotations && (SEED_ANNOTATIONS[episode.number] || []).length > 0 && (
+          {showAnnotations && (_seedAnnotations[episode.number] || []).length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -303,7 +212,7 @@ export default function EpisodeReader() {
                 <Star className="w-4 h-4" /> Author Notes
               </h3>
               <div className="space-y-4">
-                {(SEED_ANNOTATIONS[episode.number] || []).map((ann, i) => (
+                {(_seedAnnotations[episode.number] || []).map((ann, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -10 }}

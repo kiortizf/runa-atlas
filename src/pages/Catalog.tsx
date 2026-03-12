@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Filter, Search, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { usePageSEO } from '../hooks/usePageSEO';
 
@@ -24,10 +24,11 @@ interface Book {
   title: string;
   author: string;
   cover: string;
-  codemark: string;
+  codemark?: string;
+  genre?: string;
   price: number;
-  editionType: string;
-  format: string;
+  editionType?: string;
+  format: string | string[];
   synopsis: string;
 }
 
@@ -42,26 +43,27 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'books'));
-        const booksData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Book[];
-        setBooks(booksData);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'books');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const unsub = onSnapshot(collection(db, 'books'), (snapshot) => {
+      const booksData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Book[];
+      console.log('[Catalog] books loaded:', booksData.length);
+      setBooks(booksData);
+      setLoading(false);
+    }, (error) => {
+      console.error('[Catalog] Firestore error:', error);
+      handleFirestoreError(error, OperationType.LIST, 'books');
+      setLoading(false);
+    });
 
-    fetchBooks();
+    return () => unsub();
   }, []);
 
   const filteredBooks = books.filter(book => {
-    const matchesFilter = activeFilter === 'All' || book.codemark === activeFilter;
+    const bookGenre = book.codemark || book.genre || '';
+    const matchesFilter = activeFilter === 'All' || 
+      bookGenre.toLowerCase().includes(activeFilter.replace(/^[^\w]*/, '').toLowerCase());
     const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           book.author.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -163,14 +165,14 @@ export default function Catalog() {
                   </div>
                   
                   <div className="flex justify-between items-start mb-1">
-                    <div className="font-ui text-[10px] uppercase tracking-widest text-text-muted">{book.codemark}</div>
+                    <div className="font-ui text-[10px] uppercase tracking-widest text-text-muted">{book.codemark || book.genre || ''}</div>
                     <div className="flex items-center gap-2">
                       {book.editionType !== 'Standard' && (
                         <span className="font-ui text-[9px] uppercase tracking-wider bg-starforge-gold/20 text-starforge-gold px-1.5 py-0.5 rounded-sm">
                           {book.editionType}
                         </span>
                       )}
-                      <div className="font-ui text-xs text-text-secondary">{book.format}</div>
+                      <div className="font-ui text-xs text-text-secondary">{Array.isArray(book.format) ? book.format[0] : book.format}</div>
                     </div>
                   </div>
                   

@@ -36,120 +36,15 @@ interface Episode {
   excerpt: string;
 }
 
-// ── Seeded Showcase Journey ──
+// Data loaded from Firestore
 const SEED_JOURNEY: Journey = {
-  id: 'seed-ember-codex',
-  title: 'The Ember Codex',
-  description: 'An ancient book of forbidden magic surfaces in a crumbling library. Scholar Elara must decode its secrets before the Order of the Eclipse claims it and the power within.',
-  author: 'Elara Vance',
-  slug: 'the-ember-codex',
-  status: 'Active',
-  visibility: 'public',
-  totalEpisodes: 8,
-  publishedEpisodes: 3,
-  genre: 'Dark Fantasy',
-  constellation: 'Rising Stars',
-  featured: true,
-  lastUpdate: Timestamp.fromDate(new Date('2027-03-10')),
-  createdAt: Timestamp.fromDate(new Date('2027-01-15')),
+  id: '', title: '', description: '', author: '',
+  slug: '', status: 'Active', visibility: 'public', totalEpisodes: 0,
+  publishedEpisodes: 0, genre: '', constellation: '', featured: false,
 };
 
-const SEED_EPISODES: Episode[] = [
-  {
-    id: 'ep-showcase-1', number: 1, title: 'The Dust of Ages', status: 'published',
-    publishDate: '2027-01-22', wordCount: 1420, excerpt: 'An unmarked tome in a forgotten library holds a warmth that should not exist.',
-    content: `# The Dust of Ages
 
-The library smelled of old paper and forgotten dreams. Elara traced the spine of the unmarked tome, feeling a strange warmth radiating from the leather.
-
-She had spent years searching for this exact volume, guided only by fragments of myths and half-remembered nursery rhymes. **The Ember Codex.**
-
-> "When the stars align in the house of the serpent, the codex will awaken, and the world will burn."
-
-She shivered, pulling her cloak tighter around her shoulders. The air in the restricted section was always cold, but this chill felt different. It felt *alive.*
-
-## A Discovery
-
-She opened the book. The pages were blank.
-
-"What?" she whispered, her voice echoing in the silent hall.
-
-She flipped through the pages, her frustration mounting. Had she been wrong? Had the myths lied?
-
----
-
-Suddenly, a faint glow began to emanate from the center of the book. The blank pages seemed to absorb the dim light of her lantern, glowing with an inner fire.
-
-Words began to form, written in a language she had never seen before, yet somehow, she understood every word.
-
-### The First Incantation
-
-*Ignis. Vita. Mors.*
-
-Fire. Life. Death.
-
-The words burned themselves into her mind, and she knew, with terrifying certainty, that her life would never be the same.`,
-  },
-  {
-    id: 'ep-showcase-2', number: 2, title: 'Whispers in the Dark', status: 'published',
-    publishDate: '2027-02-05', wordCount: 890, excerpt: 'The codex speaks. But voices in empty libraries are rarely good news.',
-    content: `# Whispers in the Dark
-
-The words on the page seemed to shift and writhe as she read them. It wasn't a language she knew, but she understood it perfectly.
-
-She closed the book, her heart pounding in her chest. The glow faded, but the warmth remained, seeping into her skin.
-
-> "The codex is not a book. It is a key."
-
-The voice was a mere whisper, echoing in the empty library. Elara spun around, her lantern swinging wildly, casting long, dancing shadows.
-
-**"Who's there?"** she called out, her voice trembling slightly.
-
-Silence answered her.
-
----
-
-She hurried out of the restricted section, the heavy tome clutched tightly to her chest. The familiar scent of old paper and dust was now tainted with the faint smell of *ozone and burning embers*.
-
-She knew she had to leave the city. The Order would be looking for the codex, and they would not stop until they found it.`,
-  },
-  {
-    id: 'ep-showcase-3', number: 3, title: 'The Order of the Eclipse', status: 'published',
-    publishDate: '2027-02-19', wordCount: 1100, excerpt: 'They come in the dead of night. The Order has found her.',
-    content: `# The Order of the Eclipse
-
-They came in the dead of night, silent as shadows. Elara barely had time to grab the codex before her door was splintered open.
-
-Three figures stood in the doorway, their faces hidden beneath dark hoods. The symbol of the Eclipse was emblazoned on their chests in **silver thread**.
-
-"Give us the book, scholar," the leader hissed, his voice like dry leaves scraping against stone.
-
-Elara backed away, her hand instinctively going to the small dagger hidden in her boot. "I don't know what you're talking about."
-
-> "Do not lie to us. We can smell the magic on you."
-
-The leader stepped forward, drawing a long, curved blade. The metal gleamed in the moonlight filtering through the window.
-
----
-
-Elara didn't hesitate. She threw her lantern at the leader, the glass shattering and spilling burning oil across the floor.
-
-### The Escape
-
-In the chaos of flames and shouting, she vaulted through the window, landing hard on the cobblestones below. Pain shot through her ankle, but she forced herself to run.
-
-Behind her, the house burned. The Order would follow. They always did.
-
-But Elara had the codex, and now she knew its first secret: *the fire within could not be extinguished*.`,
-  },
-  {
-    id: 'ep-showcase-4', number: 4, title: 'The Road to Ashenmoor', status: 'draft',
-    publishDate: '', wordCount: 0, excerpt: '',
-    content: `# The Road to Ashenmoor
-
-*Coming soon...*`,
-  },
-];
+const SEED_EPISODES: Episode[] = [];
 
 export default function AdminJourneys() {
   const [journeys, setJourneys] = useState<Journey[]>([]);

@@ -24,59 +24,22 @@ type Serial = {
   chapters: Chapter[];
 };
 
-const SERIALS: Serial[] = [
-  {
-    id: '1',
-    title: 'The Clockwork Heart',
-    author: 'Elias Thorne',
-    cover: 'https://picsum.photos/seed/clockwork/400/600',
-    genre: 'Steampunk Romance',
-    status: 'Ongoing',
-    latestChapter: 12,
-    nextRelease: '2 days',
-    synopsis: 'In a city powered by steam and secrets, a rogue mechanic discovers a sentient automaton with a heart that beats to a dangerous rhythm.',
-    chapters: [
-      { num: 1, title: 'The Brass Awakening', free: true, content: 'The smog was particularly thick tonight. Elara wiped a smudge of grease from her cheek, her goggles pushed up onto her forehead. Before her lay the chassis of a standard worker-drone, but the power core... the power core was unlike anything she had ever seen.\n\nIt pulsed with a soft, golden light, humming a tune that felt almost organic. She reached out, her wrench forgotten on the workbench. As her fingers brushed the warm metal, the automaton\'s optical sensors flickered to life.\n\n"Hello," it whirred, the voice surprisingly melodic. "I have been waiting for you."' },
-      { num: 2, title: 'Gears in Motion', free: true, content: 'Panic and fascination warred within Elara. Sentience in automatons was strictly forbidden by the High Council. If the Enforcers found out, she would be exiled to the Rust Wastes.\n\n"Who... what are you?" she stammered, stepping back.\n\nThe automaton slowly sat up, its joints moving with fluid grace instead of the usual jerky mechanical motions. "I am designated Orion. And I believe I am in danger."' },
-      { num: 3, title: 'A Spark in the Dark', free: true, content: 'Hiding Orion proved to be Elara\'s greatest challenge yet. Her small workshop in the Undercity was barely large enough for her, let alone a seven-foot-tall mechanical being.\n\nOver the next few days, she learned that Orion wasn\'t just sentient; he could feel. He expressed curiosity about the rain, sadness at the sight of discarded parts, and a strange, warm affection whenever Elara was near.\n\nBut the Enforcers were getting closer. Their heavy boots echoed in the alleys above, searching for the stolen prototype.' },
-      { num: 4, title: 'The Inspector Calls', free: false, content: 'Premium content. Please subscribe to read.' },
-      { num: 5, title: 'Flight over the Smog', free: false, content: 'Premium content. Please subscribe to read.' },
-    ]
-  },
-  {
-    id: '2',
-    title: 'Void Walkers',
-    author: 'Kaelen Vance',
-    cover: 'https://picsum.photos/seed/void/400/600',
-    genre: 'Space Opera',
-    status: 'Completed',
-    latestChapter: 24,
-    nextRelease: null,
-    synopsis: 'A crew of outcasts navigates the treacherous Void, a region of space where reality bends and ancient entities slumber.',
-    chapters: [
-      { num: 1, title: 'Into the Abyss', free: true, content: 'Captain Jax gripped the helm, knuckles white. The viewport showed nothing but the swirling, impossible colors of the Void. Normal space was a memory.\n\n"Shields at forty percent and dropping," yelled Kira from the engineering console. "Whatever is out there, it\'s eating our energy!"\n\nJax gritted his teeth. "Divert life support from decks 3 and 4. We need to push through. If the legends are true, the Sanctuary is just beyond this nebula."' },
-      { num: 2, title: 'Whispers from the Dark', free: true, content: 'The ship groaned as it breached the nebula\'s edge. Suddenly, the chaotic colors vanished, replaced by an eerie, absolute blackness. But it wasn\'t empty.\n\nVoices began to echo through the ship\'s comms, though no signals were being received. Whispers in forgotten languages, promising power, threatening doom.\n\n"Turn it off!" Kira screamed, clutching her head. But Jax knew the voices weren\'t coming from the speakers. They were in their minds.' },
-      { num: 3, title: 'The First Anomaly', free: false, content: 'Premium content. Please subscribe to read.' },
-    ]
-  }
-];
-
 export default function Serials() {
-  const [serials, setSerials] = useState<Serial[]>(SERIALS);
-  const [activeSerial, setActiveSerial] = useState<Serial>(SERIALS[0]);
+  const [serials, setSerials] = useState<Serial[]>([]);
+  const [activeSerial, setActiveSerial] = useState<Serial | null>(null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onSnapshot(
       query(collection(db, 'serials'), orderBy('createdAt', 'desc')),
       (snap) => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Serial));
-        if (data.length > 0) {
-          setSerials(data);
-          setActiveSerial(prev => data.find(s => s.id === prev.id) || data[0]);
-        }
+        setSerials(data);
+        setActiveSerial(prev => data.find(s => s.id === prev?.id) || data[0] || null);
+        setLoading(false);
       },
-      () => { }
+      () => setLoading(false)
     );
     return () => unsub();
   }, []);

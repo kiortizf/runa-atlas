@@ -9,6 +9,8 @@ import { db } from '../firebase';
 import {
     doc, setDoc, collection, serverTimestamp, Timestamp
 } from 'firebase/firestore';
+import { seedWave3 } from './seedWave3Data';
+import { seedWave4 } from './seedWave4Data';
 
 // ─── helpers ────────────────────────────────────────────────────
 function ts(dateStr: string): Timestamp {
@@ -258,6 +260,7 @@ export async function seedAllDemoData(uid: string): Promise<{ success: boolean; 
             await fn();
             seeded.push(label);
         } catch (e: any) {
+            console.error(`[SEED ERROR] ${label}:`, e.message);
             errors.push(`${label}: ${e.message}`);
         }
     }
@@ -515,6 +518,12 @@ export async function seedAllDemoData(uid: string): Promise<{ success: boolean; 
         await safeWrite(`newsletterCampaigns/${item.id}`, () =>
             setDoc(doc(db, 'newsletterCampaigns', item.id), item));
     }
+
+    // Wave 3: All remaining reader-facing and editorial content
+    await seedWave3(safeWrite);
+
+    // Wave 4: All remaining content collections (books, constellations, posts, polls, etc.)
+    await seedWave4(safeWrite);
 
     return { success: errors.length === 0, seeded, errors };
 }

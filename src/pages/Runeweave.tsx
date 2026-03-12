@@ -100,50 +100,15 @@ function layoutStarNodes(books: Book[], constellations: Constellation[], width: 
 }
 
 // ─── Expanded Seed Data ───────────────────────────────────────
-const SEED_CONSTELLATIONS: Constellation[] = [
-  { id: 'c1', name: 'Voices of the Diaspora', description: 'Stories exploring cultural displacement, belonging, and the search for home across worlds.', color: '#d4a853', curator: 'Editorial Team', status: 'Active', icon: '🌍' },
-  { id: 'c2', name: 'Queer Futures', description: 'LGBTQ+ speculative fiction imagining worlds beyond binaries.', color: '#ec4899', curator: 'Editorial Team', status: 'Active', icon: '🏳️‍🌈' },
-  { id: 'c3', name: 'Ancestral Magic', description: 'Stories rooted in non-European mythologies and magical traditions.', color: '#a855f7', curator: 'Editorial Team', status: 'Active', icon: '✨' },
-  { id: 'c4', name: 'Climate Requiem', description: 'Cli-fi and environmental narratives from the edge of tomorrow.', color: '#2dd4bf', curator: 'Editorial Team', status: 'Active', icon: '🌊' },
-  { id: 'c5', name: 'Afrofuturism', description: 'Black speculative visions weaving technology, ancestral memory, and liberation.', color: '#f59e0b', curator: 'Editorial Team', status: 'Active', icon: '🚀' },
-  { id: 'c6', name: 'Indigenous Futures', description: 'Speculative fiction centering Indigenous sovereignty, knowledge systems, and futurity.', color: '#10b981', curator: 'Editorial Team', status: 'Active', icon: '🌿' },
-  { id: 'c7', name: 'Cyberpunk Resistance', description: 'Stories of rebellion against corporate dystopia, surveillance states, and digital oppression.', color: '#6366f1', curator: 'Editorial Team', status: 'Active', icon: '⚡' },
-  { id: 'c8', name: 'Mythic Horror', description: 'Horror drawn from folklore, myth, and the uncanny territories of the human psyche.', color: '#8b2635', curator: 'Editorial Team', status: 'Active', icon: '🩸' },
-];
+let _seedConstellations: any[] = [];
 
-const SEED_BOOKS: Book[] = [
-  { id: 'b1', title: 'The Obsidian Crown', author: 'Elara Vance', cover: 'https://picsum.photos/seed/obsidian/600/900', codemark: '🗡️ Epic Fantasy', synopsis: 'A disgraced queen must reclaim her stolen throne from a rival who wields ancient, forbidden blood magic.', price: 24.99, constellationId: 'c3', themes: ['power', 'identity', 'mythology'], connections: ['b2', 'b4'] },
-  { id: 'b2', title: 'Neon Requiem', author: 'Kai Nakamura', cover: 'https://picsum.photos/seed/neon/600/900', codemark: '⚔️ Speculative Fiction', synopsis: 'In a flooded Tokyo of 2089, a deaf hacker uncovers a conspiracy that links dying coral reefs to corporate AI.', price: 19.99, constellationId: 'c4', themes: ['technology', 'identity', 'environment'], connections: ['b1', 'b3'] },
-  { id: 'b3', title: 'Salt & Starlight', author: 'Amara Osei', cover: 'https://picsum.photos/seed/salt/600/900', codemark: '💜 Queer Romance', synopsis: 'Two rival mechanics on a deep-space mining colony find themselves forced to cooperate when their station is sabotaged.', price: 16.99, constellationId: 'c2', themes: ['love', 'survival', 'queerness'], connections: ['b2'] },
-  { id: 'b4', title: 'Wound of the World', author: 'Tomás Gutiérrez', cover: 'https://picsum.photos/seed/wound/600/900', codemark: '🌙 Dark Fantasy', synopsis: 'A grief-stricken healer discovers her blood can close the rifts opening between dimensions.', price: 22.99, constellationId: 'c1', themes: ['grief', 'healing', 'diaspora'], connections: ['b1', 'b5'] },
-  { id: 'b5', title: 'The Roots Remember', author: 'Priya Sharma', cover: 'https://picsum.photos/seed/roots/600/900', codemark: '✨ Magical Realism', synopsis: 'When an ancient banyan tree begins to speak, a village is forced to confront colonial wounds beneath its soil.', price: 18.99, constellationId: 'c3', themes: ['colonialism', 'nature', 'mythology'], connections: ['b4', 'b6'] },
-  { id: 'b6', title: 'Binary Stars', author: 'River Chen', cover: 'https://picsum.photos/seed/binary/600/900', codemark: '💜 Queer Romance', synopsis: 'A non-binary astrophysicist and a trans poet navigate love across parallel timelines.', price: 15.99, constellationId: 'c2', themes: ['love', 'identity', 'science'], connections: ['b3', 'b5'] },
-  { id: 'b7', title: 'Sunfall Empire', author: 'Nneka Achebe', cover: 'https://picsum.photos/seed/sunfall/600/900', codemark: '🚀 Afrofuturism', synopsis: 'On a terraformed Mars, a griot must sing the old songs to prevent the colony\'s AI overseer from erasing their history.', price: 21.99, constellationId: 'c5', themes: ['memory', 'technology', 'liberation'], connections: ['b8', 'b1'] },
-  { id: 'b8', title: 'The Dreamline Protocol', author: 'Jarli Yunupingu', cover: 'https://picsum.photos/seed/dreamline/600/900', codemark: '🌿 Indigenous Futurism', synopsis: 'A Yolŋu data-weaver discovers that the songlines are living algorithms—and someone is hacking them.', price: 20.99, constellationId: 'c6', themes: ['sovereignty', 'knowledge', 'connection'], connections: ['b7', 'b9'] },
-  { id: 'b9', title: 'Chrome Meridian', author: 'Zahra Kalil', cover: 'https://picsum.photos/seed/chrome/600/900', codemark: '⚡ Cyberpunk', synopsis: 'A street surgeon and a rogue AI broker join forces to expose a megacorp\'s mind-control implant program.', price: 18.99, constellationId: 'c7', themes: ['resistance', 'freedom', 'augmentation'], connections: ['b8', 'b10'] },
-  { id: 'b10', title: 'The Bone Garden', author: 'Inés Morales', cover: 'https://picsum.photos/seed/bonegarden/600/900', codemark: '🩸 Horror', synopsis: 'In 1920s Oaxaca, a curandera discovers that the spirits of the dead are not resting—they are organizing.', price: 17.99, constellationId: 'c8', themes: ['folklore', 'death', 'resistance'], connections: ['b9', 'b4'] },
-  { id: 'b11', title: 'Tidewalker', author: 'Moana Tui', cover: 'https://picsum.photos/seed/tidewalker/600/900', codemark: '🌊 Climate Fiction', synopsis: 'A Pacific Islander navigator uses ancestral wayfinding to guide climate refugees across a drowned ocean.', price: 19.99, constellationId: 'c4', themes: ['climate', 'navigation', 'survival'], connections: ['b2', 'b8'] },
-  { id: 'b12', title: 'Gilded Ghosts', author: 'Kofi Mensah', cover: 'https://picsum.photos/seed/gilded/600/900', codemark: '🚀 Afrofuturism', synopsis: 'The ghosts of enslaved ancestors haunt a luxury space station, demanding the living fulfill an ancient pact.', price: 23.99, constellationId: 'c5', themes: ['legacy', 'justice', 'haunting'], connections: ['b7', 'b10'] },
-];
+let _seedBooks: any[] = [];
 
 // ─── Activity Feed Data ───────────────────────────────────────
-const ACTIVITY_FEED = [
-  { text: 'Nneka Achebe submitted Chapter 18 of "Sunfall Empire"', icon: PenTool, time: '12 min ago', color: '#f59e0b' },
-  { text: 'Queer Futures constellation gained a new star', icon: Sparkles, time: '1 hr ago', color: '#ec4899' },
-  { text: '4 beta readers are reviewing "Chrome Meridian" right now', icon: Eye, time: '2 hrs ago', color: '#6366f1' },
-  { text: 'River Chen\'s "Binary Stars" hit 500 pre-orders', icon: TrendingUp, time: '3 hrs ago', color: '#2dd4bf' },
-  { text: 'New manuscript entered the Indigenous Futures constellation', icon: Star, time: '5 hrs ago', color: '#10b981' },
-  { text: 'Inés Morales joined the Mythic Horror constellation', icon: Users, time: '6 hrs ago', color: '#8b2635' },
-  { text: '"The Dreamline Protocol" completed beta reading round 2', icon: BookMarked, time: '8 hrs ago', color: '#10b981' },
-];
+const ACTIVITY_FEED: { text: string; icon: any; time: string; color: string }[] = [];
 
 // ─── Pull Quotes ──────────────────────────────────────────────
-const PULL_QUOTES = [
-  { quote: 'The stars don\'t forget. They hold every name that was ever stolen, waiting for the right voice to call them back.', book: SEED_BOOKS[6], constellation: SEED_CONSTELLATIONS[4] },
-  { quote: 'She pressed her palm to the rift and felt the wound of the world pulse like a second heartbeat—ancient, furious, alive.', book: SEED_BOOKS[3], constellation: SEED_CONSTELLATIONS[0] },
-  { quote: 'In the silence between heartbeats, the coral sang. And the hacker, for the first time in her life, listened.', book: SEED_BOOKS[1], constellation: SEED_CONSTELLATIONS[3] },
-  { quote: 'Love is not a timeline. It is the space between them—the breath before the universe decides which version of us gets to stay.', book: SEED_BOOKS[5], constellation: SEED_CONSTELLATIONS[1] },
-];
+const PULL_QUOTES: { quote: string; book: any; constellation: any }[] = [];
 
 // ─── Main Component ──────────────────────────────────────────
 export default function Runeweave() {
@@ -187,13 +152,13 @@ export default function Runeweave() {
   useEffect(() => { const t = setTimeout(() => setEntranceComplete(true), 3000); return () => clearTimeout(t); }, []);
 
   // Rotating quote
-  useEffect(() => { const t = setInterval(() => setQuoteIndex(i => (i + 1) % PULL_QUOTES.length), 8000); return () => clearInterval(t); }, []);
+  useEffect(() => { if (PULL_QUOTES.length === 0) return; const t = setInterval(() => setQuoteIndex(i => (i + 1) % PULL_QUOTES.length), 8000); return () => clearInterval(t); }, []);
 
   // Activity feed rotation
-  useEffect(() => { const t = setInterval(() => setActivityIndex(i => (i + 1) % ACTIVITY_FEED.length), 4000); return () => clearInterval(t); }, []);
+  useEffect(() => { if (ACTIVITY_FEED.length === 0) return; const t = setInterval(() => setActivityIndex(i => (i + 1) % ACTIVITY_FEED.length), 4000); return () => clearInterval(t); }, []);
 
-  const displayConstellations = constellations.length > 0 ? constellations : SEED_CONSTELLATIONS;
-  const seedBooks = books.length > 0 ? books : SEED_BOOKS;
+  const displayConstellations = constellations.length > 0 ? constellations : _seedConstellations;
+  const seedBooks = books.length > 0 ? books : _seedBooks;
 
   const displayNodes = useMemo(() => {
     const allNodes = layoutStarNodes(seedBooks, displayConstellations, 1200, 800);
@@ -317,6 +282,7 @@ export default function Runeweave() {
           </div>
           <div className="h-3 w-px bg-border flex-shrink-0" />
           <AnimatePresence mode="wait">
+            {ACTIVITY_FEED.length > 0 && ACTIVITY_FEED[activityIndex] && (
             <motion.div key={activityIndex}
               initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -16, opacity: 0 }}
               transition={{ duration: 0.4 }}
@@ -330,6 +296,7 @@ export default function Runeweave() {
                 </>
               ); })()}
             </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
@@ -572,6 +539,7 @@ export default function Runeweave() {
            ═══════════════════════════════════════════════════════════ */}
 
       {/* ── Pull Quote ── */}
+      {PULL_QUOTES.length > 0 && currentQuote && (
       <section className="relative z-20 py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-void-black via-cosmic-purple/5 to-void-black" />
         <div className="max-w-4xl mx-auto relative">
@@ -604,6 +572,7 @@ export default function Runeweave() {
           </AnimatePresence>
         </div>
       </section>
+      )}
 
       {/* ── Featured Constellation Spotlight ── */}
       {featuredConstellation && (

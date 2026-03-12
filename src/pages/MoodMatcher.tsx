@@ -54,106 +54,27 @@ const MOOD_PRESETS = [
     { label: 'Love story, dark setting', emoji: '🥀', values: { darkness: 70, pacing: 40, romance: 90, worldbuilding: 65, prose: 60, body_count: 45 } },
 ];
 
-const BOOK_DATABASE: BookResult[] = [
-    {
-        title: 'The Obsidian Crown',
-        author: 'Elara Vance',
-        cover: 'https://picsum.photos/seed/obsidian-crown/300/450',
-        match: 0,
-        mood: 'Dark, immersive, and unforgettable',
-        tags: ['Dark Fantasy', 'Necromancy', 'Epic'],
-        summary: 'A librarian discovers her bloodline connects to a fallen god\'s magic system. The city breathes. The streets rearrange themselves at night. Nothing is safe.',
-        price: '$14.99',
-    },
-    {
-        title: 'Bones of Tomorrow',
-        author: 'Kael Thornwood',
-        cover: 'https://picsum.photos/seed/bones-tomorrow/300/450',
-        match: 0,
-        mood: 'Brutal, poetic, and relentless',
-        tags: ['Sci-Fi', 'Post-Apocalyptic', 'Literary'],
-        summary: 'In a world where memories can be extracted and sold, a bone-reader must decode the future from the remains of the past.',
-        price: '$12.99',
-    },
-    {
-        title: 'The Glass Meridian',
-        author: 'Sera Nighthollow',
-        cover: 'https://picsum.photos/seed/glass-meridian/300/450',
-        match: 0,
-        mood: 'Lush, slow, and devastating',
-        tags: ['Magical Realism', 'Romance', 'Literary'],
-        summary: 'Two cartographers mapping impossible coastlines discover that the landscapes they chart mirror the geography of grief.',
-        price: '$11.99',
-    },
-    {
-        title: 'Ironvein Rising',
-        author: 'Marcus Rivera',
-        cover: 'https://picsum.photos/seed/ironvein/300/450',
-        match: 0,
-        mood: 'Kinetic, electric, and addictive',
-        tags: ['Cyberpunk', 'Thriller', 'Action'],
-        summary: 'A blackmarket neurosurgeon discovers her latest client\'s implant contains a blueprint for a weapon that could rewrite consciousness.',
-        price: '$13.99',
-    },
-    {
-        title: 'The Hollow Garden',
-        author: 'Althea Priory',
-        cover: 'https://picsum.photos/seed/hollow-garden/300/450',
-        match: 0,
-        mood: 'Gentle, eerie, and deeply felt',
-        tags: ['Gothic', 'Romance', 'Horror'],
-        summary: 'A botanist inherits a Victorian estate where the garden grows emotions instead of flowers — and grief is the most fertile soil.',
-        price: '$10.99',
-    },
-    {
-        title: 'Signal to Noise',
-        author: 'Dev Kessler',
-        cover: 'https://picsum.photos/seed/signal-noise/300/450',
-        match: 0,
-        mood: 'Clean, propulsive, and cerebral',
-        tags: ['Hard Sci-Fi', 'Mystery', 'Thriller'],
-        summary: 'A SETI researcher picks up an alien signal that, when decoded, turns out to be a distress call from humans — sent 10,000 years in the future.',
-        price: '$14.99',
-    },
-    {
-        title: 'The Ember Codex',
-        author: 'Lyra Ashbloom',
-        cover: 'https://picsum.photos/seed/ember-codex/300/450',
-        match: 0,
-        mood: 'Warm, sprawling, and cozy-dark',
-        tags: ['Fantasy', 'Found Family', 'Adventure'],
-        summary: 'A disgraced fire mage and a mute archive keeper must decode a burning manuscript before the embers consume the last library in the realm.',
-        price: '$11.99',
-    },
-    {
-        title: 'Wrath & Reverie',
-        author: 'Nyx Hathaway',
-        cover: 'https://picsum.photos/seed/wrath-reverie/300/450',
-        match: 0,
-        mood: 'Intense, romantic, and dark',
-        tags: ['Dark Romance', 'Fantasy', 'Villain POV'],
-        summary: 'A god of destruction and the mortal scholar sent to kill him discover that annihilation and devotion share the same root.',
-        price: '$12.99',
-    },
-];
+const BOOK_DATABASE: BookResult[] = [];
 
 function computeMatch(axes: MoodAxis[], book: BookResult): number {
     // Simple scoring based on book tags and axis values
-    const profiles: Record<string, Record<string, number>> = {
-        'The Obsidian Crown': { darkness: 80, pacing: 55, romance: 40, worldbuilding: 95, prose: 85, body_count: 60 },
-        'Bones of Tomorrow': { darkness: 85, pacing: 60, romance: 10, worldbuilding: 65, prose: 90, body_count: 80 },
-        'The Glass Meridian': { darkness: 40, pacing: 20, romance: 80, worldbuilding: 55, prose: 95, body_count: 15 },
-        'Ironvein Rising': { darkness: 60, pacing: 95, romance: 25, worldbuilding: 45, prose: 30, body_count: 75 },
-        'The Hollow Garden': { darkness: 50, pacing: 25, romance: 70, worldbuilding: 60, prose: 70, body_count: 30 },
-        'Signal to Noise': { darkness: 45, pacing: 80, romance: 10, worldbuilding: 50, prose: 40, body_count: 35 },
-        'The Ember Codex': { darkness: 35, pacing: 45, romance: 30, worldbuilding: 80, prose: 55, body_count: 25 },
-        'Wrath & Reverie': { darkness: 75, pacing: 65, romance: 95, worldbuilding: 70, prose: 65, body_count: 55 },
-    };
+    const profiles: Record<string, Record<string, number>> = {};
     const profile = profiles[book.title];
     if (!profile) return 50;
     const diffs = axes.map(a => Math.abs(a.value - (profile[a.id] || 50)));
     const avgDiff = diffs.reduce((s, d) => s + d, 0) / diffs.length;
     return Math.max(0, Math.round(100 - avgDiff));
+}
+
+const ICON_MAP: Record<string, any> = {
+    Sun, Moon, Feather, Zap, Shield, Heart, Wind, Mountain, Waves, Snowflake, Flame, Eye,
+    Sparkles, Star, BookOpen, RotateCcw, ArrowRight
+};
+
+function resolveIcon(icon: any): any {
+    if (typeof icon === 'function') return icon;
+    if (typeof icon === 'string' && ICON_MAP[icon]) return ICON_MAP[icon];
+    return Sparkles; // fallback
 }
 
 export default function MoodMatcher() {
@@ -166,7 +87,18 @@ export default function MoodMatcher() {
             query(collection(db, 'mood_axes')),
             (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as MoodAxis));
-                if (data.length > 0) setAxes(data);
+                if (data.length > 0) {
+                    // Merge Firestore data with local icons (Firestore can't store React components)
+                    const merged = data.map(d => {
+                        const initial = INITIAL_AXES.find(a => a.id === d.id);
+                        return {
+                            ...d,
+                            leftIcon: initial?.leftIcon ?? resolveIcon(d.leftIcon),
+                            rightIcon: initial?.rightIcon ?? resolveIcon(d.rightIcon),
+                        };
+                    });
+                    setAxes(merged);
+                }
             },
             () => { }
         );
@@ -194,14 +126,6 @@ export default function MoodMatcher() {
 
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {!user && (
-                <div className="bg-gradient-to-r from-violet-500/10 to-starforge-gold/5 border-b border-violet-500/10">
-                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-violet-400 font-semibold">Demo Mode</span> — Sign in to save your mood preferences and get personalized recommendations.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-violet-500/10 text-violet-400 text-[10px] font-semibold uppercase tracking-wider border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">

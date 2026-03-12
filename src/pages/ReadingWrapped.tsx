@@ -9,6 +9,7 @@ import {
     ArrowLeft, Share2, Download, TrendingUp, BarChart3, Award,
     Sparkles, Calendar, Target, BookMarked, Quote, Eye
 } from 'lucide-react';
+import AuthGatedCTA from '../components/AuthGatedCTA';
 
 // ═══════════════════════════════════════════
 // READING WRAPPED — Your Year in Books
@@ -21,58 +22,17 @@ const COLORS = {
 };
 
 const WRAPPED_DATA = {
-    year: 2025,
-    username: 'star_reader_42',
-    totalBooks: 47,
-    totalPages: 14_280,
-    totalHours: 312,
-    avgPagesPerDay: 39,
-    longestStreak: 23,
-    currentStreak: 8,
-    topGenres: [
-        { name: 'Dark Fantasy', percent: 34, books: 16 },
-        { name: 'Sci-Fi', percent: 23, books: 11 },
-        { name: 'Literary Fiction', percent: 19, books: 9 },
-        { name: 'Magical Realism', percent: 13, books: 6 },
-        { name: 'Horror', percent: 11, books: 5 },
-    ],
-    topAuthors: [
-        { name: 'Elara Vance', books: 4, avatar: '📖' },
-        { name: 'Kael Thornwood', books: 3, avatar: '🌲' },
-        { name: 'Sera Nighthollow', books: 3, avatar: '🌙' },
-        { name: 'Marcus Rivera', books: 2, avatar: '✒️' },
-        { name: 'Althea Priory', books: 2, avatar: '🏛️' },
-    ],
-    favoriteBook: {
-        title: 'The Obsidian Crown',
-        author: 'Elara Vance',
-        rating: 5,
-        highlights: 47,
-        reactions: 23,
-    },
-    topHighlight: {
-        text: '"Magic is not a gift. It is a wound the universe has learned to sing through."',
-        book: 'The Obsidian Crown',
-        chapter: 'The Marrow Gate',
-    },
-    monthlyBreakdown: [
-        { month: 'Jan', books: 3 }, { month: 'Feb', books: 5 }, { month: 'Mar', books: 4 },
-        { month: 'Apr', books: 6 }, { month: 'May', books: 3 }, { month: 'Jun', books: 2 },
-        { month: 'Jul', books: 5 }, { month: 'Aug', books: 4 }, { month: 'Sep', books: 3 },
-        { month: 'Oct', books: 6 }, { month: 'Nov', books: 4 }, { month: 'Dec', books: 2 },
-    ],
-    communityStats: {
-        discussionsJoined: 89,
-        votesInForge: 34,
-        readingCircles: 3,
-        eventsAttended: 12,
-    },
-    percentile: 94,
-    readingPersonality: 'The Obsidian Scholar',
-    personalityDesc: 'You gravitate toward dark, complex narratives with deep worldbuilding. You read with intensity and engagement — the kind of reader who highlights passages and builds theories. Authors dream of readers like you.',
+    year: 2025, username: '', totalBooks: 0, totalPages: 0, totalHours: 0, avgPagesPerDay: 0,
+    longestStreak: 0, currentStreak: 0, topGenres: [] as { name: string; percent: number; books: number }[],
+    topAuthors: [] as { name: string; books: number; avatar: string }[],
+    favoriteBook: { title: '', author: '', rating: 0, highlights: 0, reactions: 0 },
+    topHighlight: { text: '', book: '', chapter: '' },
+    monthlyBreakdown: [] as { month: string; books: number }[],
+    communityStats: { discussionsJoined: 0, votesInForge: 0, readingCircles: 0, eventsAttended: 0 },
+    percentile: 0, readingPersonality: '', personalityDesc: '',
 };
 
-const maxBooks = Math.max(...WRAPPED_DATA.monthlyBreakdown.map(m => m.books));
+const maxBooks = Math.max(1, ...WRAPPED_DATA.monthlyBreakdown.map(m => m.books), ...WRAPPED_DATA.monthlyBreakdown.map(m => m.books));
 
 interface SlideProps {
     onNext: () => void;
@@ -336,24 +296,108 @@ export default function ReadingWrapped() {
     const { user } = useAuth();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [direction, setDirection] = useState(1);
+    const [wrappedData, setWrappedData] = useState<typeof WRAPPED_DATA | null>(null);
+    const [loading, setLoading] = useState(true);
+    const currentYear = new Date().getFullYear();
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                doc(db, 'users', user.uid),
+                doc(db, 'users', u.uid),
                 (snap) => {
                     if (snap.exists() && snap.data().readingWrapped) {
-                        // Reading Wrapped data available from Firestore
+                        setWrappedData(snap.data().readingWrapped);
                     }
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
         return () => unsubAuth();
     }, []);
+
+    // State 1: Not logged in → full-page CTA
+    if (!loading && !user) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] to-[#1a0a2e] text-white">
+                <AuthGatedCTA
+                    icon={Award}
+                    title={`Your ${currentYear} in Books`}
+                    subtitle="Reading Wrapped is your annual reading recap — books read, hours spent, genres explored, top passages, community impact, and your unique reading personality. Like Spotify Wrapped, but for readers."
+                    ctaText="Sign In to Start Tracking"
+                    accentColor="aurora-teal"
+                >
+                    <div className="grid grid-cols-2 gap-3 text-xs text-text-secondary">
+                        {[
+                            { icon: '📚', label: 'Books & pages tracked' },
+                            { icon: '📊', label: 'Genre breakdown' },
+                            { icon: '✨', label: 'Reading personality' },
+                            { icon: '🎯', label: 'Community impact score' },
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-2 bg-white/[0.03] px-3 py-2 rounded-lg">
+                                <span>{item.icon}</span>
+                                <span>{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </AuthGatedCTA>
+            </div>
+        );
+    }
+
+    // State 2: Logged in but no wrapped data → year-gated message
+    if (!loading && user && !wrappedData) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] to-[#1a0a2e] text-white">
+                <AuthGatedCTA
+                    icon={Calendar}
+                    title="We're Building Your Wrapped"
+                    subtitle={`Your ${currentYear} Reading Wrapped will be ready at the end of the year. Keep reading, rating, and engaging with the community — we're tracking everything behind the scenes for your annual recap.`}
+                    ctaText="Browse the Catalog"
+                    ctaLink="/catalog"
+                    accentColor="aurora-teal"
+                >
+                    <div className="flex items-center justify-center gap-6 text-xs text-text-secondary">
+                        <div className="flex flex-col items-center gap-1">
+                            <BookOpen className="w-5 h-5 text-aurora-teal/50" />
+                            <span>Read</span>
+                        </div>
+                        <span className="text-white/10">→</span>
+                        <div className="flex flex-col items-center gap-1">
+                            <Star className="w-5 h-5 text-aurora-teal/50" />
+                            <span>Rate</span>
+                        </div>
+                        <span className="text-white/10">→</span>
+                        <div className="flex flex-col items-center gap-1">
+                            <TrendingUp className="w-5 h-5 text-aurora-teal/50" />
+                            <span>Engage</span>
+                        </div>
+                        <span className="text-white/10">→</span>
+                        <div className="flex flex-col items-center gap-1">
+                            <Award className="w-5 h-5 text-aurora-teal/50" />
+                            <span>Wrapped!</span>
+                        </div>
+                    </div>
+                </AuthGatedCTA>
+            </div>
+        );
+    }
+
+    // Loading
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] to-[#1a0a2e] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-aurora-teal/30 border-t-aurora-teal rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // State 3: Has data → show the full wrapped experience
+    const data = wrappedData || WRAPPED_DATA;
+    const maxBooksLocal = Math.max(1, ...(data.monthlyBreakdown || []).map(m => m.books));
 
     const goNext = () => {
         if (currentSlide < SLIDES.length - 1) {
@@ -369,16 +413,6 @@ export default function ReadingWrapped() {
         }
     };
 
-    // Keyboard navigation
-    useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') goNext();
-            if (e.key === 'ArrowLeft') goPrev();
-        };
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [currentSlide]);
-
     const SlideComponent = SLIDES[currentSlide];
     const bgIdx = currentSlide % COLORS.bg.length;
 
@@ -391,16 +425,6 @@ export default function ReadingWrapped() {
                     transition={{ duration: 0.5 }}
                 />
             </div>
-
-            {/* Demo Banner */}
-            {!user && (
-                <div className="fixed top-1 left-0 right-0 z-40 flex justify-center">
-                    <div className="bg-deep-space/90 backdrop-blur-sm border border-white/[0.08] rounded-full px-5 py-2 flex items-center gap-3">
-                        <span className="text-[10px] text-text-secondary"><span className="text-aurora-teal font-semibold">Demo</span> — Sign in to see your personal Year in Review</span>
-                        <a href="/portal" className="px-3 py-1 bg-aurora-teal/10 text-aurora-teal text-[9px] font-semibold uppercase tracking-wider border border-aurora-teal/20 rounded-full hover:bg-aurora-teal/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
 
             {/* Slide area */}
             <div className="flex-1 flex items-center justify-center px-8 py-16 relative">
@@ -449,3 +473,4 @@ export default function ReadingWrapped() {
         </div>
     );
 }
+

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Newspaper, Calendar, ArrowRight } from 'lucide-react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Timestamp } from 'firebase/firestore';
 
@@ -21,21 +21,25 @@ export default function Posts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'posts'),
-      where('status', '==', 'published'),
-      orderBy('publishDate', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
+    const unsub = onSnapshot(collection(db, 'posts'), (snapshot) => {
+      const allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      console.log('[Posts] all posts from Firestore:', allPosts.length);
+      const published = allPosts
+        .filter(p => p.status === 'published')
+        .sort((a, b) => {
+          const dateA = a.publishDate?.toDate?.()?.getTime() || 0;
+          const dateB = b.publishDate?.toDate?.()?.getTime() || 0;
+          return dateB - dateA;
+        });
+      setPosts(published);
       setLoading(false);
     }, (error) => {
+      console.error('[Posts] Firestore error:', error);
       handleFirestoreError(error, OperationType.LIST, 'posts');
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   if (loading) {

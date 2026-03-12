@@ -45,6 +45,7 @@ export default function Layout() {
         { name: 'Book DNA', path: '/book-dna' },
         { name: 'Reader Compatibility', path: '/compatibility' },
         { name: 'Spoiler Shield', path: '/spoiler-shield' },
+        { name: 'Content Compass', path: '/content-compass' },
         { name: 'Reading Wrapped', path: '/wrapped' },
         { name: 'Passage Collections', path: '/passages' },
       ],
@@ -58,7 +59,7 @@ export default function Layout() {
       ],
     },
     { name: 'Catalog', path: '/catalog', icon: BookOpen, show: true },
-    { name: 'Journeys', path: '/journeys', icon: Scroll, show: true },
+    { name: 'Serials', path: '/journeys', icon: Scroll, show: true },
     { name: 'The Forge', path: '/forge', icon: Flame, show: true },
     { name: 'Events', path: '/events', icon: Calendar, show: true },
     { name: 'Community', path: '/community', icon: Users, show: true },
@@ -68,7 +69,7 @@ export default function Layout() {
   // ── Footer sections ──
   const footerExplore = [
     { name: 'Catalog', path: '/catalog' },
-    { name: 'Journeys', path: '/journeys' },
+    { name: 'Serials', path: '/journeys' },
     { name: 'The Forge', path: '/forge' },
     { name: 'Events', path: '/events' },
     { name: 'Community', path: '/community' },

@@ -6,31 +6,19 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const CART_ITEMS = [
-  {
-    id: '1',
-    title: 'The Obsidian Crown',
-    author: 'Elara Vance',
-    cover: 'https://picsum.photos/seed/obsidian/200/300',
-    format: 'Paperback',
-    price: 18.99,
-    quantity: 1,
-    editionType: 'Standard'
-  },
-  {
-    id: '2',
-    title: 'Neon Requiem',
-    author: 'Jax Thorne',
-    cover: 'https://picsum.photos/seed/neon/200/300',
-    format: 'Ebook',
-    price: 9.99,
-    quantity: 1,
-    editionType: 'Interactive'
-  }
-];
+interface CartItem {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  format: string;
+  price: number;
+  quantity: number;
+  editionType: string;
+}
 
 export default function Cart() {
-  const [items, setItems] = useState(CART_ITEMS);
+  const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     const auth = getAuth();
@@ -39,8 +27,7 @@ export default function Cart() {
       const unsubCart = onSnapshot(
         query(collection(db, 'user_carts'), where('userId', '==', user.uid)),
         (snap) => {
-          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as typeof CART_ITEMS[0]));
-          if (data.length > 0) setItems(data);
+          setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as CartItem)));
         },
         () => { }
       );

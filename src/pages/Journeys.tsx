@@ -20,21 +20,6 @@ type Journey = {
   publishedEpisodes: number;
 };
 
-const SEED_JOURNEYS: Journey[] = [
-  {
-    id: 'seed-1', slug: 'the-ember-codex', title: 'The Ember Codex', author: 'Alara Vane', genre: 'Dark Fantasy',
-    status: 'Active', featured: true,
-    description: 'A scholar discovers a forbidden text that rewrites the history of magic, drawing the attention of an ancient order that will stop at nothing to keep its secrets buried.',
-    totalEpisodes: 8, publishedEpisodes: 3,
-  },
-  {
-    id: 'seed-2', slug: 'neon-horizons', title: 'Neon Horizons', author: 'Kaelen Vance', genre: 'Cyberpunk',
-    status: 'Completed', featured: false,
-    description: 'In a city where memories can be bought and sold, a rogue archivist must uncover the truth behind her own missing past before her mind is wiped completely.',
-    totalEpisodes: 12, publishedEpisodes: 12,
-  },
-];
-
 export default function Journeys() {
   const { user, signIn } = useAuth();
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -45,11 +30,9 @@ export default function Journeys() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'journeys'), snap => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Journey));
-      setJourneys(data.length > 0 ? data : SEED_JOURNEYS);
+      setJourneys(snap.docs.map(d => ({ id: d.id, ...d.data() } as Journey)));
       setLoading(false);
     }, () => {
-      setJourneys(SEED_JOURNEYS);
       setLoading(false);
     });
     return () => unsub();

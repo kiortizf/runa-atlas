@@ -355,15 +355,9 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       
       allow create: if isAuthenticated() && 
-                    isOwner(userId) && 
-                    isValidUser(request.resource.data) && 
-                    uidUnchanged() &&
-                    (request.resource.data.role in ['member', 'author'] || isAdmin());
+                    (isOwner(userId) || isAdmin());
                     
       allow update: if isAuthenticated() && 
-                    isValidUser(request.resource.data) && 
-                    uidNotModified() &&
-                    areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) &&
                     ((isOwner(userId) && areImmutableFieldsUnchanged(['role'])) || isAdmin());
                     
       allow delete: if isAdmin();
@@ -435,28 +429,28 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidPost(request.resource.data);
-      allow update: if isAdmin() && isValidPost(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /events/{eventId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidEvent(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin() || isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /journeys/{journeyId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidJourney(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /journeys/{journeyId}/chapters/{chapterId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidJourneyChapter(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -464,7 +458,7 @@ service cloud.firestore {
     // Episodes (serialized fiction chapters)
     match /journeys/{journeyId}/episodes/{episodeId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidEpisode(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -478,32 +472,29 @@ service cloud.firestore {
 
     match /authorProfiles/{profileId} {
       allow read: if true;
-      allow create: if (isAdmin() || isOwner(request.resource.data.userId)) && isValidAuthorProfile(request.resource.data);
-      allow update: if (isAdmin() || isOwner(request.resource.data.userId)) && isValidAuthorProfile(request.resource.data) && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow create: if isAdmin() || (isAuthenticated() && isOwner(request.resource.data.userId));
+      allow update: if isAdmin() || (isAuthenticated() && isOwner(request.resource.data.userId));
       allow delete: if isAdmin();
     }
 
     match /submissions/{submissionId} {
-      allow read: if isAdmin() || isOwner(resource.data.authorId);
-      allow create: if (isAuthor() || isAdmin()) && isOwner(request.resource.data.authorId) && isValidSubmission(request.resource.data);
-      allow update: if (isAdmin() && isValidSubmission(request.resource.data) && areImmutableFieldsUnchanged(['authorId', 'createdAt'])) ||
-                    (isOwner(request.resource.data.authorId) && isValidSubmission(request.resource.data) && areImmutableFieldsUnchanged(['authorId', 'status', 'createdAt']));
+      allow read: if isAdmin() || (isAuthenticated() && isOwner(resource.data.authorId));
+      allow create: if isAdmin() || (isAuthenticated() && isOwner(request.resource.data.authorId));
+      allow update: if isAdmin() || (isAuthenticated() && isOwner(request.resource.data.authorId));
       allow delete: if isAdmin();
     }
 
     match /messages/{messageId} {
-      allow read: if isAdmin() || isOwner(resource.data.senderId) || isOwner(resource.data.receiverId);
-      allow create: if (isOwner(request.resource.data.senderId) || isAdmin()) && isValidMessage(request.resource.data);
-      allow update: if isAdmin() || isOwner(resource.data.receiverId);
+      allow read: if isAdmin() || (isAuthenticated() && (isOwner(resource.data.senderId) || isOwner(resource.data.receiverId)));
+      allow create: if isAdmin() || isAuthenticated();
+      allow update: if isAdmin() || isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /books/{bookId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidBook(request.resource.data);
-      allow update: if isAdmin() && 
-                    isValidBook(request.resource.data) &&
-                    areImmutableFieldsUnchanged(['createdAt']);
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -525,22 +516,15 @@ service cloud.firestore {
 
     match /polls/{pollId} {
       allow read: if true;
-      
-      allow create: if isAdmin() && isValidPoll(request.resource.data);
-      
-      allow update: if (isAdmin() && isValidPoll(request.resource.data) && areImmutableFieldsUnchanged(['createdAt'])) ||
-                    (isAuthenticated() && isValidPoll(request.resource.data) && areImmutableFieldsUnchanged(['type', 'title', 'description', 'daysLeft', 'createdAt']));
-                    
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /readerCircles/{circleId} {
       allow read: if true;
-      
-      allow create: if isAdmin() && isValidReaderCircle(request.resource.data);
-      
-      allow update: if isAdmin() && isValidReaderCircle(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
-                    
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -562,17 +546,14 @@ service cloud.firestore {
 
     match /bookClubGuides/{guideId} {
       allow read: if true;
-      
-      allow create: if isAdmin() && isValidBookClubGuide(request.resource.data);
-      
-      allow update: if isAdmin() && isValidBookClubGuide(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
-                    
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     match /qaSessions/{sessionId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidQASession(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -587,7 +568,7 @@ service cloud.firestore {
 
     match /constellations/{constellationId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidConstellation(request.resource.data);
+      allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -636,6 +617,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // AMA Questions subcollection
+    match /amas/{amaId}/questions/{questionId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     // ═══ Admin & Platform Collections ═══
 
     match /siteConfig/{configId} {
@@ -681,10 +670,18 @@ service cloud.firestore {
 
     // ── Forge Manuscripts ──
     match /manuscripts/{manuscriptId} {
-      allow read: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
       allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+
+      // Manuscript comments subcollection
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
 
       // Chapters subcollection
       match /chapters/{chapterId} {
@@ -774,8 +771,7 @@ service cloud.firestore {
 
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAdmin() || isAuthenticated();
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
@@ -790,6 +786,12 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated();
       allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /spoiler_books/{bookId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -932,24 +934,22 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════════════════
 
     match /user_libraries/{entryId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin() || isAuthenticated();
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     match /user_wishlists/{entryId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin() || isAuthenticated();
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     match /user_carts/{entryId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid || isAdmin();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin() || isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1166,9 +1166,9 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════════════════
 
     match /book_launches/{launchId} {
-      allow read: if isMember();
-      allow create: if isMember() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isAdmin() || (isMember() && resource.data.authorId == request.auth.uid);
+      allow read: if isAdmin() || isMember();
+      allow create, update: if isAdmin() || (isMember() && request.resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isMember() && resource.data.authorId == request.auth.uid);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1196,9 +1196,9 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════════════════
 
     match /reader_matches/{matchId} {
-      allow read: if isMember();
-      allow create: if isMember() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isMember() && resource.data.userId == request.auth.uid;
+      allow read: if isAdmin() || isMember();
+      allow create: if isAdmin() || (isMember() && request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin() || (isMember() && resource.data.userId == request.auth.uid);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1206,9 +1206,9 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════════════════
 
     match /revision_rounds/{roundId} {
-      allow read: if isMember();
-      allow create: if isMember() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isAdmin() || (isMember() && resource.data.authorId == request.auth.uid);
+      allow read: if isAdmin() || isMember();
+      allow create, update: if isAdmin() || (isMember() && request.resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isMember() && resource.data.authorId == request.auth.uid);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1337,6 +1337,88 @@ service cloud.firestore {
     match /users/{userId}/challenge_progress/{challengeId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // READER-FACING DATA (authenticated read, admin write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /book_dna/{docId} {
+      allow read: if isMember();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /buddy_reads/{docId} {
+      allow read: if isMember();
+      allow create: if isMember();
+      allow update, delete: if isAdmin() || (isMember() && resource.data.userId == request.auth.uid);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EDITORIAL WORKFLOW (admin/author read, admin write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /editor_beta_notes/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /editor_consensus/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /manuscript_inbox/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /editor_beta_readers/{docId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /beta_campaign_readers/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin() || isAuthor();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // AUTHOR TOOLS (authenticated read, admin write)
+    // ═══════════════════════════════════════════════════════════════
+
+    match /studio_feedback_pipeline/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin() || isAuthor();
+    }
+
+    match /studio_beta_readers/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin() || isAuthor();
+    }
+
+    match /writing_goals_config/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /writing_weekly_log/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /writing_milestones/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /writing_achievements/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
       allow delete: if isAdmin();
     }
   }

@@ -56,44 +56,28 @@ const CATEGORY_ICONS: Record<string, any> = {
     overall: Star,
 };
 
-const BETA_NOTES: BetaNote[] = [
-    { id: 'n1', reader: 'Taylor Park', readerTier: 'Trusted', chapter: 14, chapterTitle: 'Battle of the Veil', category: 'pacing', text: 'The battle sequence in Ch. 14 drags — flashback interruptions break momentum. 3 out of 5 readers flagged this.', timestamp: '2h ago', imported: false, highlighted: true, agreement: 3 },
-    { id: 'n2', reader: 'Nia Blackwood', readerTier: 'Inner Circle', chapter: 12, chapterTitle: 'The Betrayal', category: 'character', text: 'Seraphine\'s motivation needs one more internal justification. Why does she trust Maren after the betrayal?', timestamp: '5h ago', imported: false, highlighted: false, agreement: 2 },
-    { id: 'n3', reader: 'Marcus Chen', readerTier: 'Trusted', chapter: 10, chapterTitle: 'The Mirror Room', category: 'plot', text: 'The twist landed perfectly. Foreshadowing from Ch. 3 was well-placed. All readers called this out positively.', timestamp: '1d ago', imported: true, highlighted: false, agreement: 5 },
-    { id: 'n4', reader: 'Lena Ortega', readerTier: 'Elite', chapter: 7, chapterTitle: 'The Garden of Glass', category: 'prose', text: '"Light filtered through leaves as stained glass in a chapel for the living." — Multiple highlights on this passage. This is the book\'s voice at its best.', timestamp: '2d ago', imported: true, highlighted: true, agreement: 4 },
-    { id: 'n5', reader: 'Jordan Mills', readerTier: 'Trusted', chapter: 8, chapterTitle: 'The Veil Expands', category: 'worldbuilding', text: 'The magic system expansion is welcome, but the Veil mechanics are confusing. One reader couldn\'t track the rules.', timestamp: '3d ago', imported: false, highlighted: false, agreement: 1 },
-    { id: 'n6', reader: 'Taylor Park', readerTier: 'Trusted', chapter: 1, chapterTitle: 'The Shattered Throne', category: 'overall', text: 'Strong opening. The world context is accessible even without the first book. Hooks immediately.', timestamp: '3w ago', imported: true, highlighted: false, agreement: 5 },
-    { id: 'n7', reader: 'Nia Blackwood', readerTier: 'Inner Circle', chapter: 14, chapterTitle: 'Battle of the Veil', category: 'pacing', text: 'Consolidating the memory reveal to Ch. 13 would keep Ch. 14 focused on action. The interspersed flashbacks are the weakest structural choice.', timestamp: '6h ago', imported: false, highlighted: true, agreement: 3 },
-    { id: 'n8', reader: 'Marcus Chen', readerTier: 'Trusted', chapter: 15, chapterTitle: 'Aftermath', category: 'character', text: 'The emotional fallout feels earned. Seraphine\'s grief in the war-room scene is the strongest character moment since Ch. 5.', timestamp: '1d ago', imported: false, highlighted: false, agreement: 3 },
-];
-
-const CONSENSUS: ConsensusItem[] = [
-    { chapter: 14, chapterTitle: 'Battle of the Veil', total: 8, flagged: true, topIssue: 'Pacing — flashback interruptions', category: 'pacing', agreementPct: 60 },
-    { chapter: 12, chapterTitle: 'The Betrayal', total: 4, flagged: true, topIssue: 'Character — Seraphine motivation gap', category: 'character', agreementPct: 40 },
-    { chapter: 10, chapterTitle: 'The Mirror Room', total: 6, flagged: false, topIssue: 'Plot twist — universally praised', category: 'plot', agreementPct: 100 },
-    { chapter: 8, chapterTitle: 'The Veil Expands', total: 3, flagged: false, topIssue: 'Worldbuilding — Veil rules unclear', category: 'worldbuilding', agreementPct: 20 },
-    { chapter: 7, chapterTitle: 'The Garden of Glass', total: 5, flagged: false, topIssue: 'Prose — highly praised passage', category: 'prose', agreementPct: 80 },
-    { chapter: 1, chapterTitle: 'The Shattered Throne', total: 5, flagged: false, topIssue: 'Overall — strong hook', category: 'overall', agreementPct: 100 },
-];
-
 export default function EditorBridge() {
     const [viewTab, setViewTab] = useState<'consensus' | 'notes' | 'import_log'>('consensus');
     const [filterCategory, setFilterCategory] = useState<string>('all');
-    const [importedNotes, setImportedNotes] = useState<Set<string>>(new Set(['n3', 'n4', 'n6']));
-    const [expandedConsensus, setExpandedConsensus] = useState<number | null>(14);
+    const [importedNotes, setImportedNotes] = useState<Set<string>>(new Set());
+    const [expandedConsensus, setExpandedConsensus] = useState<number | null>(null);
+    const [notes, setNotes] = useState<BetaNote[]>([]);
+    const [consensus, setConsensus] = useState<ConsensusItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                query(collection(db, 'editor_feedback'), where('authorId', '==', user.uid)),
+                query(collection(db, 'editor_feedback'), where('authorId', '==', u.uid)),
                 (snap) => {
-                    if (snap.docs.length > 0) {
-                        // Editor feedback data available from Firestore
-                    }
+                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setNotes(data.filter((d: any) => d.type === 'note') as any as BetaNote[]);
+                    setConsensus(data.filter((d: any) => d.type === 'consensus') as any as ConsensusItem[]);
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
@@ -104,8 +88,8 @@ export default function EditorBridge() {
         setImportedNotes(prev => { const n = new Set(prev); n.add(id); return n; });
     };
 
-    const filteredNotes = filterCategory === 'all' ? BETA_NOTES : BETA_NOTES.filter(n => n.category === filterCategory);
-    const importedCount = BETA_NOTES.filter(n => importedNotes.has(n.id)).length;
+    const filteredNotes = filterCategory === 'all' ? notes : notes.filter(n => n.category === filterCategory);
+    const importedCount = notes.filter(n => importedNotes.has(n.id)).length;
 
     return (
         <div className="min-h-screen bg-void-black text-white">
@@ -120,7 +104,7 @@ export default function EditorBridge() {
                             <div>
                                 <h1 className="text-xl font-semibold text-white">Editor Feedback Bridge</h1>
                                 <p className="text-xs text-text-secondary">
-                                    <span className="text-white/70">Wrath & Reverie</span> · Beta feedback from 5 readers · {importedCount}/{BETA_NOTES.length} notes imported to editorial
+                                    <span className="text-white/70">Wrath & Reverie</span> · Beta feedback from 5 readers · {importedCount}/{notes.length} notes imported to editorial
                                 </p>
                             </div>
                         </div>
@@ -135,7 +119,7 @@ export default function EditorBridge() {
                     <div className="flex items-center gap-6">
                         {[
                             { id: 'consensus' as const, label: 'Chapter Consensus', icon: BarChart3 },
-                            { id: 'notes' as const, label: 'Individual Notes', icon: MessageCircle, count: BETA_NOTES.length },
+                            { id: 'notes' as const, label: 'Individual Notes', icon: MessageCircle, count: notes.length },
                             { id: 'import_log' as const, label: 'Import Log', icon: Download, count: importedCount },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setViewTab(tab.id)}
@@ -152,17 +136,17 @@ export default function EditorBridge() {
 
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <AnimatePresence mode="wait">
-                    {/* ═══ CHAPTER CONSENSUS ═══ */}
+                    {/* ═══ CHAPTER consensus ═══ */}
                     {viewTab === 'consensus' && (
                         <motion.div key="consensus" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="mb-4">
                                 <p className="text-xs text-text-secondary">Chapters sorted by feedback volume and consensus. Flagged issues need editor attention.</p>
                             </div>
                             <div className="space-y-2">
-                                {CONSENSUS.sort((a, b) => b.total - a.total).map((item, idx) => {
+                                {consensus.sort((a, b) => b.total - a.total).map((item, idx) => {
                                     const CategoryIcon = CATEGORY_ICONS[item.category] || Star;
                                     const color = CATEGORY_COLORS[item.category] || '#6b7280';
-                                    const chapterNotes = BETA_NOTES.filter(n => n.chapter === item.chapter);
+                                    const chapterNotes = notes.filter(n => n.chapter === item.chapter);
                                     return (
                                         <motion.div key={item.chapter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.06 }}
@@ -293,7 +277,7 @@ export default function EditorBridge() {
                                 <p className="text-xs text-text-secondary">{importedCount} beta reader notes pulled into the editorial workflow</p>
                             </div>
                             <div className="space-y-2">
-                                {BETA_NOTES.filter(n => importedNotes.has(n.id)).map((note, idx) => {
+                                {notes.filter(n => importedNotes.has(n.id)).map((note, idx) => {
                                     const NoteIcon = CATEGORY_ICONS[note.category] || Star;
                                     const noteColor = CATEGORY_COLORS[note.category];
                                     return (

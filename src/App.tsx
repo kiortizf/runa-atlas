@@ -54,6 +54,7 @@ const PassageCollections = lazy(() => import('./pages/PassageCollections'));
 const BookDNA = lazy(() => import('./pages/BookDNA'));
 const ReaderCompatibility = lazy(() => import('./pages/ReaderCompatibility'));
 const ContentCompass = lazy(() => import('./pages/ContentCompass'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Beta reader / editorial
 const BetaReaderHub = lazy(() => import('./pages/BetaReaderHub'));
@@ -315,6 +316,7 @@ export default function App() {
               <SubmissionTracker />
             </ProtectedRoute>
           } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

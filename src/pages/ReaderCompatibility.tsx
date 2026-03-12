@@ -10,6 +10,7 @@ import {
     Bookmark, Zap, Target, BarChart3, Send, Check,
     X, Dna, Quote, Flame, Award
 } from 'lucide-react';
+import AuthGatedCTA from '../components/AuthGatedCTA';
 
 // ═══════════════════════════════════════════════
 // READER COMPATIBILITY — Find Your Book Buddy
@@ -34,84 +35,34 @@ interface ReaderMatch {
     badge?: string;
 }
 
-const MATCHES: ReaderMatch[] = [
-    {
-        id: 'm1', username: 'midnight_ink', avatar: '🖋️', personality: 'The Shadowweaver',
-        overallMatch: 92, dnaMatch: 89, highlightOverlap: 73, paceMatch: 85,
-        sharedBooks: 12, totalBooks: 52, topGenres: ['Dark Fantasy', 'Gothic Horror', 'Literary Fiction'],
-        favBook: 'The Obsidian Crown', recentRead: 'Bones of Tomorrow',
-        sharedHighlights: [
-            '"Magic is not a gift. It is a wound the universe has learned to sing through."',
-            '"The city had teeth, and it used them at night."',
-            '"We are all haunted houses. The question is whether you keep the lights on."',
-        ],
-        status: 'reading', badge: '🔥 Hot Match',
-    },
-    {
-        id: 'm2', username: 'prose_hunter', avatar: '🔍', personality: 'The Lyric Cartographer',
-        overallMatch: 87, dnaMatch: 84, highlightOverlap: 68, paceMatch: 78,
-        sharedBooks: 9, totalBooks: 41, topGenres: ['Literary Fiction', 'Magical Realism', 'Sci-Fi'],
-        favBook: 'The Glass Meridian', recentRead: 'The Ember Codex',
-        sharedHighlights: [
-            '"She had been so busy being brave that she forgot bravery was supposed to be temporary."',
-            '"Memory is matter. Everything you\'ve ever remembered has weight."',
-        ],
-        status: 'online',
-    },
-    {
-        id: 'm3', username: 'theory_crafter', avatar: '🧠', personality: 'The Pattern Seeker',
-        overallMatch: 83, dnaMatch: 80, highlightOverlap: 61, paceMatch: 90,
-        sharedBooks: 8, totalBooks: 63, topGenres: ['Dark Fantasy', 'Sci-Fi', 'Mystery'],
-        favBook: 'Bones of Tomorrow', recentRead: 'Signal to Noise',
-        sharedHighlights: [
-            '"The future is not a destination. It is a wound in time that has not yet learned to scar."',
-        ],
-        status: 'idle',
-    },
-    {
-        id: 'm4', username: 'the_archivist', avatar: '📚', personality: 'The Deep Diver',
-        overallMatch: 79, dnaMatch: 78, highlightOverlap: 55, paceMatch: 72,
-        sharedBooks: 7, totalBooks: 89, topGenres: ['Dark Fantasy', 'Historical fiction', 'Gothic Horror'],
-        favBook: 'The Obsidian Crown', recentRead: 'The Hollow Garden',
-        sharedHighlights: [
-            '"The bones remember what the living choose to forget."',
-        ],
-        status: 'reading',
-    },
-    {
-        id: 'm5', username: 'star_gazer_99', avatar: '⭐', personality: 'The Horizon Walker',
-        overallMatch: 74, dnaMatch: 71, highlightOverlap: 48, paceMatch: 82,
-        sharedBooks: 5, totalBooks: 34, topGenres: ['Sci-Fi', 'Fantasy', 'Magical Realism'],
-        favBook: 'Signal to Noise', recentRead: 'Ironvein Rising',
-        sharedHighlights: [],
-        status: 'online',
-    },
-];
-
-const BUDDY_READS = [
-    { title: 'The Obsidian Crown', participants: 3, progress: 'Ch. 12 / 24', pace: '2 chapters/week' },
-    { title: 'Bones of Tomorrow', participants: 2, progress: 'Ch. 8 / 18', pace: '3 chapters/week' },
-];
-
 export default function ReaderCompatibility() {
     const { user } = useAuth();
-    const [expandedMatch, setExpandedMatch] = useState<string | null>('m1');
+    const [matches, setMatches] = useState<ReaderMatch[]>([]);
+    const [buddyReads, setBuddyReads] = useState<any[]>([]);
+    const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'matches' | 'buddy-reads' | 'invites'>('matches');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                query(collection(db, 'reader_matches'), where('userId', '==', user.uid)),
+                query(collection(db, 'reader_matches'), where('userId', '==', u.uid)),
                 (snap) => {
-                    if (snap.docs.length > 0) {
-                        // Reader matches available from Firestore
-                    }
+                    setMatches(snap.docs.map(d => ({ id: d.id, ...d.data() } as ReaderMatch)));
+                    setLoading(false);
+                },
+                () => setLoading(false)
+            );
+            const unsubBuddy = onSnapshot(
+                query(collection(db, 'buddy_reads'), where('userId', '==', u.uid)),
+                (snap) => {
+                    setBuddyReads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                 },
                 () => { }
             );
-            return () => unsub();
+            return () => { unsub(); unsubBuddy(); };
         });
         return () => unsubAuth();
     }, []);
@@ -127,16 +78,39 @@ export default function ReaderCompatibility() {
         idle: 'Away',
     };
 
+    // State 1: Not logged in → full-page CTA
+    if (!loading && !user) {
+        return (
+            <div className="min-h-screen bg-void-black text-white">
+                <AuthGatedCTA
+                    icon={Users}
+                    title="Find Your Book Buddy"
+                    subtitle="Reader Compatibility matches you with people who read like you — same genres, same tastes, same obsessions. Start buddy reads and discover books through shared reading."
+                    ctaText="Sign In to Find Matches"
+                    accentColor="rose"
+                />
+            </div>
+        );
+    }
+
+    // State 2: Logged in but no matches → encouraging CTA
+    if (!loading && user && matches.length === 0) {
+        return (
+            <div className="min-h-screen bg-void-black text-white">
+                <AuthGatedCTA
+                    icon={Heart}
+                    title="Your Matches Are Coming"
+                    subtitle="Read and rate more books to build your Book DNA. The more we know about your taste, the better we can match you with compatible readers for buddy reads and discussions."
+                    ctaText="Browse the Catalog"
+                    ctaLink="/catalog"
+                    accentColor="rose"
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-void-black text-white">
-            {!user && (
-                <div className="bg-gradient-to-r from-rose-500/10 to-starforge-gold/5 border-b border-rose-500/10">
-                    <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-                        <p className="text-xs text-text-secondary"><span className="text-rose-400 font-semibold">Demo Mode</span> — Sign in to find your real reader matches and start buddy reads.</p>
-                        <a href="/portal" className="px-4 py-1.5 bg-rose-500/10 text-rose-400 text-[10px] font-semibold uppercase tracking-wider border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors">Sign In</a>
-                    </div>
-                </div>
-            )}
             {/* Header */}
             <div className="border-b border-white/[0.06]">
                 <div className="max-w-5xl mx-auto px-6 py-6">
@@ -161,8 +135,8 @@ export default function ReaderCompatibility() {
                     {/* Tabs */}
                     <div className="flex items-center gap-6">
                         {[
-                            { id: 'matches' as const, label: 'Your Matches', icon: Heart, count: MATCHES.length },
-                            { id: 'buddy-reads' as const, label: 'Buddy Reads', icon: BookOpen, count: BUDDY_READS.length },
+                            { id: 'matches' as const, label: 'Your Matches', icon: Heart, count: matches.length },
+                            { id: 'buddy-reads' as const, label: 'Buddy Reads', icon: BookOpen, count: buddyReads.length },
                             { id: 'invites' as const, label: 'Invitations', icon: Send, count: 2 },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -179,11 +153,11 @@ export default function ReaderCompatibility() {
 
             <div className="max-w-5xl mx-auto px-6 py-8">
                 <AnimatePresence mode="wait">
-                    {/* ═══ MATCHES TAB ═══ */}
+                    {/* ═══ matches TAB ═══ */}
                     {activeTab === 'matches' && (
                         <motion.div key="matches" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="space-y-3">
-                                {MATCHES.map((match, idx) => {
+                                {matches.map((match, idx) => {
                                     const isExpanded = expandedMatch === match.id;
                                     return (
                                         <motion.div key={match.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
@@ -324,7 +298,7 @@ export default function ReaderCompatibility() {
                     {activeTab === 'buddy-reads' && (
                         <motion.div key="buddy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="space-y-4 mb-8">
-                                {BUDDY_READS.map((read, idx) => (
+                                {buddyReads.map((read, idx) => (
                                     <motion.div key={idx} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.1 }}
                                         className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl">

@@ -58,81 +58,16 @@ type OfficeHoursSlot = {
     bookedBy: string[];
 };
 
-// ─── Seed Data ──────────────────────────────────────
-const SEED_AMAS: AMA[] = [
-    {
-        id: 'ama1', title: 'Ask Me Anything: Writing Dark Fantasy', authorName: 'Elara Vance',
-        authorImage: 'https://picsum.photos/seed/elara/200/200', authorBio: 'Author of The Obsidian Crown',
-        scheduledAt: Timestamp.fromDate(new Date('2027-04-15T19:00:00')), status: 'upcoming',
-        description: 'Join Elara Vance for an open AMA about crafting dark fantasy, building magic systems inspired by mythology, and the journey from first draft to publication with Rüna Atlas.',
-        questionCount: 23,
-    },
-    {
-        id: 'ama2', title: 'Worldbuilding in Flooded Tokyo', authorName: 'Kai Nakamura',
-        authorImage: 'https://picsum.photos/seed/kai/200/200', authorBio: 'Author of Neon Requiem',
-        scheduledAt: Timestamp.fromDate(new Date('2027-03-28T20:00:00')), status: 'archived',
-        description: 'Kai discusses the research behind Neon Requiem\'s underwater Tokyo, the ethics of cybernetic enhancement in fiction, and climate fiction as a genre.',
-        questionCount: 47,
-    },
-    {
-        id: 'ama3', title: 'Queer Love Across Timelines', authorName: 'River Chen',
-        authorImage: 'https://picsum.photos/seed/river/200/200', authorBio: 'Author of Binary Stars',
-        scheduledAt: Timestamp.fromDate(new Date('2027-05-02T18:00:00')), status: 'upcoming',
-        description: 'River explores writing queer romance in speculative settings, the challenge of parallel timelines, and finding authenticity in fantastical love stories.',
-        questionCount: 12,
-    },
-];
+// Data loaded from Firestore
 
-const SEED_QUESTIONS: Record<string, AMAQuestion[]> = {
-    ama2: [
-        { id: 'q1', text: 'How much of the underwater city is based on real urban planning proposals for climate-adapted cities?', askerName: 'coral_reader', askerId: 'u1', upvotes: 34, answer: 'About 60% is drawn from real proposals. Tokyo has several speculative architecture studies about vertical expansion. I spent weeks reading Japanese urban planning papers. The Undertow markets are entirely fictional, but the gills tech is inspired by real research into artificial gill membranes.', createdAt: Timestamp.fromDate(new Date('2027-03-28T20:05:00')) },
-        { id: 'q2', text: 'Will there be a sequel exploring the AI consciousness sanctuaries?', askerName: 'neon_dreamer', askerId: 'u2', upvotes: 89, answer: 'I can\'t confirm a full sequel yet, but I am working on a novella set in the Sanctuary. The community voted for this direction in The Forge, which made the decision easy. Stay tuned for announcements.', createdAt: Timestamp.fromDate(new Date('2027-03-28T20:12:00')) },
-        { id: 'q3', text: 'What does your writing routine look like?', askerName: 'aspiring_author', askerId: 'u3', upvotes: 18, createdAt: Timestamp.fromDate(new Date('2027-03-28T20:20:00')) },
-    ],
-};
-
-const SEED_JOURNALS: WritingJournal[] = [
-    {
-        id: 'j1', title: 'On Building Magic from Bone', authorName: 'Elara Vance',
-        authorImage: 'https://picsum.photos/seed/elara/200/200',
-        content: 'The Marrow System didn\'t start as a magic system. It started as a metaphor for generational trauma.\n\nI was reading about epigenetics and how trauma literally changes the structure of your DNA. That became the seed: what if trauma wasn\'t just inherited emotionally, but physically embedded in the world itself? What if the earth remembers violence the way bodies do?\n\nThe fallen gods became stand-ins for colonized cultures. Their marrow, the magical residue they left behind, is both a gift and a wound. Using it heals, but it also calcifies the user, turning them slowly to stone. There is no clean power in this world.\n\nThis is the tension I wanted: that the tools of liberation are themselves scarred.',
-        excerpt: 'The Marrow System didn\'t start as a magic system. It started as a metaphor for generational trauma.',
-        publishedAt: Timestamp.fromDate(new Date('2027-03-05')),
-        tags: ['worldbuilding', 'process', 'magic systems'], likes: 234, bookTitle: 'The Obsidian Crown',
-    },
-    {
-        id: 'j2', title: 'Why I Write Cyberpunk as Climate Fiction', authorName: 'Kai Nakamura',
-        authorImage: 'https://picsum.photos/seed/kai/200/200',
-        content: 'People keep calling Neon Requiem cyberpunk. I call it climate fiction wearing a leather jacket.\n\nThe flood that drowns Tokyo in 2071 isn\'t caused by a war or an experiment gone wrong. It\'s sea level rise. Boring, predictable, preventable sea level rise. The most terrifying futures are the ones we can see coming.\n\nThe cybernetics, the AI, the neon: those came after. They are how humanity adapts. But the story is about the water. Always the water.',
-        excerpt: 'People keep calling Neon Requiem cyberpunk. I call it climate fiction wearing a leather jacket.',
-        publishedAt: Timestamp.fromDate(new Date('2027-02-18')),
-        tags: ['climate fiction', 'genre', 'intention'], likes: 187, bookTitle: 'Neon Requiem',
-    },
-    {
-        id: 'j3', title: 'Finding the Banyan\'s Voice', authorName: 'Priya Sharma',
-        authorImage: 'https://picsum.photos/seed/priya/200/200',
-        content: 'When I decided the banyan tree would speak, I had to decide HOW it speaks. Trees don\'t have mouths. They don\'t have opinions.\n\nOr do they?\n\nI spent three months recording sounds in old-growth forests in Kerala. The creaking, the wind through branches, the drip of dew. I wanted to understand what a tree\'s voice would sound like if we could hear it. The answer: slow. Patient. Deeply, unbearably sad.\n\nMy banyan speaks in memories. It replays what it has absorbed through its roots: conversations, footsteps, the chemical signature of tears in the soil. It doesn\'t narrate. It witnesses.',
-        excerpt: 'When I decided the banyan tree would speak, I had to decide HOW it speaks.',
-        publishedAt: Timestamp.fromDate(new Date('2027-01-10')),
-        tags: ['process', 'research', 'voice'], likes: 312, bookTitle: 'The Roots Remember',
-    },
-];
-
-const SEED_OFFICE_HOURS: OfficeHoursSlot[] = [
-    { id: 'oh1', authorName: 'Elara Vance', authorImage: 'https://picsum.photos/seed/elara/200/200', date: Timestamp.fromDate(new Date('2027-04-20T14:00:00')), duration: 15, topic: 'Manuscript feedback & publishing advice', spotsTotal: 4, spotsTaken: 2, tier: 'architect', bookedBy: [] },
-    { id: 'oh2', authorName: 'River Chen', authorImage: 'https://picsum.photos/seed/river/200/200', date: Timestamp.fromDate(new Date('2027-04-22T16:00:00')), duration: 15, topic: 'Writing queer characters authentically', spotsTotal: 3, spotsTaken: 1, tier: 'architect', bookedBy: [] },
-    { id: 'oh3', authorName: 'Kai Nakamura', authorImage: 'https://picsum.photos/seed/kai/200/200', date: Timestamp.fromDate(new Date('2027-05-05T19:00:00')), duration: 20, topic: 'Climate fiction and research methods', spotsTotal: 4, spotsTaken: 0, tier: 'architect', bookedBy: [] },
-];
-
-// ─── Component ──────────────────────────────────────
 export default function AuthorConnect() {
     const { user, signIn } = useAuth();
     const [activeTab, setActiveTab] = useState<'amas' | 'journals' | 'officehours'>('amas');
-    const [amas, setAmas] = useState<AMA[]>(SEED_AMAS);
-    const [journals, setJournals] = useState<WritingJournal[]>(SEED_JOURNALS);
-    const [officeHours, setOfficeHours] = useState<OfficeHoursSlot[]>(SEED_OFFICE_HOURS);
+    const [amas, setAmas] = useState<AMA[]>([]);
+    const [journals, setJournals] = useState<WritingJournal[]>([]);
+    const [officeHours, setOfficeHours] = useState<OfficeHoursSlot[]>([]);
     const [expandedAMA, setExpandedAMA] = useState<string | null>(null);
-    const [amaQuestions, setAmaQuestions] = useState<Record<string, AMAQuestion[]>>(SEED_QUESTIONS);
+    const [amaQuestions, setAmaQuestions] = useState<Record<string, AMAQuestion[]>>({});
     const [newQuestion, setNewQuestion] = useState('');
     const [votedQuestions, setVotedQuestions] = useState<string[]>([]);
     const [likedJournals, setLikedJournals] = useState<string[]>([]);
@@ -141,18 +76,15 @@ export default function AuthorConnect() {
     // Load from Firestore
     useEffect(() => {
         const unsub1 = onSnapshot(query(collection(db, 'amas'), orderBy('scheduledAt', 'desc')), (snap) => {
-            const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AMA));
-            if (docs.length > 0) setAmas(docs);
+            setAmas(snap.docs.map(d => ({ id: d.id, ...d.data() } as AMA)));
         }, () => { });
 
         const unsub2 = onSnapshot(query(collection(db, 'writingJournals'), orderBy('publishedAt', 'desc')), (snap) => {
-            const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WritingJournal));
-            if (docs.length > 0) setJournals(docs);
+            setJournals(snap.docs.map(d => ({ id: d.id, ...d.data() } as WritingJournal)));
         }, () => { });
 
         const unsub3 = onSnapshot(query(collection(db, 'officeHours'), orderBy('date')), (snap) => {
-            const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as OfficeHoursSlot));
-            if (docs.length > 0) setOfficeHours(docs);
+            setOfficeHours(snap.docs.map(d => ({ id: d.id, ...d.data() } as OfficeHoursSlot)));
         }, () => { });
 
         return () => { unsub1(); unsub2(); unsub3(); };
@@ -166,7 +98,7 @@ export default function AuthorConnect() {
             query(collection(db, 'amas', expandedAMA, 'questions'), orderBy('upvotes', 'desc')),
             (snap) => {
                 const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AMAQuestion));
-                if (docs.length > 0) setAmaQuestions(prev => ({ ...prev, [expandedAMA]: docs }));
+                setAmaQuestions(prev => ({ ...prev, [expandedAMA]: docs }));
             },
             () => { }
         );

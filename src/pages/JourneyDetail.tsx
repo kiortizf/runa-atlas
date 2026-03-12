@@ -28,20 +28,6 @@ type Journey = {
   status?: string;
 };
 
-// Seed data fallback
-const SEED_JOURNEY: Journey = {
-  id: 'seed-1', slug: 'the-ember-codex', title: 'The Ember Codex', author: 'Alara Vane',
-  synopsis: 'A scholar discovers a forbidden text that rewrites the history of magic, drawing the attention of an ancient order that will stop at nothing to keep its secrets buried. As she delves deeper into the codex, she realizes the magic it describes is not just history, but a living, breathing force that is awakening.',
-  totalEpisodes: 8, genre: 'Dark Fantasy', status: 'Active',
-};
-
-const SEED_EPISODES: Episode[] = [
-  { id: 'ep1', number: 1, title: 'The Dust of Ages', status: 'published', wordCount: 3450, publishDate: '2026-02-15', excerpt: 'The library smelled of old paper and forgotten dreams. Elara traced the spine of the unmarked tome, feeling a strange warmth radiating from the leather.' },
-  { id: 'ep2', number: 2, title: 'Whispers in the Dark', status: 'published', wordCount: 4120, publishDate: '2026-02-22', excerpt: "The words on the page seemed to shift and writhe as she read them. It wasn't a language she knew, but she understood it perfectly." },
-  { id: 'ep3', number: 3, title: 'The Order of the Eclipse', status: 'published', wordCount: 3890, publishDate: '2026-03-01', excerpt: 'They came in the dead of night, silent as shadows. Elara barely had time to grab the codex before her door was splintered open.' },
-  { id: 'ep4', number: 4, title: 'Flight through the Catacombs', status: 'scheduled', wordCount: 4500, publishDate: '2026-03-15', excerpt: 'The air grew colder the deeper they went. The catacombs were a maze, but the codex seemed to pulse, guiding her steps.' },
-];
-
 export default function JourneyDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -65,29 +51,17 @@ export default function JourneyDetail() {
         const epUnsub = onSnapshot(
           query(collection(db, `journeys/${found.id}/episodes`), orderBy('number', 'asc')),
           epSnap => {
-            const eps = epSnap.docs.map(d => ({ id: d.id, ...d.data() } as Episode));
-            setEpisodes(eps.length > 0 ? eps : (slug === 'the-ember-codex' ? SEED_EPISODES : []));
+            setEpisodes(epSnap.docs.map(d => ({ id: d.id, ...d.data() } as Episode)));
             setLoading(false);
           },
-          () => {
-            setEpisodes(slug === 'the-ember-codex' ? SEED_EPISODES : []);
-            setLoading(false);
-          }
+          () => setLoading(false)
         );
         return () => epUnsub();
-      } else if (slug === 'the-ember-codex' || slug === 'seed-1') {
-        setJourney(SEED_JOURNEY);
-        setEpisodes(SEED_EPISODES);
-        setLoading(false);
       } else {
         setJourney(null);
         setLoading(false);
       }
     }, () => {
-      if (slug === 'the-ember-codex' || slug === 'seed-1') {
-        setJourney(SEED_JOURNEY);
-        setEpisodes(SEED_EPISODES);
-      }
       setLoading(false);
     });
 

@@ -44,32 +44,6 @@ interface RevisionRound {
     notes: EditorialNote[];
 }
 
-const ROUNDS: RevisionRound[] = [
-    {
-        id: 'r1', round: 1, status: 'completed', startDate: 'Sep 10, 2025', endDate: 'Oct 30, 2025',
-        editor: 'Marcus Reid', notesGiven: 24, notesResolved: 22, decision: 'Revise & Resubmit',
-        summary: 'Strong narrative voice and compelling characters. Primary concerns: pacing in Act II, unclear magic system rules in Ch. 8, and Maren\'s motivation arc needs development. Recommend structural revision in chapters 10-14.',
-        notes: [
-            { id: 'r1n1', chapter: 8, chapterTitle: 'The Veil Expands', category: 'Worldbuilding', text: 'Magic system needs clearer rules. Reader shouldn\'t need to remember definitions from Book 1.', editor: 'Marcus Reid', status: 'resolved', authorResponse: 'Added a brief recap woven into character dialogue.', source: 'editorial', priority: 'high' },
-            { id: 'r1n2', chapter: 10, chapterTitle: 'The Mirror Room', category: 'Plot', text: 'The twist is well-executed. Foreshadowing in Ch. 3 lands. Keep as-is.', editor: 'Marcus Reid', status: 'resolved', source: 'editorial', priority: 'low' },
-            { id: 'r1n3', chapter: 12, chapterTitle: 'The Betrayal', category: 'Character', text: 'Seraphine trusts Maren too quickly after the betrayal. Needs internal justification.', editor: 'Marcus Reid', status: 'resolved', authorResponse: 'Added introspection scene in new Ch. 12b showing Seraphine\'s reasoning.', source: 'editorial', priority: 'critical' },
-            { id: 'r1n4', chapter: 14, chapterTitle: 'Battle of the Veil', category: 'Pacing', text: 'Flashback interruptions in the battle sequence break momentum. Consider consolidating to Ch. 13.', editor: 'Marcus Reid', status: 'resolved', authorResponse: 'Moved memory reveals to Ch. 13. Ch. 14 is now pure action.', source: 'beta_imported', priority: 'high' },
-        ]
-    },
-    {
-        id: 'r2', round: 2, status: 'active', startDate: 'Jan 2, 2026',
-        editor: 'Marcus Reid', notesGiven: 11, notesResolved: 4, decision: 'Pending',
-        summary: 'Structural revisions from R1 are strong. Pacing fixed in Ch. 14. Remaining concerns: new Ch. 12b scene feels slightly overwritten, ending setup for Book 3 needs subtlety. Line-level prose polish needed in chapters 16-20.',
-        notes: [
-            { id: 'r2n1', chapter: 12, chapterTitle: 'The Betrayal (12b)', category: 'Prose', text: 'The new introspection scene is slightly overwritten. Seraphine\'s internal monologue could be 30% shorter while conveying the same emotional weight.', editor: 'Marcus Reid', status: 'open', priority: 'medium' },
-            { id: 'r2n2', chapter: 20, chapterTitle: 'The Crown Divided', category: 'Plot', text: 'Book 3 setup in the final paragraphs is too explicit. Let the reader infer. The line about "the true war begins" reads like a trailer tagline.', editor: 'Marcus Reid', status: 'open', priority: 'high' },
-            { id: 'r2n3', chapter: 16, chapterTitle: 'The Second Crown', category: 'Pacing', text: 'Chapters 16-18 could be tightened. Post-battle lull is necessary but these chapters collectively add ~8k words that could be 5k.', editor: 'Marcus Reid', status: 'open', priority: 'medium' },
-            { id: 'r2n4', chapter: 15, chapterTitle: 'Aftermath', category: 'Character', text: 'Seraphine\'s grief in the war-room scene is the strongest character moment in the book. Consider mirroring this voice in the ending.', editor: 'Marcus Reid', status: 'resolved', authorResponse: 'Great note. Echoed the war-room emotional register in the final chapter.', source: 'beta_imported', priority: 'low' },
-            { id: 'r2n5', chapter: 7, chapterTitle: 'The Garden of Glass', category: 'Prose', text: '"Light filtered through leaves as stained glass in a chapel for the living." Beta readers highlighted this heavily. Signature passage — protect in copyedit.', editor: 'Marcus Reid', status: 'resolved', source: 'beta_imported', priority: 'low' },
-        ]
-    },
-];
-
 const statusConfig: Record<NoteStatus, { color: string; label: string; icon: any }> = {
     open: { color: '#f59e0b', label: 'Open', icon: Circle },
     resolved: { color: '#22c55e', label: 'Resolved', icon: CheckCircle2 },
@@ -82,28 +56,31 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function RevisionRounds() {
-    const [selectedRound, setSelectedRound] = useState<string>('r2');
+    const [rounds, setRounds] = useState<RevisionRound[]>([]);
+    const [selectedRound, setSelectedRound] = useState<string>('');
     const [filterStatus, setFilterStatus] = useState<NoteStatus | 'all'>('all');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+        const unsubAuth = onAuthStateChanged(auth, (u) => {
+            if (!u) { setLoading(false); return; }
             const unsub = onSnapshot(
-                query(collection(db, 'revision_rounds'), where('authorId', '==', user.uid)),
+                query(collection(db, 'revision_rounds'), where('authorId', '==', u.uid)),
                 (snap) => {
-                    if (snap.docs.length > 0) {
-                        // Revision rounds data available from Firestore
-                    }
+                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as RevisionRound));
+                    setRounds(data);
+                    if (data.length > 0 && !selectedRound) setSelectedRound(data[0].id);
+                    setLoading(false);
                 },
-                () => { }
+                () => setLoading(false)
             );
             return () => unsub();
         });
         return () => unsubAuth();
     }, []);
 
-    const activeRound = ROUNDS.find(r => r.id === selectedRound);
+    const activeRound = rounds.find(r => r.id === selectedRound);
 
     return (
         <div className="min-h-screen bg-void-black text-white">
@@ -126,7 +103,7 @@ export default function RevisionRounds() {
 
                     {/* Round Tabs */}
                     <div className="flex items-center gap-3">
-                        {ROUNDS.map(r => (
+                        {rounds.map(r => (
                             <button key={r.id} onClick={() => { setSelectedRound(r.id); setFilterStatus('all'); }}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-xs transition-all
                                     ${selectedRound === r.id ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' : 'bg-white/[0.02] text-text-secondary border-white/[0.06] hover:border-white/[0.1]'}`}>
