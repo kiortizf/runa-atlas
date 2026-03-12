@@ -16,7 +16,7 @@ import {
 // Drag-and-drop · Stage advancement · Comments · Deadlines
 // ═══════════════════════════════════════════════
 
-type PipelineStage = 'submission' | 'editorial_review' | 'beta_reading' | 'revision' | 'copyedit' | 'proof' | 'production' | 'published';
+type PipelineStage = 'submission' | 'editorial_review' | 'analysis' | 'beta_reading' | 'revision' | 'copyedit' | 'proof' | 'production' | 'published';
 
 interface StageHistoryEntry { stage: PipelineStage; entered: string; completed?: string }
 
@@ -50,6 +50,7 @@ interface Comment {
 const STAGES: { id: PipelineStage; label: string; icon: any; color: string }[] = [
     { id: 'submission', label: 'Submission', icon: Send, color: '#6366f1' },
     { id: 'editorial_review', label: 'Editorial Review', icon: Eye, color: '#8b5cf6' },
+    { id: 'analysis', label: 'AI Analysis', icon: Sparkles, color: '#a855f7' },
     { id: 'beta_reading', label: 'Beta Reading', icon: Users, color: '#f59e0b' },
     { id: 'revision', label: 'Author Revision', icon: Edit3, color: '#3b82f6' },
     { id: 'copyedit', label: 'Copyedit', icon: FileText, color: '#10b981' },

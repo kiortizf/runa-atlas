@@ -42,6 +42,12 @@ import { useVersionHistory, type DiffSegment } from '../hooks/useVersionHistory'
 import { useWritingSessions } from '../hooks/useWritingSessions';
 import { useCollaboration, useComments, useSuggestions } from '../hooks/useCollaboration';
 import { useWorldBible, type WorldBibleEntry } from '../hooks/useWorldBible';
+import NarrativeXRay from '../components/editor/NarrativeXRay';
+import CompressionEngine from '../components/editor/CompressionEngine';
+import ThreadTracker from '../components/editor/ThreadTracker';
+import DiplomaticCuts from '../components/editor/DiplomaticCuts';
+import PacingAnalyzer from '../components/editor/PacingAnalyzer';
+import StructuralArchitect from '../components/editor/StructuralArchitect';
 import { useAuth } from '../contexts/AuthContext';
 
 // ── Annotation Tag Definitions ──
@@ -120,7 +126,7 @@ export default function ForgeEditor() {
     const [newTitle, setNewTitle] = useState('');
     const [editingTitle, setEditingTitle] = useState<string | null>(null);
     const [editTitleValue, setEditTitleValue] = useState('');
-    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments' | 'bible'>('notes');
+    const [inspectorTab, setInspectorTab] = useState<'notes' | 'meta' | 'comments' | 'bible' | 'xray' | 'compress' | 'threads' | 'cuts' | 'pacing' | 'structure'>('notes');
     const [notesValue, setNotesValue] = useState('');
     const notesDirtyRef = useRef(false);
     const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1469,19 +1475,27 @@ export default function ForgeEditor() {
                     {showInspector && (
                         <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 280, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
                             className="flex-none bg-deep-space/40 border-l border-white/[0.06] flex flex-col overflow-hidden">
-                            <div className="flex border-b border-white/[0.06]">
-                                {(['notes', 'meta', 'comments', 'bible'] as const).map(tab => (
-                                    <button key={tab} onClick={() => setInspectorTab(tab)}
-                                        className={`flex-1 py-2.5 text-[10px] uppercase tracking-wider font-ui transition-colors relative ${inspectorTab === tab ? 'text-starforge-gold border-b border-starforge-gold' : 'text-text-secondary hover:text-white'}`}>
-                                        {tab === 'bible' ? '🌍' : tab}
-                                        {tab === 'comments' && openComments.length > 0 && (
-                                            <span className="ml-1 px-1 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[8px]">{openComments.length}</span>
-                                        )}
-                                        {tab === 'bible' && bibleEntries.length > 0 && (
-                                            <span className="ml-0.5 text-[8px] text-text-secondary">{bibleEntries.length}</span>
-                                        )}
-                                    </button>
-                                ))}
+                            <div className="border-b border-white/[0.06]">
+                                <div className="flex">
+                                    {(['notes', 'meta', 'comments', 'bible'] as const).map(tab => (
+                                        <button key={tab} onClick={() => setInspectorTab(tab)}
+                                            className={`flex-1 py-2 text-[10px] uppercase tracking-wider font-ui transition-colors relative ${inspectorTab === tab ? 'text-starforge-gold border-b border-starforge-gold' : 'text-text-secondary hover:text-white'}`}>
+                                            {tab === 'bible' ? '🌍' : tab}
+                                            {tab === 'comments' && openComments.length > 0 && (
+                                                <span className="ml-1 px-1 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[8px]">{openComments.length}</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex border-t border-white/[0.04]">
+                                    {([['xray','🧬'],['compress','✂️'],['threads','🧵'],['cuts','💬'],['pacing','📊'],['structure','🏗️']] as const).map(([tab, icon]) => (
+                                        <button key={tab} onClick={() => setInspectorTab(tab as any)}
+                                            className={`flex-1 py-1.5 text-[10px] transition-colors relative ${inspectorTab === tab ? 'text-purple-400 border-b border-purple-400 bg-purple-500/5' : 'text-text-secondary hover:text-white'}`}
+                                            title={tab === 'xray' ? 'Narrative X-Ray' : tab === 'compress' ? 'Compression Engine' : tab === 'threads' ? 'Thread Tracker' : tab === 'cuts' ? 'Diplomatic Cuts' : tab === 'pacing' ? 'Pacing Analyzer' : 'Structural Architect'}>
+                                            {icon}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4">
                                 {inspectorTab === 'notes' && (
@@ -1731,6 +1745,26 @@ export default function ForgeEditor() {
                                             </div>
                                         )}
                                     </div>
+                                )}
+
+                                {/* ── Editor Tool Panels ── */}
+                                {inspectorTab === 'xray' && (
+                                    <NarrativeXRay manuscriptId={manuscriptId} chapters={chapters.map(c => ({ id: c.id, title: c.title, content: c.content, plainText: c.plainText }))} />
+                                )}
+                                {inspectorTab === 'compress' && (
+                                    <CompressionEngine chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
+                                )}
+                                {inspectorTab === 'threads' && (
+                                    <ThreadTracker manuscriptId={manuscriptId} chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
+                                )}
+                                {inspectorTab === 'cuts' && (
+                                    <DiplomaticCuts manuscriptId={manuscriptId} isEditor={(user as any)?.role === 'editor' || (user as any)?.role === 'admin'} manuscriptTitle={activeManuscript?.title} authorName={activeManuscript?.authorName} />
+                                )}
+                                {inspectorTab === 'pacing' && (
+                                    <PacingAnalyzer chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
+                                )}
+                                {inspectorTab === 'structure' && (
+                                    <StructuralArchitect chapters={chapters.map(c => ({ id: c.id, title: c.title, plainText: c.plainText }))} />
                                 )}
                             </div>
                         </motion.div>
