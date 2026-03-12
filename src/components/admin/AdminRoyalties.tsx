@@ -153,10 +153,10 @@ export default function AdminRoyalties() {
           {formats.map(f => (
             <div key={f.id} className={`grid grid-cols-7 gap-3 items-center bg-surface-elevated border border-border/50 rounded-xl px-4 py-3 ${!f.enabled ? 'opacity-50' : ''}`}>
               <span className="col-span-2 font-heading text-sm text-text-primary">{f.label}</span>
-              <span className="font-mono text-sm text-text-secondary">${f.defaultPrice.toFixed(2)}</span>
-              <span className="font-mono text-sm text-text-muted">{(f.tradRate * 100).toFixed(1)}%</span>
-              <span className="font-mono text-sm text-aurora-teal">{(f.selfRate * 100).toFixed(0)}%</span>
-              <span className="font-mono text-sm text-starforge-gold font-semibold">{(f.runaRate * 100).toFixed(0)}%</span>
+              <span className="font-mono text-sm text-text-secondary">${(f.defaultPrice ?? 0).toFixed(2)}</span>
+              <span className="font-mono text-sm text-text-muted">{((f.tradRate ?? 0) * 100).toFixed(1)}%</span>
+              <span className="font-mono text-sm text-aurora-teal">{((f.selfRate ?? 0) * 100).toFixed(0)}%</span>
+              <span className="font-mono text-sm text-starforge-gold font-semibold">{((f.runaRate ?? 0) * 100).toFixed(0)}%</span>
               <div className="flex gap-1 justify-end">
                 <button onClick={() => openFormatModal(f)} className="p-1.5 text-text-muted hover:text-starforge-gold"><Edit2 className="w-3.5 h-3.5" /></button>
                 <button onClick={() => deleteFormat(f.id)} className="p-1.5 text-text-muted hover:text-forge-red"><Trash2 className="w-3.5 h-3.5" /></button>

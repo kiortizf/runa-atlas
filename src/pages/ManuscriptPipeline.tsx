@@ -17,7 +17,7 @@ import {
 // Drag-and-drop · Stage advancement · Comments · Deadlines
 // ═══════════════════════════════════════════════
 
-type PipelineStage = 'submission' | 'editorial_review' | 'analysis' | 'beta_reading' | 'revision' | 'copyedit' | 'proof' | 'production' | 'published';
+type PipelineStage = string;
 
 interface StageHistoryEntry { stage: PipelineStage; entered: string; completed?: string }
 
@@ -48,7 +48,13 @@ interface Comment {
     createdAt: any;
 }
 
-const STAGES: { id: PipelineStage; label: string; icon: any; color: string }[] = [
+// ── Icon mapping for Firestore stage configs ──
+const ICON_MAP: Record<string, any> = {
+    Send, Eye, Users, FileText, Printer, Package, Sparkles, Clock,
+    Edit3: Edit3 as any, AlertCircle, Layers, GitBranch, TrendingUp, AlertTriangle, X,
+};
+
+const DEFAULT_STAGES: { id: PipelineStage; label: string; icon: any; color: string }[] = [
     { id: 'submission', label: 'Submission', icon: Send, color: '#6366f1' },
     { id: 'editorial_review', label: 'Editorial Review', icon: Eye, color: '#8b5cf6' },
     { id: 'analysis', label: 'AI Analysis', icon: Sparkles, color: '#a855f7' },
@@ -92,7 +98,31 @@ export default function ManuscriptPipeline() {
     const [filterStage, setFilterStage] = useState<PipelineStage | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [manuscripts, setManuscripts] = useState<ManuscriptEntry[]>([]);
+    const [STAGES, setSTAGES] = useState(DEFAULT_STAGES);
     const [loading, setLoading] = useState(true);
+
+    // Load pipeline stages from Firestore (fallback to defaults)
+    useEffect(() => {
+        const unsub = onSnapshot(
+            query(collection(db, 'pipeline_stages'), orderBy('order', 'asc')),
+            (snap) => {
+                if (snap.docs.length > 0) {
+                    const firestoreStages = snap.docs
+                        .map(d => ({ id: d.id, ...d.data() } as any))
+                        .filter((s: any) => s.enabled !== false)
+                        .map((s: any) => ({
+                            id: s.stageKey || s.id,
+                            label: s.label,
+                            icon: ICON_MAP[s.icon] || Sparkles,
+                            color: s.color || '#6366f1',
+                        }));
+                    setSTAGES(firestoreStages);
+                }
+            },
+            () => { /* keep defaults on error */ }
+        );
+        return () => unsub();
+    }, []);
 
     // Drag state
     const [dragId, setDragId] = useState<string | null>(null);

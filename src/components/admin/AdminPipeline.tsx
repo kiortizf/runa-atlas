@@ -157,8 +157,27 @@ export default function AdminPipeline() {
         <div className="space-y-2">
           <p className="font-ui text-xs text-text-muted mb-3">Stages a manuscript passes through from submission to publication. Order matters.</p>
           {stages.length === 0 && (
-            <div className="text-center py-8 text-text-muted font-ui text-sm">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" /> No stages configured. Hardcoded defaults (8 stages) will be used.
+            <div className="text-center py-8 text-text-muted font-ui text-sm space-y-3">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" /> No stages configured yet.
+              <button onClick={async () => {
+                const defaults = [
+                  { stageKey: 'submission', label: 'Submission', icon: 'Send', color: '#6366f1', slaWarningDays: 7, slaOverdueDays: 14, autoNotify: true, notifyRoles: ['admin'], description: 'Initial manuscript submission from author', order: 0, enabled: true },
+                  { stageKey: 'editorial_review', label: 'Editorial Review', icon: 'Eye', color: '#8b5cf6', slaWarningDays: 14, slaOverdueDays: 30, autoNotify: true, notifyRoles: ['admin', 'editor'], description: 'Editor reviews manuscript for fit and quality', order: 1, enabled: true },
+                  { stageKey: 'analysis', label: 'AI Analysis', icon: 'Sparkles', color: '#a855f7', slaWarningDays: 7, slaOverdueDays: 14, autoNotify: true, notifyRoles: ['editor'], description: 'Run Narrative X-Ray, Compression Engine, Pacing Analyzer, and Thread Tracker', order: 2, enabled: true },
+                  { stageKey: 'beta_reading', label: 'Beta Reading', icon: 'Users', color: '#f59e0b', slaWarningDays: 21, slaOverdueDays: 45, autoNotify: true, notifyRoles: ['admin', 'author'], description: 'Beta readers provide structured feedback', order: 3, enabled: true },
+                  { stageKey: 'revision', label: 'Author Revision', icon: 'Edit3', color: '#3b82f6', slaWarningDays: 30, slaOverdueDays: 60, autoNotify: true, notifyRoles: ['admin'], description: 'Author revises based on editorial and beta feedback', order: 4, enabled: true },
+                  { stageKey: 'copyedit', label: 'Copyedit', icon: 'FileText', color: '#10b981', slaWarningDays: 14, slaOverdueDays: 30, autoNotify: true, notifyRoles: ['editor'], description: 'Line-level editing for grammar, style, consistency', order: 5, enabled: true },
+                  { stageKey: 'proof', label: 'Proof', icon: 'Printer', color: '#06b6d4', slaWarningDays: 7, slaOverdueDays: 14, autoNotify: true, notifyRoles: ['admin'], description: 'Final proofread before production', order: 6, enabled: true },
+                  { stageKey: 'production', label: 'Production', icon: 'Package', color: '#f97316', slaWarningDays: 14, slaOverdueDays: 30, autoNotify: true, notifyRoles: ['admin'], description: 'Formatting, cover design, ISBN assignment', order: 7, enabled: true },
+                  { stageKey: 'published', label: 'Published', icon: 'Sparkles', color: '#22c55e', slaWarningDays: 999, slaOverdueDays: 999, autoNotify: false, notifyRoles: [], description: 'Manuscript is live and available', order: 8, enabled: true },
+                ];
+                for (const stage of defaults) {
+                  await setDoc(doc(collection(db, 'pipeline_stages')), { ...stage, createdAt: serverTimestamp() });
+                }
+              }}
+                className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-starforge-gold text-void-black rounded-full font-ui font-medium hover:bg-starforge-gold/90 transition-all">
+                <Plus className="w-4 h-4" /> Seed Default Stages (9)
+              </button>
             </div>
           )}
           {stages.map((stage, idx) => (
