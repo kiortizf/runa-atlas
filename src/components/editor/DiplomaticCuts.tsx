@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Check, Edit3, Shield, ArrowRight, ChevronDown, ChevronUp, Gavel } from 'lucide-react';
+import { MessageSquare, Check, Edit3, Shield, ArrowRight, ChevronDown, ChevronUp, Gavel, Archive } from 'lucide-react';
 import { useCuts, type EditorialCut, type CutCategory } from '../../hooks/useCuts';
 
 interface Props {
@@ -126,11 +127,16 @@ export default function DiplomaticCuts({ manuscriptId, isEditor, manuscriptTitle
                     <MessageSquare className="w-4 h-4 text-emerald-400" />
                     <h3 className="text-sm font-semibold text-white">Diplomatic Cuts</h3>
                 </div>
+            <div className="flex items-center gap-2">
                 <div className="flex gap-1 text-[8px]">
                     <span className="px-1.5 py-0.5 bg-white/[0.04] rounded text-text-secondary">{stats.proposed} pending</span>
                     <span className="px-1.5 py-0.5 bg-emerald-500/10 rounded text-emerald-400">{stats.accepted} accepted</span>
                     {stats.wordsToRemove > 0 && <span className="px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">-{stats.wordsToRemove}w</span>}
                 </div>
+                <Link to="/deleted-scenes" className="flex items-center gap-1 px-2 py-1 text-[8px] bg-purple-500/10 border border-purple-500/20 rounded text-purple-400 hover:bg-purple-500/20 transition-colors">
+                    <Archive className="w-3 h-3" /> Vault
+                </Link>
+            </div>
             </div>
             <div className="flex gap-1">
                 {(['all', 'keep', 'compress', 'archive'] as const).map(tab => (

@@ -135,8 +135,23 @@ export default function AdminRoyalties() {
         <div className="space-y-3">
           <p className="font-ui text-xs text-text-muted mb-2">Royalty rates per format, compared across publishing channels.</p>
           {formats.length === 0 && (
-            <div className="text-center py-8 text-text-muted font-ui text-sm">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" /> No formats configured. Hardcoded defaults will be used.
+            <div className="text-center py-8 text-text-muted font-ui text-sm space-y-3">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" /> No formats configured yet.
+              <button onClick={async () => {
+                const defaults = [
+                  { label: 'Hardcover', defaultPrice: 24.99, tradRate: 0.10, selfRate: 0.60, runaRate: 0.55, enabled: true, order: 0 },
+                  { label: 'Paperback', defaultPrice: 14.99, tradRate: 0.08, selfRate: 0.60, runaRate: 0.50, enabled: true, order: 1 },
+                  { label: 'eBook', defaultPrice: 9.99, tradRate: 0.25, selfRate: 0.70, runaRate: 0.60, enabled: true, order: 2 },
+                  { label: 'Audiobook', defaultPrice: 19.99, tradRate: 0.125, selfRate: 0.40, runaRate: 0.45, enabled: true, order: 3 },
+                  { label: 'Serial Chapter', defaultPrice: 2.99, tradRate: 0, selfRate: 0.70, runaRate: 0.65, enabled: true, order: 4 },
+                ];
+                for (const fmt of defaults) {
+                  await setDoc(doc(collection(db, 'royalty_formats')), { ...fmt, createdAt: serverTimestamp() });
+                }
+              }}
+                className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-starforge-gold text-void-black rounded-full font-ui font-medium hover:bg-starforge-gold/90 transition-all">
+                <Plus className="w-4 h-4" /> Seed Default Formats (5)
+              </button>
             </div>
           )}
           {/* Header Row */}
