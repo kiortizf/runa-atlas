@@ -16,12 +16,9 @@ import type { NDASignatureRecord } from '../hooks/useNDASigning';
 // BETA READER APPLICATION — Multi-step signup form
 // ═══════════════════════════════════════════════
 
-const GENRES = [
-    'Dark Fantasy', 'Sci-Fi', 'Magical Realism', 'Literary Fiction',
-    'Gothic Horror', 'Space Opera', 'Cyberpunk', 'Queer Romance',
-    'Afrofuturism', 'Solarpunk', 'Dystopian', 'New Weird',
-    'Mythpunk', 'Urban Fantasy', 'Climate Fiction', 'Biopunk',
-];
+import { GENRE_PICKER_OPTIONS } from '../data/genreData';
+
+const GENRES = GENRE_PICKER_OPTIONS;
 
 const READING_SPEEDS = [
     { id: 'slow', label: 'Slow & Careful', desc: '1-2 chapters/week', icon: '🐢' },

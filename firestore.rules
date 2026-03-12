@@ -655,6 +655,59 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ═══ Runeweave Archive ═══
+
+    match /archive_artifacts/{artifactId} {
+      // Published artifacts are public; drafts/pending visible to owner + admin
+      allow read: if resource.data.status == 'published' ||
+                    isAdmin() ||
+                    (isAuthenticated() && resource.data.authorUserId == request.auth.uid);
+
+      // Any authenticated member can create
+      allow create: if isAuthenticated() &&
+                      request.resource.data.authorUserId == request.auth.uid &&
+                      request.resource.data.status in ['draft', 'pending'] &&
+                      request.resource.data.type in [
+                        'CONSTELLATION_CURATION', 'READING_PATH', 'READ_ALIKE', 'VIBE_PROFILE',
+                        'DISCUSSION_PROMPT', 'THREAD_SUMMARY', 'READING_LOG',
+                        'ANNOTATION_TRAIL', 'QUOTE_CARD', 'CRAFT_NOTE', 'RESEARCH_DOSSIER',
+                        'MOODBOARD', 'PLAYLIST', 'COLOR_PALETTE', 'STYLE_ATLAS',
+                        'FIELD_NOTE', 'LETTER', 'POSTCARD', 'MEMO_REPORT', 'RECIPE_MENU',
+                        'MAP_DIAGRAM', 'OBJECT_CATALOG', 'TIMELINE',
+                        'TROPE_BINGO', 'QUIZ', 'SCAVENGER_HUNT', 'READER_CHALLENGE'
+                      ] &&
+                      request.resource.data.rating in ['G', 'TEEN', 'MATURE'] &&
+                      request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200 &&
+                      request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 50000;
+
+      // Owner can update own drafts/pending; admin can update any
+      allow update: if isAdmin() ||
+                      (isAuthenticated() && resource.data.authorUserId == request.auth.uid &&
+                       resource.data.status in ['draft', 'pending']);
+
+      allow delete: if isAdmin();
+    }
+
+    match /archive_likes/{likeId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /archive_reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Per-user archive bookmarks
+    match /users/{userId}/archive_bookmarks/{bookmarkId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isMember();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
     match /amas/{amaId} {
       allow read: if true;
       allow create: if isAdmin();

@@ -562,3 +562,39 @@ export const GENRE_ENRICHMENT: Record<string, GenreEnrichment> = {
     whyWePublish: 'Short fiction is where emerging writers prove themselves and established writers experiment. We publish it because so many BIPOC and queer voices get their start here — and because some stories only need 30,000 words to change your life.',
   },
 };
+
+// ── Genre Picker Options (for forms, onboarding, filters) ──
+// Curated flat list derived from the full genre taxonomy above.
+// Used everywhere a user picks genres: Beta apply, ARC apply,
+// Reader Circles, Member onboarding, Author onboarding.
+export const GENRE_PICKER_OPTIONS: string[] = [
+  // Fantasy
+  'Epic / High Fantasy', 'Dark Fantasy', 'Gothic Fantasy', 'Urban Fantasy',
+  'Romantic Fantasy (Romantasy)', 'Cozy Fantasy', 'Historical Fantasy',
+  'Mythic Fantasy', 'Steampunk / Clockpunk', 'Silkpunk',
+  'Sword & Sorcery', 'Portal Fantasy',
+  // Science Fiction
+  'Space Opera', 'Cyberpunk', 'Solarpunk', 'Afrofuturism',
+  'Indigenous Futurism', 'Latinx Futurism', 'Dystopian',
+  'Post-Apocalyptic', 'Climate Fiction', 'Biopunk',
+  'Literary Sci-Fi', 'Near-Future Thriller', 'AI & Sentience',
+  // Horror
+  'Gothic Horror', 'Cosmic Horror', 'Folk Horror',
+  'Psychological Horror', 'Body Horror', 'Quiet Horror',
+  'Supernatural Horror', 'Southern / Global Gothic', 'Survival Horror',
+  // Magical Realism
+  'Latin American Magical Realism', 'Caribbean Magical Realism',
+  'African Magical Realism', 'Diaspora Magical Realism',
+  'Ancestral / Generational Magic',
+  // Romance
+  'Queer Romance', 'Paranormal Romance', 'Fantasy Romance',
+  'Gothic Romance', 'Dark Romance', 'Sci-Fi Romance',
+  // Literary Speculative
+  'Slipstream', 'New Weird', 'Fabulism', 'Weird Fiction',
+  'Interstitial Fiction',
+  // Thriller / Suspense
+  'Supernatural Suspense', 'Occult Thriller',
+  'Psychological Thriller (Speculative)',
+  // Short Fiction
+  'Novellas', 'Anthologies', 'Serialized Fiction',
+];

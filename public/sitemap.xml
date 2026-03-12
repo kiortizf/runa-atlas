@@ -48,12 +48,22 @@
 
   <!-- ═══ Community & Content (Medium Priority) ═══ -->
   <url>
-    <loc>https://runaatlas.com/community</loc>
+    <loc>https://runaatlas.com/forge</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://runaatlas.com/forge</loc>
+    <loc>https://runaatlas.com/archive</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://runaatlas.com/archive/policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://runaatlas.com/champions</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -137,7 +147,7 @@
     <priority>0.5</priority>
   </url>
 
-  <!-- ═══ Beta Reading ═══ -->
+  <!-- ═══ Beta & ARC Reading ═══ -->
   <url>
     <loc>https://runaatlas.com/beta-reader</loc>
     <changefreq>monthly</changefreq>
@@ -145,6 +155,16 @@
   </url>
   <url>
     <loc>https://runaatlas.com/for-beta-readers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://runaatlas.com/for-arc-readers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://runaatlas.com/for-reader-circles</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

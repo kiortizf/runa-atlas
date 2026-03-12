@@ -1,7 +1,8 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
-  BookOpen, Menu, X, Scroll, Newspaper, Flame, Users, Calendar,
-  PenTool, Feather, BookMarked, Eye, ChevronDown, LogIn, LayoutDashboard
+  BookOpen, Menu, X, Scroll, Flame, Users,
+  Feather, BookMarked, Eye, ChevronDown, LogIn, LayoutDashboard,
+  Gift, CircleDot
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -58,12 +59,24 @@ export default function Layout() {
         { name: 'Beta Campaigns', path: '/beta-campaign' },
       ],
     },
+    {
+      name: 'ARC Readers', path: '/for-arc-readers', icon: Gift, show: true,
+      children: [
+        { name: 'ARC Reader Info', path: '/for-arc-readers' },
+        { name: 'Apply to ARC Program', path: '/arc-apply' },
+      ],
+    },
+    {
+      name: 'Reader Circles', path: '/for-reader-circles', icon: CircleDot, show: true,
+      children: [
+        { name: 'About Reader Circles', path: '/for-reader-circles' },
+        { name: 'Browse & Join Circles', path: '/book-clubs' },
+      ],
+    },
     { name: 'Catalog', path: '/catalog', icon: BookOpen, show: true },
     { name: 'Serials', path: '/journeys', icon: Scroll, show: true },
     { name: 'The Forge', path: '/forge', icon: Flame, show: true },
-    { name: 'Events', path: '/events', icon: Calendar, show: true },
     { name: 'Community', path: '/community', icon: Users, show: true },
-    { name: 'News', path: '/posts', icon: Newspaper, show: true },
   ].filter(l => l.show);
 
   // ── Footer sections ──
@@ -71,8 +84,9 @@ export default function Layout() {
     { name: 'Catalog', path: '/catalog' },
     { name: 'Serials', path: '/journeys' },
     { name: 'The Forge', path: '/forge' },
-    { name: 'Events', path: '/events' },
     { name: 'Community', path: '/community' },
+    { name: 'The Archive', path: '/archive' },
+    { name: 'Events', path: '/events' },
     { name: 'News', path: '/posts' },
     { name: 'About Us', path: '/about' },
   ];
@@ -97,6 +111,8 @@ export default function Layout() {
     { name: 'For Authors', path: '/for-authors' },
     { name: 'For Readers', path: '/for-readers' },
     { name: 'For Beta Readers', path: '/for-beta-readers' },
+    { name: 'For ARC Readers', path: '/for-arc-readers' },
+    { name: 'Reader Circles', path: '/for-reader-circles' },
     { name: 'Membership', path: '/membership' },
     { name: 'Contact', path: '/contact' },
     { name: 'Foreign Rights', path: '/rights' },

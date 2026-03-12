@@ -9,6 +9,7 @@ import { collection, onSnapshot, doc, setDoc, addDoc, serverTimestamp, query, or
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { GENRE_PICKER_OPTIONS } from '../data/genreData';
 
 // ═══════════════════════════════════════════════
 // READER CIRCLES — Community reading groups
@@ -41,11 +42,7 @@ interface CircleMembership {
     status: 'active' | 'pending';
 }
 
-const GENRES = [
-    'All', 'Dark Fantasy', 'Sci-Fi', 'Magical Realism', 'Literary Fiction',
-    'Gothic Horror', 'Space Opera', 'Queer Romance', 'Afrofuturism',
-    'Solarpunk', 'Dystopian', 'Urban Fantasy', 'Climate Fiction',
-];
+const GENRES = ['All', ...GENRE_PICKER_OPTIONS];
 
 const PACES = [
     { id: 'relaxed', label: 'Relaxed', desc: '1 book / 6-8 weeks', emoji: '🌙' },

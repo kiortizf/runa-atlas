@@ -19,12 +19,9 @@ const STEPS = [
     { title: 'Ready!', icon: Crown },
 ];
 
-const GENRES = [
-    'Fantasy', 'Science Fiction', 'Literary Fiction', 'Horror', 'Romance',
-    'Mystery/Thriller', 'Historical Fiction', 'Magical Realism', 'Dystopian',
-    'Dark Fantasy', 'New Weird', 'Afrofuturism', 'Climate Fiction', 'Cyberpunk',
-    'Gothic', 'Young Adult', 'Short Stories', 'Poetry',
-];
+import { GENRE_PICKER_OPTIONS } from '../data/genreData';
+
+const GENRES = GENRE_PICKER_OPTIONS;
 
 const READING_PACE = [
     { id: 'casual', label: 'Casual', desc: '1–2 books/month' },

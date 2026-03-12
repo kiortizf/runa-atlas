@@ -276,6 +276,39 @@ export default function BookDetail() {
           </motion.div>
         )}
 
+        {/* Runeweave Archive */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mt-16"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="font-display text-2xl text-text-primary uppercase tracking-widest flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-starforge-gold" /> The Archive
+              </h2>
+              <p className="font-ui text-sm text-text-secondary mt-1">Reader-made artifacts for this book — non-canon, community-driven</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to={`/archive?book=${id}`} className="font-ui text-xs uppercase tracking-widest text-text-muted hover:text-starforge-gold transition-colors">
+                View All →
+              </Link>
+              <Link to="/archive/submit" className="font-ui text-xs uppercase tracking-widest text-starforge-gold hover:text-yellow-300 transition-colors">
+                + Submit
+              </Link>
+            </div>
+          </div>
+          <div className="p-6 bg-surface border border-border rounded-sm text-center">
+            <p className="font-ui text-sm text-text-muted mb-3">
+              Glossaries, playlists, moodboards, craft essays, quizzes, and more.
+            </p>
+            <Link to={`/archive?book=${id}`} className="inline-flex items-center gap-2 text-starforge-gold hover:text-yellow-300 font-ui text-xs uppercase tracking-widest transition-colors">
+              <BookOpen className="w-4 h-4" /> Browse Archive for this Book
+            </Link>
+          </div>
+        </motion.div>
+
         {/* Reviews */}
         <BookReviews bookId={id!} />
       </div>

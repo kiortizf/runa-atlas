@@ -61,6 +61,8 @@ const BetaReaderHub = lazy(() => import('./pages/BetaReaderHub'));
 const ForBetaReaders = lazy(() => import('./pages/ForBetaReaders'));
 const BetaReaderApply = lazy(() => import('./pages/BetaReaderApply'));
 const ARCReaderApply = lazy(() => import('./pages/ARCReaderApply'));
+const ForARCReaders = lazy(() => import('./pages/ForARCReaders'));
+const ForReaderCircles = lazy(() => import('./pages/ForReaderCircles'));
 const ManuscriptPipeline = lazy(() => import('./pages/ManuscriptPipeline'));
 const BetaCampaign = lazy(() => import('./pages/BetaCampaign'));
 const EditorBridge = lazy(() => import('./pages/EditorBridge'));
@@ -69,6 +71,12 @@ const ManuscriptInbox = lazy(() => import('./pages/ManuscriptInbox'));
 const EditorBetaManager = lazy(() => import('./pages/EditorBetaManager'));
 const DeletedScenesVault = lazy(() => import('./pages/DeletedScenesVault'));
 const ReaderCircleDetail = lazy(() => import('./pages/ReaderCircleDetail'));
+
+// Archive
+const ArchiveHub = lazy(() => import('./pages/ArchiveHub'));
+const ArtifactDetail = lazy(() => import('./pages/ArtifactDetail'));
+const ArchiveSubmit = lazy(() => import('./pages/ArchiveSubmit'));
+const NoPlotPolicy = lazy(() => import('./pages/NoPlotPolicy'));
 
 // Author tools (protected)
 const Submissions = lazy(() => import('./pages/Submissions'));
@@ -226,6 +234,16 @@ export default function App() {
             <Route path="content-compass" element={<ContentCompass />} />
             <Route path="beta-reader" element={<BetaReaderHub />} />
             <Route path="for-beta-readers" element={<ForBetaReaders />} />
+            <Route path="for-arc-readers" element={<ForARCReaders />} />
+            <Route path="for-reader-circles" element={<ForReaderCircles />} />
+            <Route path="archive" element={<ArchiveHub />} />
+            <Route path="archive/policy" element={<NoPlotPolicy />} />
+            <Route path="archive/submit" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <ArchiveSubmit />
+              </ProtectedRoute>
+            } />
+            <Route path="archive/:artifactId" element={<ArtifactDetail />} />
             <Route path="beta-reader-apply" element={
               <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
                 <BetaReaderApply />

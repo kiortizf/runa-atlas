@@ -16,12 +16,9 @@ import type { NDASignatureRecord } from '../hooks/useNDASigning';
 // ARC READER APPLICATION — Advance Reader Copy signup
 // ═══════════════════════════════════════════════
 
-const GENRES = [
-    'Dark Fantasy', 'Sci-Fi', 'Magical Realism', 'Literary Fiction',
-    'Gothic Horror', 'Space Opera', 'Cyberpunk', 'Queer Romance',
-    'Afrofuturism', 'Solarpunk', 'Dystopian', 'New Weird',
-    'Mythpunk', 'Urban Fantasy', 'Climate Fiction', 'Biopunk',
-];
+import { GENRE_PICKER_OPTIONS } from '../data/genreData';
+
+const GENRES = GENRE_PICKER_OPTIONS;
 
 const REVIEW_PLATFORMS = [
     { id: 'amazon', label: 'Amazon', icon: '📦', desc: 'Amazon book reviews' },

@@ -4,7 +4,7 @@ import {
   Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame,
   Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale,
   PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer,
-  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint
+  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint, Archive
 } from 'lucide-react';
 // Import Admin Tab Components
 import AdminSubmissions from '../components/admin/AdminSubmissions';
@@ -44,6 +44,7 @@ import AdminContacts from '../components/admin/AdminContacts';
 import AdminProduction from '../components/admin/AdminProduction';
 import AdminReviewTracker from '../components/admin/AdminReviewTracker';
 import AdminNDA from '../components/admin/AdminNDA';
+import AdminArchive from '../components/admin/AdminArchive';
 import React from 'react';
 
 // ── Tab Error Boundary ──────────────────────────
@@ -84,6 +85,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   onboarding: AdminOnboarding, imprints: AdminImprints, sops: AdminSOPs,
   distribution: AdminDistribution, awards: AdminAwards, contacts: AdminContacts,
   production: AdminProduction, reviews: AdminReviewTracker, nda: AdminNDA,
+  archive: AdminArchive,
   settings: AdminSettings, activity: AdminActivity,
 };
 
@@ -129,6 +131,7 @@ const NAV_GROUPS = [
       { id: 'events', label: 'Events', icon: Calendar },
       { id: 'reader-tools', label: 'Reader Tools', icon: Sparkles },
       { id: 'reader-exp', label: 'Reader Experience', icon: Monitor },
+      { id: 'archive', label: 'Archive', icon: Archive },
     ],
   },
   {

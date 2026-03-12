@@ -160,6 +160,63 @@ export default function Dashboard() {
                 {/* Community Tools — All Members */}
                 <ToolSection title="Community" tools={COMMUNITY_TOOLS} delay={0.1} />
 
+                {/* Guides & Programs */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.4 }}
+                >
+                    <h2 className="text-xs uppercase tracking-widest text-text-secondary font-semibold mb-4">Guides & Programs</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[
+                            {
+                                emoji: '📖', title: 'Beta Reader Program', accent: 'amber',
+                                desc: 'Read unfinished manuscripts and provide development feedback to authors under NDA.',
+                                learnHref: '/for-beta-readers', actionHref: '/beta-reader-apply', actionLabel: 'Apply',
+                            },
+                            {
+                                emoji: '📦', title: 'ARC Reader Program', accent: 'emerald',
+                                desc: 'Receive finished books before launch and post honest reviews to amplify marginalized voices.',
+                                learnHref: '/for-arc-readers', actionHref: '/arc-apply', actionLabel: 'Apply',
+                            },
+                            {
+                                emoji: '👥', title: 'Reader Circles', accent: 'violet',
+                                desc: 'Join or create reading communities with discussions, progress tracking, highlights, and meetings.',
+                                learnHref: '/for-reader-circles', actionHref: '/book-clubs', actionLabel: 'Browse',
+                            },
+                            {
+                                emoji: '📜', title: 'Runeweave Archive', accent: 'amber',
+                                desc: 'Contribute reader-made artifacts — glossaries, playlists, moodboards, craft essays, and more.',
+                                learnHref: '/archive', actionHref: '/archive/submit', actionLabel: 'Submit',
+                            },
+                        ].map((prog) => (
+                            <div key={prog.title}
+                                className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:border-white/[0.12] transition-colors">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="text-xl">{prog.emoji}</span>
+                                    <h3 className="text-sm font-semibold text-white">{prog.title}</h3>
+                                </div>
+                                <p className="text-[11px] text-text-secondary leading-relaxed mb-4">{prog.desc}</p>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => navigate(prog.learnHref)}
+                                        className="text-[10px] uppercase tracking-widest text-white/50 hover:text-white transition-colors">
+                                        Learn More
+                                    </button>
+                                    <span className="text-white/10">·</span>
+                                    <button onClick={() => navigate(prog.actionHref)}
+                                        className={`text-[10px] uppercase tracking-widest font-semibold transition-colors ${
+                                            prog.accent === 'amber' ? 'text-amber-400 hover:text-amber-300' :
+                                            prog.accent === 'emerald' ? 'text-emerald-400 hover:text-emerald-300' :
+                                            'text-violet-400 hover:text-violet-300'
+                                        }`}>
+                                        {prog.actionLabel} →
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
                 {/* Author Tools — Authors & Admins */}
                 {isAuthor && (
                     <>

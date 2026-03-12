@@ -18,12 +18,9 @@ const STEPS = [
     { title: 'Ready to Go', icon: Zap },
 ];
 
-const GENRES = [
-    'Fantasy', 'Science Fiction', 'Literary Fiction', 'Horror', 'Romance',
-    'Mystery/Thriller', 'Historical Fiction', 'Magical Realism', 'Dystopian',
-    'Dark Fantasy', 'New Weird', 'Afrofuturism', 'Climate Fiction', 'Cyberpunk',
-    'Gothic', 'Young Adult', 'Short Stories',
-];
+import { GENRE_PICKER_OPTIONS } from '../data/genreData';
+
+const GENRES = GENRE_PICKER_OPTIONS;
 
 const WRITING_STYLES = [
     { id: 'plotter', label: 'Plotter', icon: Target, desc: 'I meticulously outline before writing' },
