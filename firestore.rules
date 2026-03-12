@@ -252,6 +252,7 @@ service cloud.firestore {
              (!('publishDate' in data) || data.publishDate is string) &&
              (!('excerpt' in data) || (data.excerpt is string && data.excerpt.size() < 1000)) &&
              (!('wordCount' in data) || (data.wordCount is number && data.wordCount >= 0)) &&
+             (!('membersOnly' in data) || data.membersOnly is bool) &&
              (!('createdAt' in data) || data.createdAt is timestamp);
     }
 
@@ -456,8 +457,9 @@ service cloud.firestore {
     }
 
     // Episodes (serialized fiction chapters)
+    // Public episodes readable by anyone; membersOnly episodes require authentication
     match /journeys/{journeyId}/episodes/{episodeId} {
-      allow read: if true;
+      allow read: if resource.data.membersOnly != true || isAuthenticated();
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -798,6 +800,16 @@ service cloud.firestore {
     match /content_warning_categories/{catId} {
       allow read: if true;
       allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EDITOR TOOLS — DELETED SCENES VAULT
+    // ═══════════════════════════════════════════════════════════════
+
+    match /deleted_scenes/{sceneId} {
+      allow read: if isAdmin() || isAuthor();
+      allow create, update: if isAdmin() || isAuthor();
       allow delete: if isAdmin();
     }
 

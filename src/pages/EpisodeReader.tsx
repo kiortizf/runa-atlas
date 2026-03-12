@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Scroll, Clock, MessageSquare, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Scroll, Clock, MessageSquare, Star, Lock, Crown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { collection, doc, getDoc, onSnapshot, setDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, setDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,6 +12,7 @@ type Episode = {
   title: string;
   content: string;
   wordCount?: number;
+  membersOnly?: boolean;
 };
 
 type Journey = {
@@ -43,6 +44,18 @@ export default function EpisodeReader() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showAnnotations, setShowAnnotations] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+
+  // Check if user has an active subscription
+  useEffect(() => {
+    if (!user) { setHasSubscription(false); return; }
+    const unsub = onSnapshot(
+      query(collection(db, 'subscriptions'), where('userId', '==', user.uid), where('status', 'in', ['active', 'trialing'])),
+      (snap) => setHasSubscription(snap.docs.length > 0),
+      () => setHasSubscription(false)
+    );
+    return () => unsub();
+  }, [user]);
 
   useEffect(() => {
     if (!slug) return;
@@ -157,6 +170,57 @@ export default function EpisodeReader() {
 
   if (loading) return <div className="min-h-screen bg-void-black flex items-center justify-center text-starforge-gold font-ui text-xl uppercase tracking-widest animate-pulse">Loading episode...</div>;
   if (!journey || !episode) return <div className="min-h-screen bg-void-black flex items-center justify-center text-text-primary">Episode not found.</div>;
+
+  // Membership gating: if episode is members-only and user has no subscription
+  const isGated = episode.membersOnly === true && !hasSubscription;
+
+  if (isGated) {
+    const previewText = episode.content ? episode.content.slice(0, 600).split('\n').slice(0, 5).join('\n') + '...' : '';
+    return (
+      <div className="bg-void-black min-h-screen py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Link to={`/journeys/${journey.slug || journey.id}`}
+            className="inline-flex items-center gap-2 text-text-muted hover:text-starforge-gold font-ui text-sm uppercase tracking-wider mb-8 transition-colors">
+            <ChevronLeft className="w-4 h-4" /> {journey.title}
+          </Link>
+
+          {/* Preview of members-only content */}
+          <div className="prose prose-invert max-w-none mb-8 relative">
+            <h2 className="font-display text-3xl text-white uppercase tracking-widest mb-4">Episode {episode.number}: {episode.title}</h2>
+            <div className="text-text-primary/60 font-body text-[17px] leading-[1.9]">
+              {previewText.split('\n').map((line, i) => <p key={i}>{line}</p>)}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-void-black to-transparent" />
+          </div>
+
+          {/* Gating CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-surface border border-starforge-gold/20 rounded-sm p-8 text-center"
+          >
+            <div className="w-16 h-16 bg-starforge-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Crown className="w-8 h-8 text-starforge-gold" />
+            </div>
+            <h3 className="font-display text-2xl text-text-primary uppercase tracking-widest mb-2">Members Only</h3>
+            <p className="font-body text-text-secondary mb-6 max-w-md mx-auto">
+              This episode is exclusive to Rüna Atlas members. Join the constellation to unlock all members-only content and support our authors.
+            </p>
+            {user ? (
+              <Link to="/membership"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-starforge-gold text-void-black font-ui text-sm uppercase tracking-wider font-semibold rounded-sm hover:bg-yellow-500 transition-colors">
+                <Crown className="w-4 h-4" /> View Membership Plans
+              </Link>
+            ) : (
+              <Link to="/portal"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-starforge-gold text-void-black font-ui text-sm uppercase tracking-wider font-semibold rounded-sm hover:bg-yellow-500 transition-colors">
+                <Lock className="w-4 h-4" /> Sign In to Continue
+              </Link>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   const wordCount = episode.content ? episode.content.split(/\s+/).length : (episode as any).wordCount || 0;
   const readTime = Math.ceil(wordCount / 250);

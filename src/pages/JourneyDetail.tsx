@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, CheckCircle, Clock, Lock, Bell, BellOff, LogIn, BookOpen, PlayCircle } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, Lock, Bell, BellOff, LogIn, BookOpen, PlayCircle, Crown } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, setDoc, deleteDoc, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +14,7 @@ type Episode = {
   wordCount: number;
   publishDate: string;
   excerpt: string;
+  membersOnly?: boolean;
 };
 
 type Journey = {
@@ -237,6 +238,11 @@ export default function JourneyDetail() {
                         <span className="font-ui text-[10px] text-text-muted">{episode.publishDate}</span>
                         <span className="font-ui text-[10px] text-text-muted">· {episode.wordCount.toLocaleString()} words</span>
                         <span className="font-ui text-[10px] text-text-muted">· {readTime} min</span>
+                        {episode.membersOnly && (
+                          <span className="flex items-center gap-1 font-ui text-[9px] text-starforge-gold uppercase tracking-wider bg-starforge-gold/10 px-1.5 py-0.5 rounded">
+                            <Crown className="w-3 h-3" /> Members Only
+                          </span>
+                        )}
                         {isRead && <span className="font-ui text-[9px] text-aurora-teal uppercase tracking-wider">✓ Read</span>}
                       </div>
                       <h3 className="font-heading text-lg text-text-primary mb-1">{episode.title}</h3>

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -8,47 +8,53 @@ import {
     BookOpen, Users, Zap, Crown, Check, Info
 } from 'lucide-react';
 
-const FORMATS = [
-    { id: 'ebook', label: 'eBook', price: 12.99 },
-    { id: 'paperback', label: 'Paperback', price: 17.99 },
-    { id: 'hardcover', label: 'Hardcover', price: 27.99 },
-    { id: 'audiobook', label: 'Audiobook', price: 24.99 },
-];
+interface RoyaltyFormat {
+    id: string;
+    label: string;
+    defaultPrice: number;
+    tradRate: number;
+    selfRate: number;
+    runaRate: number;
+    order?: number;
+}
 
-const CHANNELS: Record<string, { tradRate: number; selfRate: number; runaRate: number }> = {
-    ebook: { tradRate: 0.125, selfRate: 0.70, runaRate: 0.55 },
-    paperback: { tradRate: 0.08, selfRate: 0.40, runaRate: 0.35 },
-    hardcover: { tradRate: 0.10, selfRate: 0.35, runaRate: 0.30 },
-    audiobook: { tradRate: 0.10, selfRate: 0.40, runaRate: 0.40 },
-};
+const DEFAULT_FORMATS: RoyaltyFormat[] = [
+    { id: 'ebook', label: 'eBook', defaultPrice: 12.99, tradRate: 0.125, selfRate: 0.70, runaRate: 0.55 },
+    { id: 'paperback', label: 'Paperback', defaultPrice: 17.99, tradRate: 0.08, selfRate: 0.40, runaRate: 0.35 },
+    { id: 'hardcover', label: 'Hardcover', defaultPrice: 27.99, tradRate: 0.10, selfRate: 0.35, runaRate: 0.30 },
+    { id: 'audiobook', label: 'Audiobook', defaultPrice: 24.99, tradRate: 0.10, selfRate: 0.40, runaRate: 0.40 },
+];
 
 export default function RoyaltyCalculator() {
     const [monthlySales, setMonthlySales] = useState(500);
+    const [formats, setFormats] = useState<RoyaltyFormat[]>(DEFAULT_FORMATS);
     const [selectedFormat, setSelectedFormat] = useState('ebook');
     const [customPrice, setCustomPrice] = useState<number | null>(null);
 
+    // Load formats from Firestore
     useEffect(() => {
         const unsub = onSnapshot(
-            doc(db, 'royalty_settings', 'default'),
+            collection(db, 'royalty_formats'),
             (snap) => {
-                if (snap.exists()) {
-                    // Royalty settings available from Firestore
+                if (snap.docs.length > 0) {
+                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as RoyaltyFormat));
+                    setFormats(data.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
                 }
             },
-            () => { }
+            (err) => handleFirestoreError(err, OperationType.LIST, 'royalty_formats')
         );
         return () => unsub();
     }, []);
 
-    const format = FORMATS.find(f => f.id === selectedFormat)!;
-    const price = customPrice ?? format.price;
-    const channel = CHANNELS[selectedFormat];
+    const format = formats.find(f => f.id === selectedFormat) || formats[0];
+    const price = customPrice ?? (format?.defaultPrice ?? 12.99);
 
     const earnings = useMemo(() => {
+        if (!format) return { monthly: { traditional: 0, selfPub: 0, runaAtlas: 0 }, annual: { traditional: 0, selfPub: 0, runaAtlas: 0 }, perUnit: { traditional: 0, selfPub: 0, runaAtlas: 0 } };
         const monthly = {
-            traditional: monthlySales * price * channel.tradRate,
-            selfPub: monthlySales * price * channel.selfRate,
-            runaAtlas: monthlySales * price * channel.runaRate,
+            traditional: monthlySales * price * (format.tradRate ?? 0),
+            selfPub: monthlySales * price * (format.selfRate ?? 0),
+            runaAtlas: monthlySales * price * (format.runaRate ?? 0),
         };
         return {
             monthly,
@@ -58,12 +64,12 @@ export default function RoyaltyCalculator() {
                 runaAtlas: monthly.runaAtlas * 12,
             },
             perUnit: {
-                traditional: price * channel.tradRate,
-                selfPub: price * channel.selfRate,
-                runaAtlas: price * channel.runaRate,
+                traditional: price * (format.tradRate ?? 0),
+                selfPub: price * (format.selfRate ?? 0),
+                runaAtlas: price * (format.runaRate ?? 0),
             },
         };
-    }, [monthlySales, price, channel]);
+    }, [monthlySales, price, format]);
 
     const maxMonthly = Math.max(earnings.monthly.traditional, earnings.monthly.selfPub, earnings.monthly.runaAtlas);
 
@@ -90,12 +96,12 @@ export default function RoyaltyCalculator() {
                         <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
                             <label className="text-xs text-white/40 uppercase tracking-wider block mb-3">Book Format</label>
                             <div className="grid grid-cols-2 gap-2">
-                                {FORMATS.map(f => (
+                                {formats.map(f => (
                                     <button key={f.id} onClick={() => { setSelectedFormat(f.id); setCustomPrice(null); }}
                                         className={`p-3 rounded-lg border text-left text-xs transition-all
                       ${selectedFormat === f.id ? 'bg-starforge-gold/10 border-starforge-gold/30 text-white' : 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:border-white/15'}`}>
                                         <p className="font-semibold">{f.label}</p>
-                                        <p className="text-white/30 mt-0.5">${f.price}</p>
+                                        <p className="text-white/30 mt-0.5">${f.defaultPrice}</p>
                                     </button>
                                 ))}
                             </div>
@@ -107,8 +113,8 @@ export default function RoyaltyCalculator() {
                             <div className="flex items-center gap-3">
                                 <span className="text-white/30 text-lg">$</span>
                                 <input type="number" step="0.01" min="0.99" max="99.99"
-                                    value={customPrice ?? format.price}
-                                    onChange={e => setCustomPrice(parseFloat(e.target.value) || format.price)}
+                                    value={customPrice ?? (format?.defaultPrice ?? 12.99)}
+                                    onChange={e => setCustomPrice(parseFloat(e.target.value) || (format?.defaultPrice ?? 12.99))}
                                     className="flex-1 bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-white text-lg font-semibold focus:border-starforge-gold/40 focus:outline-none" />
                             </div>
                         </div>
@@ -143,9 +149,9 @@ export default function RoyaltyCalculator() {
 
                         {/* Comparison Cards */}
                         {[
-                            { label: 'Traditional Publishing', key: 'traditional' as const, rate: `${(channel.tradRate * 100).toFixed(1)}%`, color: 'text-white/40', bg: 'bg-white/[0.04]', barColor: 'bg-white/20', border: 'border-white/[0.06]' },
-                            { label: 'Self-Publishing', key: 'selfPub' as const, rate: `${(channel.selfRate * 100).toFixed(0)}%`, color: 'text-aurora-teal', bg: 'bg-aurora-teal/[0.04]', barColor: 'bg-aurora-teal/40', border: 'border-aurora-teal/20' },
-                            { label: 'Runa Atlas', key: 'runaAtlas' as const, rate: `${(channel.runaRate * 100).toFixed(0)}%`, color: 'text-starforge-gold', bg: 'bg-starforge-gold/[0.04]', barColor: 'bg-starforge-gold/60', border: 'border-starforge-gold/20', highlight: true },
+                            { label: 'Traditional Publishing', key: 'traditional' as const, rate: `${((format?.tradRate ?? 0) * 100).toFixed(1)}%`, color: 'text-white/40', bg: 'bg-white/[0.04]', barColor: 'bg-white/20', border: 'border-white/[0.06]' },
+                            { label: 'Self-Publishing', key: 'selfPub' as const, rate: `${((format?.selfRate ?? 0) * 100).toFixed(0)}%`, color: 'text-aurora-teal', bg: 'bg-aurora-teal/[0.04]', barColor: 'bg-aurora-teal/40', border: 'border-aurora-teal/20' },
+                            { label: 'Runa Atlas', key: 'runaAtlas' as const, rate: `${((format?.runaRate ?? 0) * 100).toFixed(0)}%`, color: 'text-starforge-gold', bg: 'bg-starforge-gold/[0.04]', barColor: 'bg-starforge-gold/60', border: 'border-starforge-gold/20', highlight: true },
                         ].map((model) => (
                             <div key={model.key} className={`p-6 rounded-lg border transition-all ${model.bg} ${model.border} ${model.highlight ? 'ring-1 ring-starforge-gold/10' : ''}`}>
                                 <div className="flex items-center justify-between mb-3">
