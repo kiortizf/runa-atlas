@@ -168,11 +168,44 @@ export default function Submissions() {
       data.synopsisFileUrl = synopsisUrl;
       data.sampleFileUrl = sampleUrl;
 
-      await addDoc(collection(db, 'submissions'), {
+      const submissionRef = await addDoc(collection(db, 'submissions'), {
         ...data,
         status: 'pending',
         createdAt: serverTimestamp(),
       });
+
+      // Auto-create a linked manuscript in the Forge
+      const manuscriptRef = await addDoc(collection(db, 'manuscripts'), {
+        title: data.title,
+        authorId: user!.uid,
+        authorName: data.penName || data.authorName || user!.displayName || 'Author',
+        genre: data.genre,
+        description: data.synopsis || '',
+        targetWords: data.wordCount || 80000,
+        status: 'draft',
+        submissionId: submissionRef.id,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Create a default first chapter
+      await addDoc(collection(db, `manuscripts/${manuscriptRef.id}/chapters`), {
+        title: 'Chapter 1',
+        content: '',
+        plainText: '',
+        order: 0,
+        wordCount: 0,
+        notes: '',
+        status: 'draft',
+        type: 'chapter',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Link manuscript back to the submission
+      const { updateDoc: updateDocFn } = await import('firebase/firestore');
+      await updateDocFn(submissionRef, { manuscriptId: manuscriptRef.id });
+
       setTrackingId(data.trackingId);
       setIsSuccess(true);
     } catch (error: any) {

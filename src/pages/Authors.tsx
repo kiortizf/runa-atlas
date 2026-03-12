@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ArrowRight, Globe, Twitter, Instagram, Users, Star, TrendingUp } from 'lucide-react';
+import { BookOpen, ArrowRight, Globe, Twitter, Instagram, Users, Star, TrendingUp, Scroll } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
@@ -37,6 +37,7 @@ export default function Authors() {
     description: 'Meet the brilliant minds forging constellations of voice at RÜNA ATLAS PRESS. Discover the creators behind our speculative fiction, dark fantasy, and literary works.',
   });
   const [authors, setAuthors] = useState<AuthorProfile[]>([]);
+  const [journeys, setJourneys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,7 +54,13 @@ export default function Authors() {
         setLoading(false);
       }
     );
-    return () => unsub();
+    // Also load journeys to link them to authors
+    const qJ = query(collection(db, 'journeys'));
+    const unsubJ = onSnapshot(qJ, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setJourneys(data);
+    }, () => {});
+    return () => { unsub(); unsubJ(); };
   }, []);
 
   if (loading) {
@@ -167,6 +174,31 @@ export default function Authors() {
                         </ul>
                       </div>
                     )}
+
+                    {/* Serialized Journeys linked to this author */}
+                    {(() => {
+                      const authorJourneys = journeys.filter((j: any) => 
+                        j.author?.toLowerCase().includes(author.name?.split(' ')[1]?.toLowerCase() || '___') ||
+                        j.authorSlug === author.slug
+                      );
+                      return authorJourneys.length > 0 ? (
+                        <div className="mb-4">
+                          <h3 className="font-ui text-xs font-semibold uppercase tracking-wider text-cosmic-purple mb-2 flex items-center justify-center md:justify-start gap-2">
+                            <Scroll className="w-3.5 h-3.5" /> Serialized Journeys
+                          </h3>
+                          <div className="space-y-1.5">
+                            {authorJourneys.map((j: any) => (
+                              <Link key={j.id} to={`/journeys/${j.slug}`}
+                                className="flex items-center gap-2 text-xs text-text-muted hover:text-cosmic-purple transition-colors group/j">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cosmic-purple/50 group-hover/j:bg-cosmic-purple transition-colors" />
+                                <span>{j.title}</span>
+                                <span className="text-[10px] text-text-muted/60">({j.genre})</span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Footer: Social + View Profile */}
                     <div className="flex items-center gap-4 pt-3 border-t border-border/50 justify-center md:justify-start">

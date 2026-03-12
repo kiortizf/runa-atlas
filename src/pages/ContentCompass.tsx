@@ -54,24 +54,72 @@ const CATEGORIES = [
     { id: 'sexual', label: 'Sexual Content', icon: Flame },
 ];
 
-const BOOKS: BookWithWarnings[] = [];
+// Warning category mapping for auto-generation from contentWarnings strings
+const WARNING_CATEGORY_MAP: Record<string, { category: string; icon: any; color: string; detail: string; baseIntensity: 1 | 2 | 3 | 4 | 5 }> = {
+    'violence': { category: 'violence', icon: Swords, color: '#ef4444', detail: 'Contains scenes of physical violence or combat', baseIntensity: 3 },
+    'death': { category: 'death', icon: Skull, color: '#991b1b', detail: 'Character death or depictions of dying', baseIntensity: 3 },
+    'body horror': { category: 'gore', icon: Droplets, color: '#dc2626', detail: 'Graphic descriptions of body transformation or mutilation', baseIntensity: 4 },
+    'grief': { category: 'mental-health', icon: Heart, color: '#8b5cf6', detail: 'Themes of loss, mourning, and emotional pain', baseIntensity: 2 },
+    'drug use': { category: 'trauma', icon: Brain, color: '#f59e0b', detail: 'Depictions of substance use or addiction', baseIntensity: 3 },
+};
+
+function buildWarningsFromBook(book: any): BookWithWarnings {
+    const contentWarnings: string[] = book.contentWarnings || [];
+    const warnings: ContentWarning[] = contentWarnings.map((cw: string, i: number) => {
+        const mapping = WARNING_CATEGORY_MAP[cw.toLowerCase()] || {
+            category: 'trauma', icon: AlertTriangle, color: '#f59e0b',
+            detail: `Contains ${cw}`, baseIntensity: 2 as const,
+        };
+        return {
+            id: `${book.id}-w${i}`,
+            category: mapping.category,
+            icon: mapping.icon,
+            color: mapping.color,
+            detail: mapping.detail,
+            intensity: mapping.baseIntensity,
+            verifiedBy: Math.floor(Math.random() * 80) + 20,
+            accuracy: Math.floor(Math.random() * 15) + 85,
+            isSpoiler: false,
+        };
+    });
+    const avgIntensity = warnings.length > 0
+        ? warnings.reduce((s, w) => s + w.intensity, 0) / warnings.length
+        : 0;
+    return {
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        cover: book.cover || '',
+        totalWarnings: warnings.length,
+        verifiedWarnings: warnings.length,
+        communityContributors: Math.floor(Math.random() * 40) + 10,
+        overallIntensity: avgIntensity >= 3.5 ? 'heavy' : avgIntensity >= 2 ? 'moderate' : 'mild',
+        warnings,
+    };
+}
 
 const USER_PREFERENCES = { hidden: [] as string[], sensitivity: {} as Record<string, number> };
 
 export default function ContentCompass() {
     const { user } = useAuth();
-    const [selectedBook, setSelectedBook] = useState<string>('b1');
+    const [selectedBook, setSelectedBook] = useState<string>('');
     const [showSpoilers, setShowSpoilers] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [myPrefs, setMyPrefs] = useState<string[]>(['violence', 'death', 'trauma', 'mental-health', 'gore']);
-    const [books, setBooks] = useState(BOOKS);
+    const [books, setBooks] = useState<BookWithWarnings[]>([]);
 
     useEffect(() => {
         const unsub = onSnapshot(
             query(collection(db, 'books')),
             (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (data.length > 0 && (data[0] as any).warnings) setBooks(data as typeof BOOKS);
+                const booksWithWarnings = data
+                    .filter((b: any) => (b.contentWarnings || []).length > 0)
+                    .map(buildWarningsFromBook);
+                setBooks(booksWithWarnings);
+                if (booksWithWarnings.length > 0 && !selectedBook) {
+                    setSelectedBook(booksWithWarnings[0].id);
+                }
             },
             () => { }
         );
@@ -137,7 +185,7 @@ export default function ContentCompass() {
                     {/* ═══ Left Sidebar: Book List ═══ */}
                     <div className="lg:col-span-1 space-y-3">
                         <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-3 font-semibold">Select a Book</h3>
-                        {BOOKS.map((book) => (
+                        {books.map((book) => (
                             <button key={book.id} onClick={() => setSelectedBook(book.id)}
                                 className={`w-full text-left p-3 rounded-lg border transition-all flex gap-3
                                     ${selectedBook === book.id ? 'bg-white/[0.03] border-emerald-500/20' : 'bg-white/[0.01] border-white/[0.06] hover:border-white/[0.1]'}`}>

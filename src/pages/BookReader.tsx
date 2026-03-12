@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BookOpen, Eye, EyeOff, MessageSquare, Users, Feather, PenTool, Bookmark, BookmarkCheck, X, Type, Sun, Moon, Maximize2, List, Heart, Flame, Skull, Sparkles, Brain, Share2, Lock, Globe, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Eye, EyeOff, MessageSquare, Users, Feather, PenTool, Bookmark, BookmarkCheck, X, Type, Sun, Moon, Maximize2, List, Heart, Flame, Skull, Sparkles, Brain, Share2, Lock, Globe, ChevronUp, ChevronDown, Shield, Fingerprint } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnnotations, type AuthorNote, type EditorNote, type ParagraphStats } from '../hooks/useAnnotations';
+import { useNDASigning } from '../hooks/useNDASigning';
+import NDASigningModal from '../components/NDASigningModal';
 
 // Data loaded from Firestore
 let _seedBook: any = { title: '', author: '', cover: '', genre: '', rating: 0, reviews: 0, synopsis: '', pages: 0, published: '', publisher: '', isbn: '', language: '', awards: [], tags: [] };
@@ -57,6 +59,24 @@ export default function BookReader() {
 
     // Expanded community paragraph
     const [expandedParagraph, setExpandedParagraph] = useState<string | null>(null);
+
+    // NDA gatekeeping
+    const { checkSignatureStatus } = useNDASigning();
+    const [ndaVerified, setNdaVerified] = useState(false);
+    const [ndaChecking, setNdaChecking] = useState(true);
+    const [showNDAModal, setShowNDAModal] = useState(false);
+
+    // Check NDA status on mount
+    useEffect(() => {
+        if (!user?.uid) {
+            setNdaChecking(false);
+            return;
+        }
+        checkSignatureStatus('beta_reader').then(record => {
+            setNdaVerified(!!record);
+            setNdaChecking(false);
+        });
+    }, [user?.uid, checkSignatureStatus]);
 
     const {
         myHighlights, communityHighlights, authorNotes, editorNotes,
@@ -183,6 +203,74 @@ export default function BookReader() {
 
     // Parse content into paragraphs
     const paragraphs = chapter.content.split('\n').filter(line => line.trim() !== '');
+
+    // ═══ NDA GATE — Require signed NDA before manuscript access ═══
+    if (ndaChecking) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (!ndaVerified) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-6">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    className="max-w-lg text-center">
+
+                    <div className="w-20 h-20 rounded-full bg-amber-500/10 mx-auto flex items-center justify-center mb-6 border border-amber-500/20">
+                        <Shield className="w-10 h-10 text-amber-400" />
+                    </div>
+
+                    <h2 className="font-display text-3xl text-white tracking-wide mb-4 uppercase">NDA Required</h2>
+                    <p className="text-text-secondary text-sm mb-3 leading-relaxed">
+                        This manuscript is protected under a Non-Disclosure Agreement. You must sign the Beta Reader NDA
+                        before accessing any manuscript content.
+                    </p>
+                    <p className="text-text-secondary/60 text-xs mb-8 leading-relaxed">
+                        The NDA is secured with <strong className="text-white/80">ECDSA P-256 + SHA-256</strong> cryptographic signatures
+                        and is legally binding under the <strong className="text-white/80">ESIGN Act</strong>, <strong className="text-white/80">UETA</strong>,
+                        and <strong className="text-white/80">EU eIDAS Regulation</strong>.
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                        {user ? (
+                            <button
+                                onClick={() => setShowNDAModal(true)}
+                                className="w-full px-6 py-4 bg-amber-400 text-void-black text-sm font-semibold uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center justify-center gap-3"
+                            >
+                                <Fingerprint className="w-5 h-5" /> Sign NDA to Continue
+                            </button>
+                        ) : (
+                            <button
+                                onClick={signIn}
+                                className="w-full px-6 py-4 bg-amber-400 text-void-black text-sm font-semibold uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center justify-center gap-3"
+                            >
+                                <Lock className="w-5 h-5" /> Log In to Sign NDA
+                            </button>
+                        )}
+                        <Link to="/" className="text-xs text-text-secondary hover:text-white transition-colors">
+                            ← Return to Home
+                        </Link>
+                    </div>
+                </motion.div>
+
+                <AnimatePresence>
+                    {showNDAModal && (
+                        <NDASigningModal
+                            ndaType="beta_reader"
+                            onSigned={() => {
+                                setNdaVerified(true);
+                                setShowNDAModal(false);
+                            }}
+                            onCancel={() => setShowNDAModal(false)}
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen relative" style={{ background: t.bg, color: t.text, transition: 'all 0.3s ease' }}>

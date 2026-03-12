@@ -153,6 +153,16 @@ export default function EpisodeReader() {
       if (line.startsWith('# ')) return <h2 key={index} className="font-display text-3xl md:text-4xl text-white uppercase tracking-widest mt-12 mb-8">{line.replace('# ', '')}</h2>;
       if (line.startsWith('---')) return <hr key={index} className="border-t border-border my-12" />;
       if (line.startsWith('> ')) return <blockquote key={index} className="border-l-4 border-starforge-gold pl-6 py-2 my-8 italic text-text-secondary text-xl font-body">{line.replace('> ', '')}</blockquote>;
+      // Image markdown: ![alt](url)
+      const imgMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
+      if (imgMatch) {
+        return (
+          <figure key={index} className="my-8">
+            <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full rounded-sm border border-border/30 object-cover max-h-[400px]" loading="lazy" />
+            {imgMatch[1] && <figcaption className="mt-2 text-center font-ui text-[11px] text-text-muted italic">{imgMatch[1]}</figcaption>}
+          </figure>
+        );
+      }
       if (line.trim() === '') return <div key={index} className="h-4" />;
 
       const parts = line.split(/(\*\*.*?\*\*|\*.*?\*)/g);

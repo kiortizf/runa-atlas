@@ -54,16 +54,53 @@ const MOOD_PRESETS = [
     { label: 'Love story, dark setting', emoji: '🥀', values: { darkness: 70, pacing: 40, romance: 90, worldbuilding: 65, prose: 60, body_count: 45 } },
 ];
 
-const BOOK_DATABASE: BookResult[] = [];
+// Mood profiles are derived from book metadata at runtime
+const TAG_MOOD_SIGNALS: Record<string, Partial<Record<string, number>>> = {
+    'dark fantasy': { darkness: 80, body_count: 60, worldbuilding: 80 },
+    'gothic': { darkness: 85, prose: 75, body_count: 50 },
+    'cyberpunk': { darkness: 70, pacing: 65, worldbuilding: 70 },
+    'dystopian': { darkness: 75, pacing: 60 },
+    'magical realism': { darkness: 40, prose: 85, worldbuilding: 60, body_count: 20 },
+    'literary fiction': { prose: 90, pacing: 30, body_count: 20 },
+    'queer romance': { romance: 90, darkness: 25, body_count: 15 },
+    'space opera': { worldbuilding: 85, pacing: 70 },
+    'strong female lead': { pacing: 55, body_count: 45 },
+    'morally grey': { darkness: 70, body_count: 55 },
+    'slow burn': { pacing: 20, romance: 65 },
+    'rivals to lovers': { romance: 80, pacing: 55, darkness: 35 },
+    'found family': { romance: 40, darkness: 25, body_count: 15 },
+    'magic systems': { worldbuilding: 90 },
+    'memory': { darkness: 55, prose: 65, worldbuilding: 50 },
+    'identity': { darkness: 50, prose: 60 },
+    'thriller': { pacing: 85, darkness: 65, body_count: 65 },
+    'violence': { body_count: 75, darkness: 65 },
+    'body horror': { body_count: 90, darkness: 85 },
+    'grief': { darkness: 55, prose: 60, body_count: 20 },
+};
 
-function computeMatch(axes: MoodAxis[], book: BookResult): number {
-    // Simple scoring based on book tags and axis values
-    const profiles: Record<string, Record<string, number>> = {};
-    const profile = profiles[book.title];
-    if (!profile) return 50;
-    const diffs = axes.map(a => Math.abs(a.value - (profile[a.id] || 50)));
+function buildMoodProfile(tags: string[], genres: string[]): Record<string, number> {
+    const profile: Record<string, number[]> = { darkness: [], pacing: [], romance: [], worldbuilding: [], prose: [], body_count: [] };
+    const allSignals = [...tags, ...genres].map(t => t.toLowerCase());
+    for (const signal of allSignals) {
+        const mood = TAG_MOOD_SIGNALS[signal];
+        if (mood) {
+            for (const [axis, val] of Object.entries(mood)) {
+                if (val != null) profile[axis]?.push(val);
+            }
+        }
+    }
+    const result: Record<string, number> = {};
+    for (const [axis, vals] of Object.entries(profile)) {
+        result[axis] = vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : 50;
+    }
+    return result;
+}
+
+function computeMatch(axes: MoodAxis[], profile: Record<string, number>): number {
+    if (axes.length === 0) return 50;
+    const diffs = axes.map(a => Math.abs((a.value ?? 50) - (profile[a.id] || 50)));
     const avgDiff = diffs.reduce((s, d) => s + d, 0) / diffs.length;
-    return Math.max(0, Math.round(100 - avgDiff));
+    return Math.max(10, Math.round(100 - avgDiff * 1.2));
 }
 
 const ICON_MAP: Record<string, any> = {
@@ -81,6 +118,20 @@ export default function MoodMatcher() {
     const { user } = useAuth();
     const [axes, setAxes] = useState<MoodAxis[]>(INITIAL_AXES);
     const [showResults, setShowResults] = useState(false);
+    const [firestoreBooks, setFirestoreBooks] = useState<any[]>([]);
+
+    // Load books from Firestore
+    useEffect(() => {
+        const unsub = onSnapshot(
+            query(collection(db, 'books')),
+            (snap) => {
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setFirestoreBooks(data);
+            },
+            () => { }
+        );
+        return () => unsub();
+    }, []);
 
     useEffect(() => {
         const unsub = onSnapshot(
@@ -119,10 +170,25 @@ export default function MoodMatcher() {
     };
 
     const results = useMemo(() => {
-        return BOOK_DATABASE
-            .map(book => ({ ...book, match: computeMatch(axes, book) }))
-            .sort((a, b) => b.match - a.match);
-    }, [axes]);
+        return firestoreBooks.map((book: any) => {
+            const tags = [...(book.tags || []), ...(book.themes || []), ...(book.contentWarnings || [])];
+            const profile = buildMoodProfile(tags, [book.genre || '', book.subgenre || '']);
+            const match = computeMatch(axes, profile);
+            // Generate mood description from highest axes
+            const topAxis = axes.reduce((a, b) => a.value > b.value ? a : b);
+            const moodDesc = topAxis.value > 60 ? topAxis.rightLabel : topAxis.leftLabel;
+            return {
+                title: book.title,
+                author: book.author,
+                cover: book.cover || '',
+                match,
+                mood: `Vibes: ${moodDesc}`,
+                tags: (book.tags || []).slice(0, 4),
+                summary: book.synopsis || book.description || '',
+                price: book.price ? `$${book.price}` : '',
+            } as BookResult;
+        }).sort((a, b) => b.match - a.match);
+    }, [axes, firestoreBooks]);
 
     return (
         <div className="min-h-screen bg-void-black text-white">

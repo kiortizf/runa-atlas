@@ -59,6 +59,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Beta reader / editorial
 const BetaReaderHub = lazy(() => import('./pages/BetaReaderHub'));
 const ForBetaReaders = lazy(() => import('./pages/ForBetaReaders'));
+const BetaReaderApply = lazy(() => import('./pages/BetaReaderApply'));
 const ManuscriptPipeline = lazy(() => import('./pages/ManuscriptPipeline'));
 const BetaCampaign = lazy(() => import('./pages/BetaCampaign'));
 const EditorBridge = lazy(() => import('./pages/EditorBridge'));
@@ -220,6 +221,11 @@ export default function App() {
             <Route path="content-compass" element={<ContentCompass />} />
             <Route path="beta-reader" element={<BetaReaderHub />} />
             <Route path="for-beta-readers" element={<ForBetaReaders />} />
+            <Route path="beta-reader-apply" element={
+              <ProtectedRoute allowedRoles={['member', 'author', 'admin']}>
+                <BetaReaderApply />
+              </ProtectedRoute>
+            } />
             <Route path="manuscript-pipeline" element={
               <ProtectedRoute allowedRoles={['author', 'admin']}>
                 <ManuscriptPipeline />

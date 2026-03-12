@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users, UserPlus, UserMinus, MessageCircle, Send, Eye, Shield,
@@ -74,39 +73,63 @@ const ACTION_CONFIG: Record<string, { icon: any; color: string; label: string }>
     message: { icon: MessageCircle, color: '#3b82f6', label: 'Messaged' },
 };
 
-const MANUSCRIPT = { title: '', author: '', genre: '', totalChapters: 0, chaptersReleased: 0 };
-
-const ACTIVE_READERS: BetaReader[] = [];
-
-const RECRUIT_CANDIDATES: RecruitCandidate[] = [];
-
-const ACTIVITY_LOG: ActivityEntry[] = [];
-
 export default function EditorBetaManager() {
     const [activeTab, setActiveTab] = useState<'readers' | 'recruit' | 'activity'>('readers');
-    const [expandedReader, setExpandedReader] = useState<string | null>('br1');
+    const [expandedReader, setExpandedReader] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [nudgedReaders, setNudgedReaders] = useState<Set<string>>(new Set());
-    const [invitedCandidates, setInvitedCandidates] = useState<Set<string>>(new Set(['rc5']));
+    const [invitedCandidates, setInvitedCandidates] = useState<Set<string>>(new Set());
+    const [filterTier, setFilterTier] = useState<string>('all');
+
+    const [ACTIVE_READERS, setActiveReaders] = useState<BetaReader[]>([]);
+    const [RECRUIT_CANDIDATES, setRecruitCandidates] = useState<RecruitCandidate[]>([]);
+    const [ACTIVITY_LOG, setActivityLog] = useState<ActivityEntry[]>([]);
+    const [MANUSCRIPT, setManuscript] = useState({ title: '', author: '', genre: '', totalChapters: 0, chaptersReleased: 0 });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const auth = getAuth();
-        const unsubAuth = onAuthStateChanged(auth, (user) => {
-            if (!user) return;
-            const unsub = onSnapshot(
-                query(collection(db, 'beta_readers'), orderBy('lastActive', 'desc')),
-                (snap) => {
-                    if (snap.docs.length > 0) {
-                        // Beta readers data available from Firestore
-                    }
-                },
-                () => { }
-            );
-            return () => unsub();
-        });
-        return () => unsubAuth();
+        const unsubs: (() => void)[] = [];
+        // Active beta readers
+        unsubs.push(onSnapshot(
+            query(collection(db, 'editor_beta_readers'), orderBy('lastActive', 'desc')),
+            (snap) => {
+                setActiveReaders(snap.docs.map(d => ({ id: d.id, ...d.data() } as BetaReader)));
+                setLoading(false);
+            },
+            () => setLoading(false)
+        ));
+        // Recruit candidates
+        unsubs.push(onSnapshot(
+            collection(db, 'recruit_candidates'),
+            (snap) => {
+                setRecruitCandidates(snap.docs.map(d => ({ id: d.id, ...d.data() } as RecruitCandidate)));
+            }
+        ));
+        // Activity log
+        unsubs.push(onSnapshot(
+            query(collection(db, 'editor_beta_activity'), orderBy('timestamp', 'desc')),
+            (snap) => {
+                setActivityLog(snap.docs.map(d => ({ id: d.id, ...d.data() } as ActivityEntry)));
+            }
+        ));
+        // Manuscript info from first beta campaign
+        unsubs.push(onSnapshot(
+            collection(db, 'beta_campaigns'),
+            (snap) => {
+                if (snap.docs.length > 0) {
+                    const d = snap.docs[0].data();
+                    setManuscript({
+                        title: d.bookTitle || d.title || '',
+                        author: d.authorName || '',
+                        genre: d.genre || '',
+                        totalChapters: d.totalChapters || 0,
+                        chaptersReleased: d.chaptersReleased || 0,
+                    });
+                }
+            }
+        ));
+        return () => unsubs.forEach(u => u());
     }, []);
-    const [filterTier, setFilterTier] = useState<string>('all');
 
     const handleNudge = (id: string) => {
         setNudgedReaders(prev => { const n = new Set(prev); n.add(id); return n; });

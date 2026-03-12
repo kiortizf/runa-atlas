@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, CheckCircle, Clock, Lock, Bell, BellOff, LogIn, BookOpen, PlayCircle, Crown } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, Lock, Bell, BellOff, LogIn, BookOpen, PlayCircle, Crown, Star } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, setDoc, deleteDoc, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +27,7 @@ type Journey = {
   totalEpisodes: number;
   genre?: string;
   status?: string;
+  constellation?: string;
 };
 
 export default function JourneyDetail() {
@@ -120,12 +121,39 @@ export default function JourneyDetail() {
     );
   }
 
-  const publishedEpisodes = episodes.filter(e => e.status === 'published');
-  const publishedCount = publishedEpisodes.length;
-  const progressPercentage = journey.totalEpisodes > 0 ? (publishedCount / journey.totalEpisodes) * 100 : 0;
-  const totalWords = publishedEpisodes.reduce((s, e) => s + (e.wordCount || 0), 0);
-  const readCount = readEpisodes.length;
-  const firstUnread = publishedEpisodes.find(e => !readEpisodes.includes(e.id));
+    const publishedEpisodes = episodes.filter(e => {
+        if (e.status === 'published') return true;
+        // Drip mechanism: auto-promote scheduled episodes whose publishDate has passed
+        if (e.status === 'scheduled' && e.publishDate) {
+            const pubDate = typeof e.publishDate === 'string' ? new Date(e.publishDate) :
+                (e.publishDate as any)?.toDate ? (e.publishDate as any).toDate() : new Date(e.publishDate);
+            return pubDate <= new Date();
+        }
+        return false;
+    });
+    const scheduledFuture = episodes.filter(e => {
+        if (e.status !== 'scheduled' || !e.publishDate) return false;
+        const pubDate = typeof e.publishDate === 'string' ? new Date(e.publishDate) :
+            (e.publishDate as any)?.toDate ? (e.publishDate as any).toDate() : new Date(e.publishDate);
+        return pubDate > new Date();
+    });
+
+    function getCountdown(dateStr: string): string {
+        const pubDate = typeof dateStr === 'string' ? new Date(dateStr) :
+            (dateStr as any)?.toDate ? (dateStr as any).toDate() : new Date(dateStr);
+        const diff = pubDate.getTime() - Date.now();
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        if (days <= 0) return 'Available now';
+        if (days === 1) return 'Tomorrow';
+        if (days <= 7) return `${days} days`;
+        const weeks = Math.floor(days / 7);
+        return `${weeks} week${weeks > 1 ? 's' : ''}`;
+    }
+    const publishedCount = publishedEpisodes.length;
+    const progressPercentage = journey.totalEpisodes > 0 ? (publishedCount / journey.totalEpisodes) * 100 : 0;
+    const totalWords = publishedEpisodes.reduce((s, e) => s + (e.wordCount || 0), 0);
+    const readCount = readEpisodes.length;
+    const firstUnread = publishedEpisodes.find(e => !readEpisodes.includes(e.id));
 
   return (
     <div className="bg-void-black min-h-screen py-16">
@@ -156,7 +184,15 @@ export default function JourneyDetail() {
               )}
             </div>
             <h1 className="font-display text-4xl md:text-5xl text-text-primary uppercase tracking-widest mb-3">{journey.title}</h1>
-            <p className="font-ui text-starforge-gold text-lg mb-6">by {journey.author}</p>
+            <p className="font-ui text-starforge-gold text-lg mb-2">
+              by <Link to={`/authors`} className="underline underline-offset-4 hover:text-white transition-colors">{journey.author}</Link>
+            </p>
+            {(journey as any).constellation && (
+              <Link to={`/runeweave`} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-cosmic-purple/10 text-cosmic-purple border border-cosmic-purple/20 font-ui text-[10px] uppercase tracking-wider hover:bg-cosmic-purple/20 transition-colors mb-6">
+                <Star className="w-3 h-3" /> {(journey as any).constellation}
+              </Link>
+            )}
+            {!(journey as any).constellation && <div className="mb-6" />}
             <p className="font-body text-text-secondary text-lg leading-relaxed max-w-2xl mb-8">{journey.synopsis}</p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -198,6 +234,17 @@ export default function JourneyDetail() {
           </div>
         </div>
 
+        {/* Next Episode Countdown */}
+        {scheduledFuture.length > 0 && (
+          <div className="mb-8 p-4 bg-starforge-gold/5 border border-starforge-gold/20 rounded-sm flex items-center gap-4">
+            <Clock className="w-5 h-5 text-starforge-gold shrink-0" />
+            <div>
+              <p className="font-ui text-sm text-starforge-gold font-medium">Next Episode: {scheduledFuture[0].title}</p>
+              <p className="font-ui text-xs text-text-muted">Releases in {getCountdown(scheduledFuture[0].publishDate)} · Subscribe to get notified</p>
+            </div>
+          </div>
+        )}
+
         {/* Progress Bar */}
         <div className="mb-12">
           <div className="flex justify-between items-end mb-2">
@@ -220,10 +267,11 @@ export default function JourneyDetail() {
           {Array.from({ length: journey.totalEpisodes }).map((_, index) => {
             const episodeNumber = index + 1;
             const episode = episodes.find(e => e.number === episodeNumber);
+            const isPublishedOrDripped = episode ? publishedEpisodes.some(pe => pe.id === episode.id) : false;
             const isRead = episode ? readEpisodes.includes(episode.id) : false;
             const readTime = episode ? Math.ceil((episode.wordCount || 0) / 250) : 0;
 
-            if (episode?.status === 'published') {
+            if (isPublishedOrDripped && episode) {
               return (
                 <Link key={episodeNumber} to={`/journeys/${slug}/episode/${episodeNumber}`}
                   onClick={() => episode && markRead(episode.id)} className="block">
@@ -258,12 +306,13 @@ export default function JourneyDetail() {
             }
 
             if (episode?.status === 'scheduled') {
+              const countdown = getCountdown(episode.publishDate);
               return (
                 <div key={episodeNumber} className="bg-surface/60 border border-border/40 rounded-sm p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 opacity-60">
                   <div className="flex-grow">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="bg-surface-elevated text-text-muted border border-border text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm font-ui">Episode {episodeNumber}</span>
-                      <span className="font-ui text-[10px] text-starforge-gold">Coming {episode.publishDate}</span>
+                      <span className="font-ui text-[10px] text-starforge-gold">Unlocks in {countdown}</span>
                     </div>
                     <h3 className="font-heading text-lg text-text-primary mb-1">{episode.title}</h3>
                     <p className="font-body text-text-secondary text-sm line-clamp-2">{episode.excerpt}</p>

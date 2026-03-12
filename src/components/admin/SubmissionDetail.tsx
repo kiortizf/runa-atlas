@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { X, ChevronRight, ExternalLink, Flag, UserPlus, Star, Send, Download, CheckCircle } from 'lucide-react';
+import { X, ChevronRight, ExternalLink, Flag, UserPlus, Star, Send, Download, CheckCircle, PenLine } from 'lucide-react';
 import { collection, addDoc, getDocs, query, orderBy, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import {
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function SubmissionDetail({ submission: sub, onClose, onStatusChange, onUpdate }: Props) {
+    const navigate = useNavigate();
     const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
     const [notes, setNotes] = useState<{ id: string; text: string; author: string; createdAt: any }[]>([]);
     const [showEvalForm, setShowEvalForm] = useState(false);
@@ -175,6 +177,20 @@ export default function SubmissionDetail({ submission: sub, onClose, onStatusCha
                                 </div>
                             </div>
                         )}
+                        {/* Manuscript in Forge */}
+                        <div>
+                            <h3 className="font-ui text-[10px] uppercase tracking-wider text-text-muted mb-2">Manuscript</h3>
+                            {sub.manuscriptId ? (
+                                <button onClick={() => navigate(`/forge-editor/${sub.manuscriptId}`)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 bg-starforge-gold/10 border border-starforge-gold/20 rounded-sm text-starforge-gold hover:bg-starforge-gold/20 transition-colors font-ui text-xs">
+                                    <PenLine className="w-3.5 h-3.5" /> Open in Forge Editor <ExternalLink className="w-3 h-3 ml-auto" />
+                                </button>
+                            ) : (
+                                <div className="px-3 py-2.5 bg-void-black border border-border rounded-sm text-text-muted font-ui text-xs">
+                                    No manuscript linked yet. Author hasn't created one in the Forge.
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* CENTER: Metadata & Evaluation */}

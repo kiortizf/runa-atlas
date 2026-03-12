@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Scroll, Plus, Edit2, Trash2, BookOpen, Clock, Star, Tag, ChevronRight, ChevronLeft, X, Check, FileText, Eye, EyeOff, Bold, Italic, Quote, Minus, Type, Heading1, Heading2, Heading3, AlignLeft, Copy, Sparkles } from 'lucide-react';
+import { Scroll, Plus, Edit2, Trash2, BookOpen, Clock, Star, Tag, ChevronRight, ChevronLeft, X, Check, FileText, Eye, EyeOff, Bold, Italic, Quote, Minus, Type, Heading1, Heading2, Heading3, AlignLeft, Copy, Sparkles, Crown, ImageIcon } from 'lucide-react';
 import AdminModal, { FormSection, FormField } from './AdminModal';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp, Timestamp, query, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
@@ -34,6 +34,7 @@ interface Episode {
   wordCount: number;
   publishDate: string;
   excerpt: string;
+  membersOnly?: boolean;
 }
 
 // Data loaded from Firestore
@@ -60,7 +61,7 @@ export default function AdminJourneys() {
   const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [epForm, setEpForm] = useState<Partial<Episode>>({
-    title: '', content: '', status: 'draft', publishDate: '', excerpt: '', number: 0,
+    title: '', content: '', status: 'draft', publishDate: '', excerpt: '', number: 0, membersOnly: false,
   });
 
   const [formData, setFormData] = useState<Partial<Journey>>({
@@ -186,7 +187,7 @@ export default function AdminJourneys() {
         title: epForm.title, content: epForm.content, status: epForm.status,
         publishDate: epForm.publishDate, excerpt: epForm.excerpt,
         number: Number(epForm.number) || episodes.length + 1,
-        wordCount,
+        wordCount, membersOnly: !!epForm.membersOnly,
       };
       if (editingEpisode) {
         await setDoc(doc(db, `journeys/${managingJourney.id}/episodes`, editingEpisode.id), data, { merge: true });
@@ -246,6 +247,7 @@ export default function AdminJourneys() {
     { icon: Italic, label: 'Italic', action: () => insertFormat('*', '*', 'italic text') },
     { icon: Quote, label: 'Quote', action: () => insertFormat('\n> ', '\n', '"A powerful quote"') },
     { icon: Minus, label: 'Break', action: () => insertFormat('\n\n---\n\n', '', '') },
+    { icon: ImageIcon, label: 'Image', action: () => insertFormat('\n![', '](https://picsum.photos/seed/scene/800/400)\n', 'image description') },
   ];
 
   // ── Preview Renderer ──
@@ -257,6 +259,15 @@ export default function AdminJourneys() {
       if (line.startsWith('# ')) return <h2 key={index} className="font-display text-3xl text-white uppercase tracking-widest mt-8 mb-6">{line.replace('# ', '')}</h2>;
       if (line.startsWith('---')) return <hr key={index} className="border-t border-border my-12" />;
       if (line.startsWith('> ')) return <blockquote key={index} className="border-l-4 border-starforge-gold pl-6 py-2 my-8 italic text-text-secondary text-xl font-body">{line.replace('> ', '')}</blockquote>;
+      const imgMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
+      if (imgMatch) {
+        return (
+          <figure key={index} className="my-6">
+            <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full rounded-sm border border-border/30 object-cover max-h-[300px]" loading="lazy" />
+            {imgMatch[1] && <figcaption className="mt-1 text-center font-ui text-[10px] text-text-muted italic">{imgMatch[1]}</figcaption>}
+          </figure>
+        );
+      }
       if (line.trim() === '') return <div key={index} className="h-4" />;
       const parts = line.split(/(\*\*.*?\*\*|\*.*?\*)/g);
       return (
@@ -301,6 +312,24 @@ export default function AdminJourneys() {
             <h2 className="font-heading text-2xl text-text-primary">{managingJourney.title}</h2>
             <p className="font-ui text-xs text-text-muted">Manage Episodes &middot; {episodes.length} total &middot; {episodes.filter(e => e.status === 'published').length} published</p>
           </div>
+          <button onClick={async () => {
+              const drafts = episodes.filter(e => e.status === 'draft').sort((a, b) => a.number - b.number);
+              if (drafts.length === 0) return;
+              const startDate = new Date();
+              for (let i = 0; i < drafts.length; i++) {
+                const pubDate = new Date(startDate);
+                pubDate.setDate(pubDate.getDate() + (i + 1) * 7); // Weekly cadence
+                const dateStr = pubDate.toISOString().split('T')[0];
+                try {
+                  await setDoc(doc(db, `journeys/${managingJourney.id}/episodes`, drafts[i].id), {
+                    ...drafts[i], status: 'scheduled', publishDate: dateStr,
+                  });
+                } catch { /* */ }
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-2 bg-cosmic-purple/10 text-cosmic-purple border border-cosmic-purple/30 rounded-sm font-ui text-xs uppercase tracking-wider hover:bg-cosmic-purple/20">
+            <Clock className="w-3.5 h-3.5" /> Auto-Schedule Drafts
+          </button>
           <button onClick={() => openEpisodeModal()}
             className="flex items-center gap-2 px-4 py-2 bg-starforge-gold text-void-black rounded-sm font-ui text-xs uppercase tracking-wider hover:bg-yellow-500">
             <Plus className="w-3.5 h-3.5" /> New Episode
@@ -420,6 +449,10 @@ export default function AdminJourneys() {
                 </select>
                 <input type="date" value={epForm.publishDate} onChange={e => setEpForm({ ...epForm, publishDate: e.target.value })}
                   className="bg-void-black border border-border rounded-sm px-3 py-1.5 text-text-primary font-ui text-sm focus:border-starforge-gold outline-none" />
+                <button type="button" onClick={() => setEpForm({ ...epForm, membersOnly: !epForm.membersOnly })}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm font-ui text-xs uppercase tracking-wider border transition-colors ${epForm.membersOnly ? 'bg-starforge-gold/10 text-starforge-gold border-starforge-gold/30' : 'bg-void-black text-text-muted border-border hover:border-starforge-gold/30'}`}>
+                  <Crown className="w-3 h-3" /> {epForm.membersOnly ? 'Members Only' : 'Public'}
+                </button>
               </div>
             </div>
 

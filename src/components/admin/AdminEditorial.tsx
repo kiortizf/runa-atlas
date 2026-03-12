@@ -19,6 +19,8 @@ const PHASE_MAP: Record<Phase, PhaseConfig> = {
     proofread: { label: 'Proofread', color: 'text-starforge-gold', bg: 'bg-starforge-gold/10', icon: SearchIcon },
 };
 
+const DEFAULT_PHASE_CONFIG: PhaseConfig = { label: 'Unknown', color: 'text-text-muted', bg: 'bg-surface-elevated', icon: Scissors };
+
 interface Deliverable { id: string; label: string; done: boolean; }
 
 interface EditorialProject {
@@ -87,7 +89,7 @@ export default function AdminEditorial() {
     const toggleDeliverable = async (projectId: string, delId: string) => {
         const proj = projects.find(p => p.id === projectId);
         if (!proj) return;
-        const updated = proj.deliverables.map(d => d.id === delId ? { ...d, done: !d.done } : d);
+        const updated = (proj.deliverables || []).map(d => d.id === delId ? { ...d, done: !d.done } : d);
         try { await updateDoc(doc(db, 'editorialProjects', projectId), { deliverables: updated }); } catch { /* local */ }
         setProjects(prev => prev.map(p => p.id === projectId ? { ...p, deliverables: updated } : p));
     };
@@ -238,11 +240,11 @@ export default function AdminEditorial() {
                     {/* Projects List */}
                     <div className="space-y-3">
                         {filtered.map(proj => {
-                            const cfg = PHASE_MAP[proj.phase];
+                            const cfg = PHASE_MAP[proj.phase] || DEFAULT_PHASE_CONFIG;
                             const Icon = cfg.icon;
                             const isExp = expandedId === proj.id;
                             const overdue = isOverdue(proj.deadline);
-                            const doneCount = proj.deliverables.filter(d => d.done).length;
+                            const doneCount = (proj.deliverables || []).filter(d => d.done).length;
                             const projNotes = notes[proj.id] || [];
 
                             return (
@@ -262,7 +264,7 @@ export default function AdminEditorial() {
                                                     {PHASES.map((ph, i) => {
                                                         const active = PHASES.indexOf(proj.phase);
                                                         return (
-                                                            <div key={ph} className={`w-12 h-1.5 rounded-full ${i <= active ? PHASE_MAP[ph].bg.replace('/10', '/40') : 'bg-border'}`} />
+                                                            <div key={ph} className={`w-12 h-1.5 rounded-full ${i <= active ? (PHASE_MAP[ph] || DEFAULT_PHASE_CONFIG).bg.replace('/10', '/40') : 'bg-border'}`} />
                                                         );
                                                     })}
                                                 </div>
@@ -271,7 +273,7 @@ export default function AdminEditorial() {
                                                 </span>
                                                 <span className={`font-mono text-[10px] ${overdue ? 'text-forge-red' : 'text-text-muted'}`}>
                                                     {overdue && <AlertTriangle className="w-2.5 h-2.5 inline mr-0.5" />}
-                                                    {proj.deadline || 'No deadline'}
+                                                    {getDate(proj.deadline) || 'No deadline'}
                                                 </span>
                                                 {isExp ? <ChevronUp className="w-4 h-4 text-text-muted" /> : <ChevronDown className="w-4 h-4 text-text-muted" />}
                                             </div>
@@ -286,28 +288,28 @@ export default function AdminEditorial() {
                                                     {/* Left: Deliverables */}
                                                     <div>
                                                         <h4 className="font-ui text-[10px] uppercase tracking-wider text-text-muted mb-3">
-                                                            Deliverables ({doneCount}/{proj.deliverables.length})
+                                                            Deliverables ({doneCount}/{(proj.deliverables || []).length})
                                                         </h4>
                                                         <div className="space-y-1.5">
-                                                            {proj.deliverables.map(d => (
+                                                            {(proj.deliverables || []).map(d => (
                                                                 <button key={d.id} onClick={() => toggleDeliverable(proj.id, d.id)}
                                                                     className="w-full flex items-center gap-2 text-left group">
                                                                     {d.done ? <CheckSquare className="w-3.5 h-3.5 text-aurora-teal shrink-0" /> : <Square className="w-3.5 h-3.5 text-text-muted shrink-0 group-hover:text-aurora-teal" />}
                                                                     <span className={`font-ui text-xs ${d.done ? 'text-text-muted line-through' : 'text-text-secondary'}`}>{d.label}</span>
                                                                 </button>
                                                             ))}
-                                                            {proj.deliverables.length === 0 && <p className="font-ui text-xs text-text-muted">No deliverables defined</p>}
+                                                            {(proj.deliverables || []).length === 0 && <p className="font-ui text-xs text-text-muted">No deliverables defined</p>}
                                                         </div>
                                                         {/* File Versions */}
                                                         <h4 className="font-ui text-[10px] uppercase tracking-wider text-text-muted mb-2 mt-6">File Versions</h4>
                                                         <div className="space-y-1.5">
-                                                            {proj.fileVersions.map((f, i) => (
+                                                            {(proj.fileVersions || []).map((f, i) => (
                                                                 <a key={i} href={f.url} className="flex items-center gap-2 text-text-secondary hover:text-starforge-gold font-ui text-xs transition-colors">
                                                                     <Download className="w-3 h-3 shrink-0" /> {f.name}
                                                                     <span className="text-text-muted text-[9px] ml-auto">{getDate(f.uploadedAt)}</span>
                                                                 </a>
                                                             ))}
-                                                            {proj.fileVersions.length === 0 && <p className="font-ui text-xs text-text-muted">No files uploaded</p>}
+                                                            {(proj.fileVersions || []).length === 0 && <p className="font-ui text-xs text-text-muted">No files uploaded</p>}
                                                         </div>
                                                     </div>
 
@@ -317,7 +319,7 @@ export default function AdminEditorial() {
                                                         <div className="space-y-2 mb-6">
                                                             {PHASES.map((ph, i) => {
                                                                 const active = PHASES.indexOf(proj.phase);
-                                                                const pc = PHASE_MAP[ph];
+                                                                const pc = PHASE_MAP[ph] || DEFAULT_PHASE_CONFIG;
                                                                 return (
                                                                     <div key={ph} className={`flex items-center gap-2 px-3 py-2 rounded-sm border ${i === active ? `${pc.bg} border-current ${pc.color}` : i < active ? 'border-border bg-surface' : 'border-border/50 opacity-40'}`}>
                                                                         <pc.icon className="w-3.5 h-3.5" />
@@ -383,7 +385,7 @@ export default function AdminEditorial() {
                                     <span className={`font-mono text-[10px] ${isToday ? 'text-starforge-gold font-bold' : 'text-text-muted'}`}>{day}</span>
                                     <div className="mt-1 space-y-0.5">
                                         {dayProjects.map(p => (
-                                            <div key={p.id} className={`px-1.5 py-0.5 rounded-sm text-[8px] font-ui truncate ${PHASE_MAP[p.phase].bg} ${PHASE_MAP[p.phase].color}`}>
+                                            <div key={p.id} className={`px-1.5 py-0.5 rounded-sm text-[8px] font-ui truncate ${(PHASE_MAP[p.phase] || DEFAULT_PHASE_CONFIG).bg} ${(PHASE_MAP[p.phase] || DEFAULT_PHASE_CONFIG).color}`}>
                                                 {p.bookTitle}
                                             </div>
                                         ))}
@@ -428,7 +430,7 @@ export default function AdminEditorial() {
                             <div className="space-y-1">
                                 {editor.projects.map(p => (
                                     <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 bg-void-black border border-border rounded-sm">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${PHASE_MAP[p.phase].color.replace('text-', 'bg-')}`} />
+                                        <span className={`w-1.5 h-1.5 rounded-full ${(PHASE_MAP[p.phase] || DEFAULT_PHASE_CONFIG).color.replace('text-', 'bg-')}`} />
                                         <span className="font-ui text-xs text-text-secondary truncate flex-1">{p.bookTitle}</span>
                                         <span className="font-mono text-[9px] text-text-muted">{toDateString(p.deadline)}</span>
                                     </div>

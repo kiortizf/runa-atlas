@@ -12,6 +12,7 @@ export interface Manuscript {
     description: string;
     targetWords: number;
     status: 'draft' | 'revision' | 'editing' | 'final';
+    submissionId?: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }

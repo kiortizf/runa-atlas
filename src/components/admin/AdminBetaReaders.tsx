@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Users, Plus, Edit2, Trash2, Save, ChevronDown, ChevronRight, AlertCircle,
   Eye, Shield, BookOpen, Clock, Star, Target, Award, Bell, Settings, Zap,
-  Upload, MessageSquare, FileUp
+  Upload, MessageSquare, FileUp, CheckCircle2, XCircle, Fingerprint
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import AdminModal, { FormSection, FormField } from './AdminModal';
 
@@ -70,8 +70,24 @@ const STATUS_COLORS: Record<string, string> = {
   recruiting: 'bg-blue-500/20 text-blue-400', closed: 'bg-gray-500/20 text-gray-400',
 };
 
+interface BetaApplication {
+  id: string;
+  userId: string;
+  email: string;
+  displayName: string;
+  genres: string[];
+  readingSpeed: string;
+  feedbackStyle: string;
+  whyBetaRead: string;
+  status: string;
+  ndaSignatureId?: string;
+  ndaDocumentHash?: string;
+  appliedAt: any;
+}
+
 export default function AdminBetaReaders() {
   const [readers, setReaders] = useState<BetaReaderProfile[]>([]);
+  const [applications, setApplications] = useState<BetaApplication[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignOverview[]>([]);
   const [feedback, setFeedback] = useState<{ id: string; readerId: string; readerName: string; campaignId: string; campaignTitle: string; rating: number; categories: Record<string, number>; notes: string; createdAt: any }[]>([]);
   const [settings, setSettings] = useState<BetaSettings>({
@@ -101,6 +117,9 @@ export default function AdminBetaReaders() {
     unsubs.push(onSnapshot(collection(db, 'beta_readers'), (snap) => {
       setReaders(snap.docs.map(d => ({ id: d.id, ...d.data() } as BetaReaderProfile)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'beta_readers')));
+    unsubs.push(onSnapshot(collection(db, 'beta_applications'), (snap) => {
+      setApplications(snap.docs.map(d => ({ id: d.id, ...d.data() } as BetaApplication)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'beta_applications')));
     unsubs.push(onSnapshot(collection(db, 'beta_campaigns'), (snap) => {
       setCampaigns(snap.docs.map(d => ({ id: d.id, ...d.data() } as CampaignOverview)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'beta_campaigns')));
@@ -144,6 +163,32 @@ export default function AdminBetaReaders() {
     }
   };
 
+  const approveApplication = async (app: BetaApplication) => {
+    try {
+      await setDoc(doc(db, 'beta_readers', app.id), {
+        name: app.displayName,
+        email: app.email,
+        genres: app.genres,
+        status: 'active',
+        skillTags: [],
+        completedReviews: 0,
+        avgRating: 0,
+        enrolled: new Date().toISOString().split('T')[0],
+        notes: `Applied: ${app.whyBetaRead?.substring(0, 100) || ''}`,
+        ndaSignatureId: app.ndaSignatureId || null,
+        createdAt: serverTimestamp(),
+      });
+      await updateDoc(doc(db, 'beta_applications', app.id), { status: 'approved' });
+    } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'beta_readers'); }
+  };
+
+  const rejectApplication = async (app: BetaApplication) => {
+    if (!window.confirm(`Reject application from ${app.displayName}?`)) return;
+    try {
+      await updateDoc(doc(db, 'beta_applications', app.id), { status: 'rejected' });
+    } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'beta_applications'); }
+  };
+
   const submitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     const reader = readers.find(r => r.id === feedbackForm.readerId);
@@ -182,6 +227,31 @@ export default function AdminBetaReaders() {
         </div>
         <button onClick={() => openReaderModal()} className="flex items-center justify-center gap-2 px-6 py-3 bg-starforge-gold text-void-black rounded-full font-ui font-medium hover:bg-starforge-gold/90 transition-all"><Plus className="w-4 h-4" /> Add Reader</button>
       </div>
+
+      {/* Pending Applications */}
+      <Panel title="Pending Applications" icon={Fingerprint} count={applications.filter(a => a.status === 'pending').length} defaultOpen>
+        <div className="space-y-2">
+          {applications.filter(a => a.status === 'pending').length === 0 && <div className="text-center py-8 text-text-muted font-ui text-sm"><AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />No pending applications.</div>}
+          {applications.filter(a => a.status === 'pending').map(app => (
+            <div key={app.id} className="group flex items-center gap-4 bg-surface-elevated border border-border/50 rounded-xl px-4 py-3">
+              <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 font-semibold text-sm">{app.displayName?.charAt(0) || '?'}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-heading text-sm text-text-primary">{app.displayName}</span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider bg-amber-500/20 text-amber-400">pending</span>
+                  {app.ndaSignatureId && <span className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider bg-emerald-500/20 text-emerald-400 flex items-center gap-0.5"><Shield className="w-2.5 h-2.5" /> NDA</span>}
+                </div>
+                <p className="text-[11px] text-text-muted">{app.email} · Speed: {app.readingSpeed} · Style: {app.feedbackStyle}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">{(app.genres || []).join(', ')}</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => approveApplication(app)} className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Approve"><CheckCircle2 className="w-4 h-4" /></button>
+                <button onClick={() => rejectApplication(app)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Reject"><XCircle className="w-4 h-4" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
 
       {/* Reader Pool */}
       <Panel title="Reader Pool" icon={Users} count={readers.length} defaultOpen>

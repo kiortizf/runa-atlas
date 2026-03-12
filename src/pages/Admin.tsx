@@ -4,7 +4,7 @@ import {
   Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame,
   Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale,
   PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer,
-  MessageSquareText, ChevronDown, Search, Menu, X
+  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint
 } from 'lucide-react';
 // Import Admin Tab Components
 import AdminSubmissions from '../components/admin/AdminSubmissions';
@@ -43,6 +43,7 @@ import AdminAwards from '../components/admin/AdminAwards';
 import AdminContacts from '../components/admin/AdminContacts';
 import AdminProduction from '../components/admin/AdminProduction';
 import AdminReviewTracker from '../components/admin/AdminReviewTracker';
+import AdminNDA from '../components/admin/AdminNDA';
 import React from 'react';
 
 // ── Tab Error Boundary ──────────────────────────
@@ -82,8 +83,8 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   'author-tools': AdminAuthorTools, 'reader-exp': AdminReaderExp,
   onboarding: AdminOnboarding, imprints: AdminImprints, sops: AdminSOPs,
   distribution: AdminDistribution, awards: AdminAwards, contacts: AdminContacts,
-  production: AdminProduction, reviews: AdminReviewTracker, settings: AdminSettings,
-  activity: AdminActivity,
+  production: AdminProduction, reviews: AdminReviewTracker, nda: AdminNDA,
+  settings: AdminSettings, activity: AdminActivity,
 };
 
 // ── Grouped navigation ──────────────────────────
@@ -152,6 +153,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'rights', label: 'Rights & Licensing', icon: Shield },
       { id: 'legal', label: 'Legal', icon: Scale },
+      { id: 'nda', label: 'NDA Signatures', icon: Fingerprint },
       { id: 'awards', label: 'Awards', icon: Trophy },
       { id: 'reviews', label: 'Reviews', icon: MessageSquareText },
     ],
@@ -352,10 +354,11 @@ export default function Admin() {
           {Array.from(mountedTabs).map(tabId => {
             const Component = TAB_COMPONENTS[tabId];
             if (!Component) return null;
+            const props: any = tabId === 'dashboard' ? { onNavigate: handleTabSwitch } : {};
             return (
               <div key={tabId} style={{ display: activeTab === tabId ? 'block' : 'none' }}>
                 <TabErrorBoundary tabId={tabId}>
-                  <Component />
+                  <Component {...props} />
                 </TabErrorBoundary>
               </div>
             );

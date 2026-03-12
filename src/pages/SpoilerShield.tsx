@@ -1,22 +1,27 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, onSnapshot, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, increment, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useAnnotations } from '../hooks/useAnnotations';
+import { useModeration } from '../hooks/useModeration';
+import { useAccessControl } from '../hooks/useAccessControl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Shield, BookOpen, Lock, Unlock, MessageCircle, Heart, ChevronDown,
     ChevronUp, Send, Eye, EyeOff, AlertTriangle, User, ThumbsUp,
-    Clock, Filter, ArrowRight, Sparkles, CheckCircle
+    Clock, Filter, ArrowRight, Sparkles, CheckCircle, Flag, X, Ban
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
 // SPOILER SHIELD — Chapter-Gated Discussions
+// Fully wired to Firestore with moderation
 // ═══════════════════════════════════════════
 
 interface Discussion {
     id: string;
     chapterNum: number;
     author: string;
+    authorId: string;
     avatar: string;
     text: string;
     timestamp: string;
@@ -24,6 +29,8 @@ interface Discussion {
     replies: Reply[];
     spoilerLevel: 'safe' | 'mild' | 'heavy';
     tags: string[];
+    hidden?: boolean;
+    createdAt?: any;
 }
 
 interface Reply {
@@ -43,48 +50,177 @@ interface SpoilerBook {
     chapters: { num: number; title: string; discussions: number }[];
 }
 
+// ── Report Modal ──
+function ReportModal({ contentId, contentType, collectionPath, onClose }: {
+    contentId: string;
+    contentType: 'discussion' | 'reply';
+    collectionPath: string;
+    onClose: () => void;
+}) {
+    const { reportContent, reporting, reportSuccess } = useModeration();
+    const [reason, setReason] = useState<'spam' | 'harassment' | 'hate_speech' | 'inappropriate' | 'spoiler' | 'other'>('inappropriate');
+    const [details, setDetails] = useState('');
+
+    const handleSubmit = async () => {
+        await reportContent(contentId, contentType, collectionPath, reason, details);
+        setTimeout(onClose, 1500);
+    };
+
+    const REASONS = [
+        { value: 'spam' as const, label: 'Spam', icon: '🚫' },
+        { value: 'harassment' as const, label: 'Harassment', icon: '⚠️' },
+        { value: 'hate_speech' as const, label: 'Hate Speech', icon: '🛑' },
+        { value: 'inappropriate' as const, label: 'Inappropriate', icon: '❌' },
+        { value: 'spoiler' as const, label: 'Unmarked Spoiler', icon: '👁️' },
+        { value: 'other' as const, label: 'Other', icon: '📝' },
+    ];
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="relative w-full max-w-md bg-[#12121f] border border-white/[0.1] rounded-xl p-6 shadow-2xl"
+                onClick={e => e.stopPropagation()}>
+                {reportSuccess ? (
+                    <div className="text-center py-6">
+                        <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-white mb-1">Report Submitted</h3>
+                        <p className="text-sm text-text-secondary">Thank you. Our team will review this content.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-2">
+                                <Flag className="w-4 h-4 text-red-400" />
+                                <h3 className="text-lg font-semibold text-white">Report Content</h3>
+                            </div>
+                            <button onClick={onClose} className="p-1 text-text-secondary hover:text-white transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-text-secondary mb-4">Select a reason for reporting this content:</p>
+
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            {REASONS.map(r => (
+                                <button key={r.value} onClick={() => setReason(r.value)}
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs transition-colors border
+                                        ${reason === r.value
+                                            ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                                            : 'bg-white/[0.03] text-text-secondary border-white/[0.06] hover:bg-white/[0.06]'}`}>
+                                    <span>{r.icon}</span> {r.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <textarea value={details} onChange={e => setDetails(e.target.value)}
+                            placeholder="Additional details (optional)..."
+                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg p-3 text-sm text-white placeholder:text-text-secondary/50 resize-none outline-none mb-4"
+                            rows={3} />
+
+                        <div className="flex gap-3">
+                            <button onClick={onClose}
+                                className="flex-1 px-4 py-2.5 text-sm text-text-secondary bg-white/[0.04] rounded-lg hover:bg-white/[0.06] transition-colors">
+                                Cancel
+                            </button>
+                            <button onClick={handleSubmit} disabled={reporting}
+                                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-500/20 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                {reporting ? <Clock className="w-3.5 h-3.5 animate-spin" /> : <Flag className="w-3.5 h-3.5" />}
+                                {reporting ? 'Submitting...' : 'Submit Report'}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </motion.div>
+        </motion.div>
+    );
+}
+
 export default function SpoilerShield() {
     const { user } = useAuth();
-    const [currentChapter, setCurrentChapter] = useState(5);
+    const { canAccess, isBanned } = useAccessControl();
+    const { validateContent, canPost, recordPost } = useModeration();
+
+    // ── Reading progress from Firestore ──
+    // Try to load reading progress for the first spoiler_book
+    const [bookId, setBookId] = useState<string>('');
+    const { readingProgress } = useAnnotations({
+        bookId: bookId || 'placeholder',
+        chapterId: '1',
+        userId: user?.uid,
+    });
+
+    // Derive chapter from reading progress, fallback to 1
+    const progressChapter = readingProgress?.currentChapter
+        ? parseInt(readingProgress.currentChapter, 10)
+        : null;
+
+    const [manualChapter, setManualChapter] = useState<number | null>(null);
+
+    // Use reading progress if available, manual override if set, default to 1
+    const currentChapter = manualChapter ?? progressChapter ?? 1;
+
     const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
     const [showChapterPicker, setShowChapterPicker] = useState(false);
     const [newComment, setNewComment] = useState('');
-    const [viewMode, setViewMode] = useState<'all' | 'chapter'>('all');
+    const [spoilerLevel, setSpoilerLevel] = useState<'safe' | 'mild' | 'heavy'>('safe');
     const [sortBy, setSortBy] = useState<'popular' | 'recent'>('popular');
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
     const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
     const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
     const [discussions, setDiscussions] = useState<Discussion[]>([]);
     const [book, setBook] = useState<SpoilerBook>({ title: '', author: '', totalChapters: 0, cover: '', chapters: [] });
+    const [posting, setPosting] = useState(false);
+    const [postError, setPostError] = useState('');
+    const [profanityWarning, setProfanityWarning] = useState('');
+    const [rateLimitWarning, setRateLimitWarning] = useState('');
+    const [reportTarget, setReportTarget] = useState<{ id: string; type: 'discussion' | 'reply' } | null>(null);
 
-    // Load book + chapters from Firestore
+    // ── Load book from Firestore ──
     useEffect(() => {
         const unsub = onSnapshot(collection(db, 'spoiler_books'), (snap) => {
             if (snap.docs.length > 0) {
                 const data = snap.docs[0].data() as SpoilerBook;
                 setBook({ ...data, chapters: data.chapters || [] });
+                // Use the book doc ID to look up reading progress
+                setBookId(snap.docs[0].id);
             }
         }, () => { });
         return () => unsub();
     }, []);
 
-    // Computed values from Firestore-loaded book
     const BOOK = book;
     const CHAPTERS = book.chapters;
 
+    // ── Load discussions from Firestore ──
     useEffect(() => {
         const unsub = onSnapshot(
             query(collection(db, 'spoiler_discussions'), orderBy('likes', 'desc')),
             (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Discussion));
-                if (data.length > 0) setDiscussions(data);
+                setDiscussions(data.filter(d => !d.hidden));
             },
             () => { }
         );
         return () => unsub();
     }, []);
 
-    // Only show discussions up to reader's current chapter
+    // ── Load user's liked posts from Firestore ──
+    useEffect(() => {
+        if (!user?.uid) return;
+        const unsub = onSnapshot(
+            collection(db, `users/${user.uid}/spoilerLikes`),
+            (snap) => {
+                const liked = new Set(snap.docs.map(d => d.id));
+                setLikedPosts(liked);
+            },
+            () => { }
+        );
+        return () => unsub();
+    }, [user?.uid]);
+
+    // ── Filtered discussions ──
     const visibleDiscussions = useMemo(() => {
         let filtered = discussions.filter(d => d.chapterNum <= currentChapter);
         if (selectedChapter !== null) {
@@ -93,17 +229,42 @@ export default function SpoilerShield() {
         return filtered.sort((a, b) =>
             sortBy === 'popular' ? b.likes - a.likes : 0
         );
-    }, [currentChapter, selectedChapter, sortBy]);
+    }, [currentChapter, selectedChapter, sortBy, discussions]);
 
     const lockedDiscussionCount = discussions.filter(d => d.chapterNum > currentChapter).length;
 
-    const toggleLike = (id: string) => {
+    // ── Like — persists to Firestore ──
+    const toggleLike = useCallback(async (discussionId: string) => {
+        if (!user?.uid) return;
+
+        const likeRef = doc(db, `users/${user.uid}/spoilerLikes`, discussionId);
+        const discussionRef = doc(db, 'spoiler_discussions', discussionId);
+        const alreadyLiked = likedPosts.has(discussionId);
+
+        // Optimistic update
         setLikedPosts(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            alreadyLiked ? next.delete(discussionId) : next.add(discussionId);
             return next;
         });
-    };
+
+        try {
+            if (alreadyLiked) {
+                await deleteDoc(likeRef);
+                await updateDoc(discussionRef, { likes: increment(-1) });
+            } else {
+                await setDoc(likeRef, { likedAt: serverTimestamp() });
+                await updateDoc(discussionRef, { likes: increment(1) });
+            }
+        } catch {
+            // Revert optimistic update on error
+            setLikedPosts(prev => {
+                const next = new Set(prev);
+                alreadyLiked ? next.add(discussionId) : next.delete(discussionId);
+                return next;
+            });
+        }
+    }, [user?.uid, likedPosts]);
 
     const toggleReplies = (id: string) => {
         setExpandedReplies(prev => {
@@ -112,6 +273,87 @@ export default function SpoilerShield() {
             return next;
         });
     };
+
+    // ── Post Discussion — writes to Firestore ──
+    const handlePost = useCallback(async () => {
+        if (!user || !newComment.trim()) return;
+
+        // Check ban
+        if (isBanned) {
+            setPostError('Your account has been suspended from posting.');
+            return;
+        }
+
+        // Check access
+        if (!canAccess('spoiler_discussions.post')) {
+            setPostError('You need to be a member to post discussions.');
+            return;
+        }
+
+        // Rate limit check
+        const rateCheck = canPost();
+        if (!rateCheck.allowed) {
+            setRateLimitWarning(`Please wait ${rateCheck.waitSeconds}s before posting again.`);
+            setTimeout(() => setRateLimitWarning(''), 3000);
+            return;
+        }
+
+        // Profanity check
+        const profanityCheck = validateContent(newComment);
+        if (!profanityCheck.clean) {
+            if (profanityCheck.severity === 'severe') {
+                setPostError('This content contains language that violates our community guidelines and cannot be posted.');
+                return;
+            }
+            setProfanityWarning('Your post may contain inappropriate language. Please review before posting.');
+            return;
+        }
+
+        setPosting(true);
+        setPostError('');
+        setProfanityWarning('');
+
+        try {
+            await addDoc(collection(db, 'spoiler_discussions'), {
+                chapterNum: selectedChapter || currentChapter,
+                author: user.displayName || 'Anonymous Reader',
+                authorId: user.uid,
+                avatar: '👤',
+                text: newComment.trim(),
+                timestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                likes: 0,
+                replies: [],
+                spoilerLevel,
+                tags: [],
+                hidden: false,
+                createdAt: serverTimestamp(),
+            });
+            setNewComment('');
+            setSpoilerLevel('safe');
+            recordPost(); // Track for rate limiting
+        } catch (error) {
+            setPostError('Failed to post. Please try again.');
+        } finally {
+            setPosting(false);
+        }
+    }, [user, newComment, currentChapter, selectedChapter, spoilerLevel, isBanned, canAccess, canPost, validateContent, recordPost]);
+
+    // ── Check profanity as user types (debounced) ──
+    useEffect(() => {
+        if (!newComment.trim()) {
+            setProfanityWarning('');
+            return;
+        }
+        const timer = setTimeout(() => {
+            const result = validateContent(newComment);
+            if (!result.clean && result.severity === 'severe') {
+                setProfanityWarning('⚠️ This content contains prohibited language.');
+            } else {
+                setProfanityWarning('');
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [newComment, validateContent]);
 
     const spoilerBadge = (level: Discussion['spoilerLevel']) => {
         const styles = {
@@ -148,6 +390,11 @@ export default function SpoilerShield() {
 
                         {/* Chapter Progress */}
                         <div className="flex items-center gap-3">
+                            {progressChapter && !manualChapter && (
+                                <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3" /> Auto-synced
+                                </span>
+                            )}
                             <span className="text-xs text-text-secondary">You're on:</span>
                             <div className="relative">
                                 <button onClick={() => setShowChapterPicker(!showChapterPicker)}
@@ -162,10 +409,20 @@ export default function SpoilerShield() {
                                         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                                             className="absolute right-0 top-full mt-2 w-72 bg-[#1a1a2e] border border-white/[0.1] rounded-lg shadow-2xl max-h-80 overflow-y-auto z-50">
                                             <div className="p-3 border-b border-white/[0.06]">
-                                                <p className="text-xs text-text-secondary">Set your reading progress to unlock discussions</p>
+                                                <p className="text-xs text-text-secondary">
+                                                    {progressChapter
+                                                        ? 'Your reading progress is auto-synced. Override below:'
+                                                        : 'Set your reading progress to unlock discussions'}
+                                                </p>
+                                                {manualChapter && (
+                                                    <button onClick={() => { setManualChapter(null); setShowChapterPicker(false); }}
+                                                        className="mt-2 text-[10px] text-aurora-teal hover:underline">
+                                                        ↩ Reset to auto-synced progress
+                                                    </button>
+                                                )}
                                             </div>
                                             {CHAPTERS.map(ch => (
-                                                <button key={ch.num} onClick={() => { setCurrentChapter(ch.num); setShowChapterPicker(false); }}
+                                                <button key={ch.num} onClick={() => { setManualChapter(ch.num); setShowChapterPicker(false); }}
                                                     className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-white/[0.04] transition-colors
                                                         ${ch.num === currentChapter ? 'bg-aurora-teal/10 text-aurora-teal' : ch.num <= currentChapter ? 'text-white' : 'text-white/30'}`}>
                                                     <span className="flex items-center gap-3">
@@ -262,8 +519,19 @@ export default function SpoilerShield() {
                             </div>
                         </div>
 
+                        {/* Banned notice */}
+                        {isBanned && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
+                                <Ban className="w-5 h-5 text-red-400 flex-none" />
+                                <div>
+                                    <p className="text-sm text-red-400 font-semibold">Account Suspended</p>
+                                    <p className="text-xs text-text-secondary">You are currently unable to post or interact with discussions.</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* New comment box */}
-                        {user ? (
+                        {user && !isBanned ? (
                         <div className="mb-8 p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-aurora-teal/10 flex items-center justify-center text-sm flex-none">
@@ -277,25 +545,61 @@ export default function SpoilerShield() {
                                         className="w-full bg-transparent text-sm text-white placeholder:text-text-secondary/50 resize-none outline-none min-h-[60px]"
                                         rows={2}
                                     />
-                                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-text-secondary">Visible to readers on Ch. 1–{currentChapter}</span>
+
+                                    {/* Profanity / Rate Limit Warnings */}
+                                    {profanityWarning && (
+                                        <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded text-xs text-amber-400">
+                                            <AlertTriangle className="w-3.5 h-3.5 flex-none" /> {profanityWarning}
                                         </div>
-                                        <button className="px-4 py-1.5 bg-aurora-teal text-void-black text-xs font-semibold rounded hover:bg-aurora-teal/90 transition-colors flex items-center gap-1.5">
-                                            <Send className="w-3 h-3" /> Post
+                                    )}
+                                    {rateLimitWarning && (
+                                        <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded text-xs text-amber-400">
+                                            <Clock className="w-3.5 h-3.5 flex-none" /> {rateLimitWarning}
+                                        </div>
+                                    )}
+                                    {postError && (
+                                        <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400">
+                                            <AlertTriangle className="w-3.5 h-3.5 flex-none" /> {postError}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+                                        <div className="flex items-center gap-3">
+                                            {/* Spoiler Level Selector */}
+                                            <div className="flex items-center gap-1">
+                                                {(['safe', 'mild', 'heavy'] as const).map(level => {
+                                                    const colors = {
+                                                        safe: spoilerLevel === 'safe' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'text-text-secondary border-transparent',
+                                                        mild: spoilerLevel === 'mild' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'text-text-secondary border-transparent',
+                                                        heavy: spoilerLevel === 'heavy' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-text-secondary border-transparent',
+                                                    };
+                                                    return (
+                                                        <button key={level} onClick={() => setSpoilerLevel(level)}
+                                                            className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded border transition-colors ${colors[level]}`}>
+                                                            {level}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <span className="text-[10px] text-text-secondary">Ch. 1–{currentChapter}</span>
+                                        </div>
+                                        <button onClick={handlePost} disabled={posting || !newComment.trim()}
+                                            className="px-4 py-1.5 bg-aurora-teal text-void-black text-xs font-semibold rounded hover:bg-aurora-teal/90 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                                            {posting ? <Clock className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                                            {posting ? 'Posting...' : 'Post'}
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        ) : (
+                        ) : !user ? (
                         <div className="mb-8 p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg text-center">
                             <p className="text-sm text-text-secondary mb-3">Sign in to join the discussion and share your thoughts</p>
                             <a href="/portal" className="inline-flex items-center gap-2 px-5 py-2 bg-aurora-teal/10 text-aurora-teal text-xs font-semibold border border-aurora-teal/20 rounded-lg hover:bg-aurora-teal/20 transition-colors">
                                 <MessageCircle className="w-3.5 h-3.5" /> Sign In to Discuss
                             </a>
                         </div>
-                        )}
+                        ) : null}
 
                         {/* Discussion threads */}
                         <div className="space-y-4">
@@ -328,19 +632,21 @@ export default function SpoilerShield() {
                                         <p className="text-sm text-white/85 leading-relaxed mb-3">{disc.text}</p>
 
                                         {/* Tags */}
-                                        <div className="flex flex-wrap gap-1.5 mb-4">
-                                            {disc.tags.map(tag => (
-                                                <span key={tag} className="text-[10px] text-text-secondary px-2 py-0.5 bg-white/[0.03] rounded-full border border-white/[0.06]">
-                                                    #{tag}
-                                                </span>
-                                            ))}
-                                        </div>
+                                        {disc.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mb-4">
+                                                {disc.tags.map(tag => (
+                                                    <span key={tag} className="text-[10px] text-text-secondary px-2 py-0.5 bg-white/[0.03] rounded-full border border-white/[0.06]">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
 
                                         {/* Actions */}
                                         <div className="flex items-center gap-4">
                                             <button onClick={() => toggleLike(disc.id)}
                                                 className={`flex items-center gap-1.5 text-xs transition-colors ${likedPosts.has(disc.id) ? 'text-aurora-teal' : 'text-text-secondary hover:text-white'}`}>
-                                                <ThumbsUp className="w-3.5 h-3.5" />
+                                                <ThumbsUp className={`w-3.5 h-3.5 ${likedPosts.has(disc.id) ? 'fill-current' : ''}`} />
                                                 {disc.likes + (likedPosts.has(disc.id) ? 1 : 0)}
                                             </button>
                                             {disc.replies.length > 0 && (
@@ -349,6 +655,14 @@ export default function SpoilerShield() {
                                                     <MessageCircle className="w-3.5 h-3.5" />
                                                     {disc.replies.length} {disc.replies.length === 1 ? 'reply' : 'replies'}
                                                     {expandedReplies.has(disc.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                                </button>
+                                            )}
+                                            {/* Report button */}
+                                            {user && (
+                                                <button onClick={() => setReportTarget({ id: disc.id, type: 'discussion' })}
+                                                    className="flex items-center gap-1 text-xs text-text-secondary/50 hover:text-red-400 transition-colors ml-auto"
+                                                    title="Report this post">
+                                                    <Flag className="w-3 h-3" />
                                                 </button>
                                             )}
                                         </div>
@@ -369,10 +683,19 @@ export default function SpoilerShield() {
                                                                     <span className="text-[10px] text-text-secondary">{reply.timestamp}</span>
                                                                 </div>
                                                                 <p className="text-xs text-white/75 leading-relaxed">{reply.text}</p>
-                                                                <button onClick={() => toggleLike(reply.id)}
-                                                                    className={`mt-1 flex items-center gap-1 text-[10px] transition-colors ${likedPosts.has(reply.id) ? 'text-aurora-teal' : 'text-text-secondary hover:text-white'}`}>
-                                                                    <ThumbsUp className="w-3 h-3" /> {reply.likes + (likedPosts.has(reply.id) ? 1 : 0)}
-                                                                </button>
+                                                                <div className="flex items-center gap-3 mt-1">
+                                                                    <button onClick={() => toggleLike(reply.id)}
+                                                                        className={`flex items-center gap-1 text-[10px] transition-colors ${likedPosts.has(reply.id) ? 'text-aurora-teal' : 'text-text-secondary hover:text-white'}`}>
+                                                                        <ThumbsUp className={`w-3 h-3 ${likedPosts.has(reply.id) ? 'fill-current' : ''}`} /> {reply.likes + (likedPosts.has(reply.id) ? 1 : 0)}
+                                                                    </button>
+                                                                    {user && (
+                                                                        <button onClick={() => setReportTarget({ id: reply.id, type: 'reply' })}
+                                                                            className="text-text-secondary/30 hover:text-red-400 transition-colors"
+                                                                            title="Report">
+                                                                            <Flag className="w-2.5 h-2.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -407,6 +730,18 @@ export default function SpoilerShield() {
                     </div>
                 </div>
             </div>
+
+            {/* ═══ Report Modal ═══ */}
+            <AnimatePresence>
+                {reportTarget && (
+                    <ReportModal
+                        contentId={reportTarget.id}
+                        contentType={reportTarget.type}
+                        collectionPath="spoiler_discussions"
+                        onClose={() => setReportTarget(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

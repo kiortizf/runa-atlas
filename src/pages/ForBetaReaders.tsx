@@ -84,7 +84,7 @@ export default function ForBetaReaders() {
                             {heroSubtitle}
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-4">
-                            <Link to="/beta-reader" className="group px-8 py-4 bg-amber-400 text-void-black font-semibold text-sm uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center gap-3">
+                            <Link to="/beta-reader-apply" className="group px-8 py-4 bg-amber-400 text-void-black font-semibold text-sm uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center gap-3">
                                 Open Beta Reader Hub <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <a href="#how-it-works" className="px-8 py-4 border border-white/[0.15] text-white text-sm uppercase tracking-widest rounded-sm hover:border-amber-400/40 hover:text-amber-400 transition-all">
@@ -461,7 +461,7 @@ export default function ForBetaReaders() {
                         Join the beta reader program, start reading manuscripts before anyone else, and help shape the stories that ship.
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-4">
-                        <Link to="/beta-reader" className="group px-10 py-4 bg-amber-400 text-void-black font-semibold text-sm uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center gap-3">
+                        <Link to="/beta-reader-apply" className="group px-10 py-4 bg-amber-400 text-void-black font-semibold text-sm uppercase tracking-widest rounded-sm hover:bg-amber-300 transition-all flex items-center gap-3">
                             Open Beta Reader Hub <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Link>
                         <Link to="/for-readers" className="px-10 py-4 border border-white/[0.15] text-white text-sm uppercase tracking-widest rounded-sm hover:border-amber-400/40 hover:text-amber-400 transition-all">

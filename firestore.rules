@@ -428,6 +428,13 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    match /beta_applications/{appId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == appId);
+      allow create: if isAuthenticated() && request.auth.uid == appId;
+      allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == appId);
+      allow delete: if isAdmin();
+    }
+
     match /posts/{postId} {
       allow read: if true;
       allow create: if isAdmin();
@@ -795,6 +802,31 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MODERATION — Reports & Bans
+    // ═══════════════════════════════════════════════════════════════
+
+    match /content_reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /user_bans/{banId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NDA SIGNATURES — Immutable cryptographic records
+    // No update or delete — signed agreements are tamper-proof
+    // ═══════════════════════════════════════════════════════════════
+
+    match /nda_signatures/{signatureId} {
+      allow read: if isAuthenticated() && (resource.data.signerUid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      // No update or delete — immutable record
     }
 
     match /content_warning_categories/{catId} {
@@ -1352,6 +1384,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /users/{userId}/spoilerLikes/{discussionId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isOwner(userId);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // READER-FACING DATA (authenticated read, admin write)
     // ═══════════════════════════════════════════════════════════════
@@ -1388,6 +1425,16 @@ service cloud.firestore {
 
     match /editor_beta_readers/{docId} {
       allow read: if isAdmin() || isAuthor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /recruit_candidates/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /editor_beta_activity/{docId} {
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 

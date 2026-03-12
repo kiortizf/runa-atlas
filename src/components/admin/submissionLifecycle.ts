@@ -125,5 +125,6 @@ export interface EditorSubmission {
     targetAudience?: string;
     synopsisFileUrl?: string;
     sampleFileUrl?: string;
+    manuscriptId?: string;
     createdAt: any;
 }

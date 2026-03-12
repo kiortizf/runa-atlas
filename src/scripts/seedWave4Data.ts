@@ -542,9 +542,12 @@ export async function seedWave4(safeWrite: SafeWrite) {
     }
 
     // ── 35. Editorial Projects (AdminEditorial.tsx) ──
+    // Fields must match the EditorialProject interface: bookTitle, authorName, phase, assignedEditor, deliverables[], fileVersions[]
     const EDITORIAL_PROJECTS = [
-        { id: 'ep-1', title: 'Wrath & Reverie', author: 'Elara Vance', genre: 'Dark Fantasy', status: 'in_progress', stage: 'developmental_edit', editor: 'Mx. Reyes', wordCount: 94000, deadline: ts('2027-04-15'), priority: 'high', notes: 'Sequel to The Obsidian Crown. Complex multi-POV structure.', createdAt: ts('2026-08-01') },
-        { id: 'ep-2', title: 'The Hollow Garden', author: 'Sera Nighthollow', genre: 'Magical Realism', status: 'initial_review', stage: 'first_read', editor: 'Mx. Reyes', wordCount: 67000, deadline: ts('2027-05-01'), priority: 'normal', notes: 'Debut novel. Strong voice, needs structural work.', createdAt: ts('2027-01-05') },
+        { id: 'ep-1', bookTitle: 'Wrath & Reverie', authorName: 'Elara Vance', phase: 'dev_edit', assignedEditor: 'Mx. Reyes', deadline: '2027-04-15', priority: true, deliverables: [{ id: 'd1', label: 'Structural outline', done: true }, { id: 'd2', label: 'Character arc review', done: false }, { id: 'd3', label: 'Developmental notes', done: false }], fileVersions: [{ name: 'WR_v1_draft.docx', url: '#', uploadedAt: ts('2026-09-01') }], createdAt: ts('2026-08-01') },
+        { id: 'ep-2', bookTitle: 'The Hollow Garden', authorName: 'Sera Nighthollow', phase: 'dev_edit', assignedEditor: 'Mx. Reyes', deadline: '2027-05-01', priority: false, deliverables: [{ id: 'd4', label: 'First read report', done: false }], fileVersions: [], createdAt: ts('2027-01-05') },
+        { id: 'ep-3', bookTitle: 'Echoes of Diaspora', authorName: 'Nadia Okafor', phase: 'copy_edit', assignedEditor: 'Cassandra Liu', deadline: '2027-03-20', priority: true, deliverables: [{ id: 'd5', label: 'Copy edit pass 1', done: true }, { id: 'd6', label: 'Style sheet', done: true }, { id: 'd7', label: 'Copy edit pass 2', done: false }], fileVersions: [{ name: 'EoD_copyedit_v2.docx', url: '#', uploadedAt: ts('2027-02-15') }], createdAt: ts('2026-06-01') },
+        { id: 'ep-4', bookTitle: 'The Cartographer\'s Ghost', authorName: 'Felix Marquez', phase: 'proofread', assignedEditor: 'Priya Sharma', deadline: '2027-03-25', priority: false, deliverables: [{ id: 'd8', label: 'Proofread pass', done: false }, { id: 'd9', label: 'Final corrections', done: false }], fileVersions: [{ name: 'TCG_proof_v1.pdf', url: '#', uploadedAt: ts('2027-03-01') }], createdAt: ts('2026-04-01') },
     ];
     for (const item of EDITORIAL_PROJECTS) {
         await safeWrite(`editorialProjects/${item.id}`, () => setDoc(doc(db, 'editorialProjects', item.id), item));
@@ -669,5 +672,45 @@ export async function seedWave4(safeWrite: SafeWrite) {
     ];
     for (const item of ONBOARDING_STEPS) {
         await safeWrite(`onboarding_steps/${item.id}`, () => setDoc(doc(db, 'onboarding_steps', item.id), item));
+    }
+
+    // ── 46. Editor Beta Readers (EditorBetaManager.tsx) ──
+    const EDITOR_BETA_READERS = [
+        { id: 'br1', name: 'Aria Chen', avatar: '🧬', tier: 'Constellation Reader', dnaMatch: 94, chaptersRead: 15, totalChapters: 24, feedbackSubmitted: 12, status: 'reading', lastActive: '2 hours ago', invitedBy: 'editor', invitedDate: 'Oct 5, 2026', nda: true, email: 'aria@example.com' },
+        { id: 'br2', name: 'Marcus Webb', avatar: '📚', tier: 'Arc Reader', dnaMatch: 87, chaptersRead: 24, totalChapters: 24, feedbackSubmitted: 18, status: 'completed', lastActive: '1 day ago', invitedBy: 'author', invitedDate: 'Oct 5, 2026', nda: true, email: 'marcus@example.com' },
+        { id: 'br3', name: 'Luna Okafor', avatar: '🌙', tier: 'Constellation Reader', dnaMatch: 91, chaptersRead: 10, totalChapters: 24, feedbackSubmitted: 7, status: 'reading', lastActive: '5 hours ago', invitedBy: 'editor', invitedDate: 'Nov 12, 2026', nda: true, email: 'luna@example.com' },
+        { id: 'br4', name: 'Dev Patel', avatar: '🔮', tier: 'New Reader', dnaMatch: 78, chaptersRead: 6, totalChapters: 24, feedbackSubmitted: 3, status: 'reading', lastActive: '3 days ago', invitedBy: 'author', invitedDate: 'Jan 15, 2027', nda: true, email: 'dev@example.com' },
+        { id: 'br5', name: 'Sophie Turner', avatar: '🦋', tier: 'Arc Reader', dnaMatch: 82, chaptersRead: 0, totalChapters: 24, feedbackSubmitted: 0, status: 'invited', lastActive: 'Never', invitedBy: 'editor', invitedDate: 'Mar 1, 2027', nda: false, email: 'sophie@example.com' },
+        { id: 'br6', name: 'James Korrath', avatar: '⚔️', tier: 'Constellation Reader', dnaMatch: 88, chaptersRead: 18, totalChapters: 24, feedbackSubmitted: 14, status: 'reviewing', lastActive: '12 hours ago', invitedBy: 'author', invitedDate: 'Oct 8, 2026', nda: true, email: 'james@example.com' },
+    ];
+    for (const item of EDITOR_BETA_READERS) {
+        await safeWrite(`editor_beta_readers/${item.id}`, () => setDoc(doc(db, 'editor_beta_readers', item.id), item));
+    }
+
+    // ── 47. Recruit Candidates (EditorBetaManager.tsx) ──
+    const RECRUIT_CANDIDATES = [
+        { id: 'rc1', name: 'Yuki Tanaka', avatar: '🌸', tier: 'Constellation Reader', dnaMatch: 92, booksRead: 34, feedbackRating: 4.8, topGenres: ['Dark Fantasy', 'Literary Fiction'], status: 'available', lastActive: '1 hour ago' },
+        { id: 'rc2', name: 'Nina Okafor', avatar: '🎭', tier: 'Arc Reader', dnaMatch: 86, booksRead: 28, feedbackRating: 4.5, topGenres: ['Dark Fantasy', 'Gothic Horror'], status: 'available', lastActive: '3 hours ago' },
+        { id: 'rc3', name: 'Omar Hassan', avatar: '📖', tier: 'New Reader', dnaMatch: 79, booksRead: 12, feedbackRating: 4.2, topGenres: ['Sci-Fi', 'Dark Fantasy'], status: 'available', lastActive: '1 day ago' },
+        { id: 'rc4', name: 'Elena Rostova', avatar: '🔥', tier: 'Constellation Reader', dnaMatch: 95, booksRead: 41, feedbackRating: 4.9, topGenres: ['Dark Fantasy', 'Epic Fantasy', 'Magical Realism'], status: 'busy', lastActive: '6 hours ago' },
+        { id: 'rc5', name: 'Diego Morales', avatar: '🎧', tier: 'Arc Reader', dnaMatch: 83, booksRead: 22, feedbackRating: 4.4, topGenres: ['Cyberpunk', 'Dark Fantasy'], status: 'available', lastActive: '2 days ago' },
+    ];
+    for (const item of RECRUIT_CANDIDATES) {
+        await safeWrite(`recruit_candidates/${item.id}`, () => setDoc(doc(db, 'recruit_candidates', item.id), item));
+    }
+
+    // ── 48. Editor Beta Activity Log (EditorBetaManager.tsx) ──
+    const EDITOR_BETA_ACTIVITY = [
+        { id: 'eba1', action: 'invited', actor: 'Mx. Reyes', actorRole: 'editor', target: 'Aria Chen', manuscript: 'Wrath & Reverie', timestamp: 'Oct 5, 2026', detail: 'High DNA match (94%)' },
+        { id: 'eba2', action: 'nda_signed', actor: 'Aria Chen', actorRole: 'author', target: 'Aria Chen', manuscript: 'Wrath & Reverie', timestamp: 'Oct 6, 2026' },
+        { id: 'eba3', action: 'invited', actor: 'Elara Vance', actorRole: 'author', target: 'Marcus Webb', manuscript: 'Wrath & Reverie', timestamp: 'Oct 5, 2026' },
+        { id: 'eba4', action: 'completed', actor: 'Marcus Webb', actorRole: 'author', target: 'Marcus Webb', manuscript: 'Wrath & Reverie', timestamp: 'Mar 2, 2027', detail: 'All 24 chapters reviewed' },
+        { id: 'eba5', action: 'nudged', actor: 'Mx. Reyes', actorRole: 'editor', target: 'Dev Patel', manuscript: 'Wrath & Reverie', timestamp: 'Mar 5, 2027', detail: 'Behind schedule on Ch. 7-12' },
+        { id: 'eba6', action: 'invited', actor: 'Mx. Reyes', actorRole: 'editor', target: 'Sophie Turner', manuscript: 'Wrath & Reverie', timestamp: 'Mar 1, 2027' },
+        { id: 'eba7', action: 'message', actor: 'Elara Vance', actorRole: 'author', target: 'James Korrath', manuscript: 'Wrath & Reverie', timestamp: 'Mar 8, 2027', detail: 'Thanked for detailed Ch. 18 feedback' },
+        { id: 'eba8', action: 'invited', actor: 'Mx. Reyes', actorRole: 'editor', target: 'Luna Okafor', manuscript: 'Wrath & Reverie', timestamp: 'Nov 12, 2026', detail: 'Constellation Reader tier' },
+    ];
+    for (const item of EDITOR_BETA_ACTIVITY) {
+        await safeWrite(`editor_beta_activity/${item.id}`, () => setDoc(doc(db, 'editor_beta_activity', item.id), item));
     }
 }
