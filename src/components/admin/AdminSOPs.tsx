@@ -4,7 +4,7 @@ import {
   ClipboardList, Plus, ChevronDown, ChevronRight, Check, Clock, User,
   BookOpen, Package, MessageCircle, Scissors, Megaphone, Trash2, Copy,
   PlayCircle, CheckCircle, AlertCircle, Edit3, Save, X, FileText, Search,
-  Filter, ArrowRight, RotateCcw
+  Filter, ArrowRight, RotateCcw, RefreshCw
 } from 'lucide-react';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
@@ -140,6 +140,8 @@ export default function AdminSOPs() {
   const [newInstanceTemplate, setNewInstanceTemplate] = useState('');
   const [newInstanceBook, setNewInstanceBook] = useState('');
   const [seeding, setSeeding] = useState(false);
+  const [missingCount, setMissingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
   // ─── Firestore Sync ──────────────────────────────────
 
@@ -152,6 +154,11 @@ export default function AdminSOPs() {
         // Auto-seed defaults if empty
         if (data.length === 0 && !seeding) {
           seedDefaults();
+        } else {
+          // Detect missing templates
+          const existingTitles = new Set(data.map(t => t.title));
+          const missing = DEFAULT_TEMPLATES.filter(t => !existingTitles.has(t.title));
+          setMissingCount(missing.length);
         }
       },
       (err) => handleFirestoreError(err, OperationType.LIST, 'sop_templates')
@@ -174,6 +181,23 @@ export default function AdminSOPs() {
       handleFirestoreError(err, OperationType.CREATE, 'sop_templates');
     } finally {
       setSeeding(false);
+    }
+  };
+
+  const syncMissing = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const existingTitles = new Set(templates.map(t => t.title));
+      const missing = DEFAULT_TEMPLATES.filter(t => !existingTitles.has(t.title));
+      for (const tmpl of missing) {
+        await addDoc(collection(db, 'sop_templates'), { ...tmpl, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      }
+      setMissingCount(0);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'sop_templates');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -285,10 +309,19 @@ export default function AdminSOPs() {
           </h2>
           <p className="text-sm text-text-secondary mt-1">Interactive workflows with step tracking, checklists, and per-book instances.</p>
         </div>
-        <button onClick={() => setShowNewInstance(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-starforge-gold text-void-black font-ui text-sm font-semibold rounded-lg hover:bg-yellow-500 transition-colors">
-          <Plus className="w-4 h-4" /> Start SOP for Book
-        </button>
+        <div className="flex items-center gap-3">
+          {missingCount > 0 && (
+            <button onClick={syncMissing} disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-ui text-sm font-semibold rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : `Sync ${missingCount} New Templates`}
+            </button>
+          )}
+          <button onClick={() => setShowNewInstance(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-starforge-gold text-void-black font-ui text-sm font-semibold rounded-lg hover:bg-yellow-500 transition-colors">
+            <Plus className="w-4 h-4" /> Start SOP for Book
+          </button>
+        </div>
       </div>
 
       {/* Sub-Navigation */}

@@ -4,7 +4,7 @@ import {
   Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame,
   Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale,
   PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer,
-  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint, Archive
+  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint, Archive, Calculator
 } from 'lucide-react';
 // Import Admin Tab Components
 import AdminSubmissions from '../components/admin/AdminSubmissions';
@@ -46,6 +46,7 @@ import AdminReviewTracker from '../components/admin/AdminReviewTracker';
 import AdminNDA from '../components/admin/AdminNDA';
 import AdminArchive from '../components/admin/AdminArchive';
 import AdminKnowledgeBase from '../components/admin/AdminKnowledgeBase';
+import ProfitabilityCalculator from '../components/admin/ProfitabilityCalculator';
 import React from 'react';
 
 // ── Tab Error Boundary ──────────────────────────
@@ -87,6 +88,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   distribution: AdminDistribution, awards: AdminAwards, contacts: AdminContacts,
   production: AdminProduction, reviews: AdminReviewTracker, nda: AdminNDA,
   archive: AdminArchive, 'knowledge-base': AdminKnowledgeBase,
+  calculator: ProfitabilityCalculator,
   settings: AdminSettings, activity: AdminActivity,
 };
 
@@ -142,6 +144,7 @@ const NAV_GROUPS = [
       { id: 'orders', label: 'Orders', icon: ShoppingCart },
       { id: 'membership', label: 'Membership', icon: Crown },
       { id: 'royalties', label: 'Royalties', icon: DollarSign },
+      { id: 'calculator', label: 'Profitability Calc', icon: Calculator },
     ],
   },
   {

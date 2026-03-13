@@ -223,4 +223,82 @@ Crowdfunding can fund specific projects (special editions, anthologies, new form
 8. **Diversify revenue streams — don't depend on one retailer**
 9. **Treat grant money like sacred funds — spend only on designated purposes**
 10. **Reinvest profits in Year 1-3; take distributions only after sustainable profitability**
+
+## MBA-Standard Single-Title P&L Template
+
+Use this template for every acquisition decision and quarterly review:
+
+| Line | Category | Amount |
+|------|---------|--------|
+| 1 | **Gross Revenue** (list price × units sold) | |
+| 2 | Less: Returns (estimated % × gross) | |
+| 3 | Less: Wholesale/retailer discounts | |
+| 4 | = **Net Revenue** | |
+| 5 | Less: Print costs (manufacturing) | |
+| 6 | Less: Market access fees | |
+| 7 | = **Gross Profit** | |
+| 8 | Less: Author advance | |
+| 9 | Less: Author royalties (earned above advance) | |
+| 10 | Less: Editorial costs | |
+| 11 | Less: Design costs | |
+| 12 | Less: Marketing costs | |
+| 13 | Less: Audio production (if applicable) | |
+| 14 | Less: Allocated overhead (% of fixed costs) | |
+| 15 | = **Net Profit (Contribution Margin)** | |
+| 16 | ROI = Net Profit / Total Investment | |
+| 17 | Break-even units = Total Costs / Net Revenue per Unit | |
+
+## Break-Even Analysis Framework
+
+### Formula
+
+> **Break-Even Units = Total Fixed Costs for Title / (Net Revenue per Unit − Variable Cost per Unit)**
+
+### Worked Example
+
+| Component | Value |
+|-----------|-------|
+| Author advance | $3,000 |
+| Editorial costs | $5,000 |
+| Design costs | $1,500 |
+| Marketing budget | $2,000 |
+| **Total fixed costs** | **$11,500** |
+| Net revenue per print unit | $2.32 |
+| Net revenue per eBook unit | $2.62 |
+| Blended net per unit (weighted 40/60) | $2.50 |
+| **Break-even units** | **4,600** |
+
+### Sensitivity Analysis
+
+| Scenario | Change | New Break-Even |
+|----------|--------|---------------|
+| Higher list price (+$2) | More net per unit | Lower break-even |
+| Lower advance ($1,500) | Less fixed cost | Lower break-even |
+| Skip audio | Less production cost | Lower break-even |
+| Add BookBub feature | +$500 marketing | Slightly higher but more units sold |
+
+## Quarterly Stakeholder Report Format
+
+### Section 1: Financial Summary
+- Revenue vs budget (by title and format)
+- Expenses vs budget
+- P&L summary
+- Cash position
+
+### Section 2: Catalog Performance
+- Units sold by title and format
+- Top performers and underperformers
+- Backlist vs frontlist revenue split
+
+### Section 3: Marketing Effectiveness
+- Ad ACOS by platform
+- Email list growth and engagement
+- Social media reach and engagement
+- Conversion funnel metrics
+
+### Section 4: Forward Outlook
+- Upcoming releases
+- Pipeline status
+- Budget projections for next quarter
+- Risks and opportunities
 `;

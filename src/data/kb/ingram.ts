@@ -114,4 +114,103 @@ Minimum viable price = Manufacturing cost ÷ (1 - Wholesale discount)
 | Title not appearing on Amazon | Wait 6-8 weeks after approval, check Amazon listing settings |
 | Returns too high | Assess if title is getting placed in wrong sections (BISAC issue) |
 | Print quality concerns | Order proof, compare to PDF, contact Ingram support if defective |
+
+## IngramSpark Print Cost Formula (2025/2026)
+
+### Per-Unit Cost Calculation
+
+> **Print Cost = (Page Count × Per-Page Rate) + Cover Cost**
+
+| Component | B&W Cream | B&W White | Standard Color | Premium Color |
+|-----------|----------|----------|----------------|---------------|
+| Per-page rate | $0.013 | $0.013 | $0.04 | $0.07 |
+| PB cover (matte/gloss) | $0.85 | $0.85 | $0.85 | $0.85 |
+| HC case laminate cover | $2.50 | $2.50 | $2.50 | $2.50 |
+| HC dust jacket cover | $3.50 | $3.50 | $3.50 | $3.50 |
+
+### Publisher Compensation Formula
+
+> **Compensation = (List Price × (1 − Wholesale Discount)) − Print Cost − Market Access Fee**
+
+### 2025/2026 Fee Schedule
+
+| Fee | Amount | Notes |
+|-----|--------|-------|
+| Title setup | Free | No setup fees since May 2023 |
+| Revision fee | $25 | After 60-day free revision window |
+| Market Access Fee | 1.875% of list price | Global distribution fee (effective Feb 2026) |
+| Returns processing | Absorbed by publisher | Via reduced compensation |
+
+### Worked Example: 320-page Trade Paperback
+
+| Step | Calculation | Amount |
+|------|-----------|--------|
+| List price | Set by publisher | $16.99 |
+| Wholesale discount (55%) | $16.99 × 0.55 | −$9.34 |
+| Gross to publisher | $16.99 − $9.34 | $7.65 |
+| Print cost | 320 × $0.013 + $0.85 | −$5.01 |
+| Market Access Fee | $16.99 × 0.01875 | −$0.32 |
+| **Net compensation** | | **$2.32** |
+
+## IngramSpark iPage Dashboard Guide
+
+iPage is Ingram's business intelligence platform for publishers.
+
+### Key Features
+
+| Feature | What It Shows |
+|---------|------------|
+| Title Demand | Units ordered by retailers, libraries, schools |
+| Retailer Activity | Which retailers are ordering your titles |
+| Return Reports | Return rates by title and channel |
+| Sales History | Historical sales data with filters |
+| Inventory Status | POD availability and any supply issues |
+| Market Intelligence | Category trends and comp title data |
+
+### Monthly iPage Review Checklist
+
+- [ ] Check demand reports for each active title
+- [ ] Identify top-performing retail channels
+- [ ] Monitor return rates (flag >15%)
+- [ ] Compare month-over-month sales trends
+- [ ] Review any new retailer pickups
+
+## Lightning Source vs. IngramSpark
+
+| Feature | IngramSpark | Lightning Source |
+|---------|-------------|----------------|
+| Target user | Self-published authors, small publishers | Established publishers |
+| Account setup | Easy online | Requires application |
+| Title setup fee | Free | Free |
+| Print quality | Same print network | Same print network |
+| Dashboard | Modern, user-friendly | More detailed reporting |
+| Compensation calculator | Built-in | Available |
+| Support | Online, email | Dedicated rep (at volume) |
+| Volume thresholds | Any volume | Better for 5+ titles |
+| **Rüna Atlas recommendation** | **Use for now** | **Consider at 15+ titles** |
+
+## Title Setup Step-by-Step
+
+1. **Prepare files**: Interior PDF (PDF/X-1a), cover PDF (full wrap, calculated spine)
+2. **Log into IngramSpark** → "Add A New Title"
+3. **Enter metadata**: Title, subtitle, contributors, description
+4. **Select specifications**: Trim size, paper, binding, interior color
+5. **Set pricing**: List price per currency/territory
+6. **Set distribution**: Wholesale discount (55%), returnability (Yes)
+7. **Upload files**: Interior PDF, cover PDF
+8. **Review digital proof**: Check for layout, font, image issues
+9. **Order physical proof**: $15-30 + shipping — ALWAYS do this
+10. **Approve title**: Goes live in catalog within 24-48 hours
+11. **Verify listings**: Check Amazon, B&N, Bookshop.org within 2-8 weeks
+
+## Bulk Printing Discounts
+
+| Quantity | Discount | Best For |
+|----------|---------|----------|
+| 1 (POD) | None | Standard orders |
+| 100+ | ~15% | Author events, signings |
+| 250+ | ~20% | Local bookstore consignment |
+| 500+ | ~25% | Conference sales, bulk orders |
+| 1,000+ | ~30% | Consider offset printing comparison |
+| 2,000+ | Compare offset | Get quotes from offset printers |
 `;

@@ -59,6 +59,12 @@ import { DOC_BETA_READER_GUIDELINES } from './kb/beta-reader-guidelines';
 import { DOC_MEMBERSHIP_GUIDE } from './kb/membership-program-guide';
 import { DOC_DISTRIBUTION_CHANNELS } from './kb/distribution-channel-guide';
 import { DOC_ROYALTY_ACCOUNTING } from './kb/royalty-accounting-guide';
+import { DOC_PUBLISHING_FUNDAMENTALS } from './kb/publishing-business-fundamentals';
+import { DOC_ACQUISITION_STRATEGY } from './kb/acquisition-strategy';
+import { DOC_METADATA_DISCOVERABILITY } from './kb/metadata-discoverability';
+import { DOC_SALES_MERCHANDISING } from './kb/sales-merchandising';
+import { DOC_EDITORIAL_RUBRIC } from './kb/editorial-standards-rubric';
+import { DOC_PUBLISHING_ANALYTICS } from './kb/publishing-analytics-kpis';
 
 export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'publishing-standards', title: 'Publishing Standards & Quality Guidelines', category: 'Publishing', icon: '📏', lastUpdated: '2026-03-12', content: DOC_PUBLISHING_STANDARDS },
@@ -109,4 +115,10 @@ export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'membership-program-guide', title: 'Membership Program Guide', category: 'Community', icon: '👑', lastUpdated: '2026-03-13', content: DOC_MEMBERSHIP_GUIDE },
   { id: 'distribution-channel-guide', title: 'Distribution Channel Guide', category: 'Partnerships', icon: '🏪', lastUpdated: '2026-03-13', content: DOC_DISTRIBUTION_CHANNELS },
   { id: 'royalty-accounting-guide', title: 'Royalty Accounting Guide', category: 'Operations', icon: '💰', lastUpdated: '2026-03-13', content: DOC_ROYALTY_ACCOUNTING },
+  { id: 'publishing-fundamentals', title: 'Publishing Business Fundamentals', category: 'Operations', icon: '📊', lastUpdated: '2026-03-13', content: DOC_PUBLISHING_FUNDAMENTALS },
+  { id: 'acquisition-strategy', title: 'Acquisition Strategy Guide', category: 'Publishing', icon: '🎯', lastUpdated: '2026-03-13', content: DOC_ACQUISITION_STRATEGY },
+  { id: 'metadata-discoverability', title: 'Metadata & Discoverability', category: 'Marketing', icon: '🔍', lastUpdated: '2026-03-13', content: DOC_METADATA_DISCOVERABILITY },
+  { id: 'sales-merchandising', title: 'Sales & Merchandising Guide', category: 'Marketing', icon: '🏷️', lastUpdated: '2026-03-13', content: DOC_SALES_MERCHANDISING },
+  { id: 'editorial-standards-rubric', title: 'Editorial Standards & Rubric', category: 'Publishing', icon: '✏️', lastUpdated: '2026-03-13', content: DOC_EDITORIAL_RUBRIC },
+  { id: 'publishing-analytics-kpis', title: 'Publishing Analytics & KPIs', category: 'Operations', icon: '📈', lastUpdated: '2026-03-13', content: DOC_PUBLISHING_ANALYTICS },
 ];
