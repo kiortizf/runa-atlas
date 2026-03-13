@@ -27,6 +27,8 @@ import passageCollectionsImg from '../assets/features/passage-collections.webp';
 import bookDnaImg from '../assets/features/book-dna.webp';
 import readerCompatibilityImg from '../assets/features/reader-compatibility.webp';
 import contentCompassImg from '../assets/features/content-compass.webp';
+import championsImg from '../assets/features/champions.webp';
+import archiveImg from '../assets/features/runeweave-archive.webp';
 
 // ═══════════════════════════════════════════
 // FOR READERS — SaaS-style feature showcase
@@ -236,14 +238,14 @@ export default function ForReaders() {
             <FeatureShowcase
                 badge="The Forge"
                 title={<>Your Vote<br /><span className="text-aurora-teal">Shapes What Ships</span></>}
-                description="The Forge is where readers become co-creators. Vote on anthology themes, choose between cover designs, decide story directions — and contribute your own fan fiction and world-building entries. This is publishing that actually listens."
+                description="The Forge is your creative hub. Vote on anthology themes, choose between cover designs, join reader circles, ask authors anything, and take on reading challenges. Five tabs of pure community engagement — this is publishing that actually listens."
                 image={forgeVotingImg}
                 features={[
                     'Anthology theme voting with real-time results',
                     'Cover design elections: pick the art that ships',
-                    'Story direction polls: influence sequel plotlines',
-                    'Fan fiction submissions with likes and tags',
-                    'Collaborative world wiki: contribute lore entries',
+                    'Reader Circles & Author Q&A in one place',
+                    'Reading challenges with goal tracking & milestones',
+                    'The Runeweave Archive: contribute creative artifacts',
                 ]}
                 reverse={true}
                 accent="teal"
@@ -439,15 +441,15 @@ export default function ForReaders() {
                             icon={Library}
                         />
                         <SubFeatureCard
-                            image={forgeVotingImg}
-                            title="Fan Fiction & World Wiki"
-                            description="Write stories set in the worlds you love and contribute to collaborative lore wikis. Your creativity becomes part of the living canon."
+                            image={archiveImg}
+                            title="Runeweave Archive"
+                            description="Submit moodboards, playlists, glossaries, craft essays, and more. Community-driven creative artifacts that celebrate the books you love."
                             icon={PenTool}
                         />
                         <SubFeatureCard
-                            image={communityImg}
-                            title="Reading Challenges"
-                            description="Set annual reading goals, join seasonal challenges, and track your progress with the community. Compete, discover new genres, and push your boundaries."
+                            image={championsImg}
+                            title="Community Champions"
+                            description="Founders Wall honoring the first 250 members, gamified badges for contributions, and live leaderboards. Your engagement gets recognized."
                             icon={Flame}
                         />
                     </motion.div>
@@ -469,7 +471,7 @@ export default function ForReaders() {
                         className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
                             { label: 'Kindle / Amazon', items: ['Algorithm-driven discovery', 'Basic e-reader, no social features', 'No author interaction', 'No voting or creative input', 'Reviews are the only feedback channel'], bad: true },
-                            { label: 'Runa Atlas', items: ['Interactive star-map discovery', 'Immersive reader with reactions & highlights', 'AMAs, office hours, writing journals', 'Vote on covers, themes, and story directions', 'Reading circles with discussion guides', 'Live events and workshops', 'Fan fiction and collaborative world wikis', 'Personal library with cross-device sync'], highlight: true },
+                            { label: 'Runa Atlas', items: ['Interactive star-map discovery', 'Immersive reader with reactions & highlights', 'AMAs, office hours, writing journals', 'Vote on covers, themes, and story directions', 'Reading circles with discussion guides', 'Live events and workshops', 'Runeweave Archive: community creative artifacts', 'Community Champions, badges & leaderboards'], highlight: true },
                             { label: 'Goodreads', items: ['Catalog and reviews only', 'No reading experience built in', 'Author Q&A is one-way', 'No creative input on publishing', 'Groups are basic forum threads'], bad: true },
                         ].map((col, idx) => (
                             <motion.div key={idx} variants={fadeUp}
@@ -518,7 +520,7 @@ export default function ForReaders() {
                         {[
                             { step: '01', title: 'Discover', desc: 'Explore the Runeweave star-map. Follow constellations that match your taste. Find books through connections and themes, not bestseller lists.', icon: Compass },
                             { step: '02', title: 'Read', desc: 'Dive into the immersive reader. Highlight passages, leave reactions, follow serialized Journeys episode by episode, and switch between dark and sepia themes.', icon: BookOpen },
-                            { step: '03', title: 'Shape', desc: 'Vote on anthology themes in The Forge, pick cover designs, influence story directions. Write fan fiction, contribute to world wikis. Your voice matters here.', icon: Vote },
+                            { step: '03', title: 'Shape', desc: 'Vote on anthology themes in The Forge, pick cover designs, influence story directions. Contribute to the Runeweave Archive. Your voice matters here.', icon: Vote },
                             { step: '04', title: 'Connect', desc: 'Join reading circles, attend author AMAs and live events, and participate in discussions with readers who share your obsessions.', icon: Users },
                             { step: '05', title: 'Belong', desc: 'Build your library, track your reading challenges, earn community recognition, and become part of a literary ecosystem that grows with you.', icon: Heart },
                         ].map((item, idx) => (
@@ -629,8 +631,8 @@ export default function ForReaders() {
                         <Link to="/" className="group px-10 py-4 bg-aurora-teal text-void-black font-semibold text-sm uppercase tracking-widest rounded-sm hover:bg-aurora-teal/90 transition-all flex items-center gap-3">
                             Enter the Runeweave <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <Link to="/community" className="px-10 py-4 border border-white/[0.15] text-white text-sm uppercase tracking-widest rounded-sm hover:border-aurora-teal/40 hover:text-aurora-teal transition-all">
-                            Join the Community
+                        <Link to="/forge" className="px-10 py-4 border border-white/[0.15] text-white text-sm uppercase tracking-widest rounded-sm hover:border-aurora-teal/40 hover:text-aurora-teal transition-all">
+                            Enter The Forge
                         </Link>
                     </div>
                 </motion.div>

@@ -5,7 +5,8 @@ import {
     MessageSquare, Star, Heart, Shield, Gem, Zap, ArrowRight,
     ChevronDown, Check, GitBranch, Eye, Target, Mic, Quote,
     TrendingUp, Award, Globe, Layers, Brain, Feather, Crown,
-    Flame, Calendar, Send, DollarSign, UserCircle, Rocket
+    Flame, Calendar, Send, DollarSign, UserCircle, Rocket,
+    Trophy, Archive
 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -31,6 +32,8 @@ import submissionTrackerImg from '../assets/features/submission-tracker.webp';
 import royaltyCalculatorImg from '../assets/features/royalty-calculator.webp';
 import authorProfileImg from '../assets/features/author-profile.webp';
 import onboardingWizardImg from '../assets/features/onboarding-wizard.webp';
+import championsImg from '../assets/features/champions.webp';
+import archiveImg from '../assets/features/runeweave-archive.webp';
 
 // ═══════════════════════════════════════════
 // FOR AUTHORS — SaaS-style feature showcase
@@ -297,16 +300,16 @@ export default function ForAuthors() {
 
             {/* ═══════ FEATURE 5: COMMUNITY ═══════ */}
             <FeatureShowcase
-                badge="The Runeweave"
+                badge="The Forge & Community"
                 title={<>A Community That<br /><span className="text-starforge-gold">Amplifies Your Voice</span></>}
-                description="The Runeweave is our community hub where readers and authors connect. Constellation voting lets your audience shape anthology themes. Reader Circles bring your books to book clubs. Discussion kits drive deeper engagement with your work."
+                description="The Forge consolidates everything in one hub — voting, reader circles, author Q&A, reading challenges, and the Runeweave Archive. Your audience shapes anthology themes, joins book clubs, and engages directly with your work. Community Champions recognize your most dedicated fans."
                 image={communityImg}
                 features={[
                     'Constellation voting: community-driven anthology curation',
                     'Reader Circles: organized book clubs with discussion guides',
-                    'Q&A sessions: connect directly with your readers',
-                    'Author spotlights and featured author programs',
-                    'Engagement metrics: see how your community is growing',
+                    'Author Q&A sessions with upvoting and live events',
+                    'Runeweave Archive: reader-made glossaries, moodboards, essays',
+                    'Community Champions: badges, leaderboards, Founders Wall',
                 ]}
                 reverse={false}
             />
@@ -434,6 +437,18 @@ export default function ForAuthors() {
                             title="Guided Onboarding"
                             description="A thoughtful 5-step setup wizard that captures your pen name, genres, writing style, goals, and preferences — personalizing the entire platform to your creative process."
                             icon={Rocket}
+                        />
+                        <SubFeatureCard
+                            image={championsImg}
+                            title="Community Champions"
+                            description="Your most engaged readers get recognized. Founders Wall, gamified badges, review leaderboards, and archive weaver rankings — building a thriving fan community around your work."
+                            icon={Trophy}
+                        />
+                        <SubFeatureCard
+                            image={archiveImg}
+                            title="Runeweave Archive"
+                            description="Readers create glossaries, moodboards, playlists, and craft essays inspired by your worlds. A living gallery of community creativity that deepens engagement with your stories."
+                            icon={Archive}
                         />
                     </motion.div>
                 </div>
