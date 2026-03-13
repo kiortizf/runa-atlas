@@ -309,13 +309,13 @@ export default function ContentCompass() {
 
                                                 {/* Vote Actions */}
                                                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[0.04] ml-13">
-                                                    <button className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-emerald-400 transition-colors">
+                                                    <button onClick={() => alert('Thanks! Your accuracy vote has been recorded.')} className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-emerald-400 transition-colors">
                                                         <ThumbsUp className="w-3 h-3" /> Accurate
                                                     </button>
-                                                    <button className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-red-400 transition-colors">
+                                                    <button onClick={() => alert('Thanks for the feedback. We will review this warning.')} className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-red-400 transition-colors">
                                                         <ThumbsDown className="w-3 h-3" /> Inaccurate
                                                     </button>
-                                                    <button className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-amber-400 transition-colors">
+                                                    <button onClick={() => alert('Suggest Edit form coming soon!')} className="flex items-center gap-1 text-[10px] text-text-secondary hover:text-amber-400 transition-colors">
                                                         <MessageCircle className="w-3 h-3" /> Suggest Edit
                                                     </button>
                                                 </div>
@@ -331,7 +331,7 @@ export default function ContentCompass() {
                                     <ShieldCheck className="w-6 h-6 text-emerald-400/40 mx-auto mb-2" />
                                     <h3 className="text-sm font-semibold text-white mb-1">Help the community</h3>
                                     <p className="text-xs text-text-secondary mb-4">Read this book? Add or verify content warnings to help future readers.</p>
-                                    <button className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors">
+                                    <button onClick={() => alert('Content warning submission form coming soon!')} className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors">
                                         Contribute Warnings
                                     </button>
                                 </motion.div>

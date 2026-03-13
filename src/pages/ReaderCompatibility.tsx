@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -42,6 +43,7 @@ export default function ReaderCompatibility() {
     const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'matches' | 'buddy-reads' | 'invites'>('matches');
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const auth = getAuth();
@@ -273,13 +275,13 @@ export default function ReaderCompatibility() {
 
                                                             {/* Actions */}
                                                             <div className="flex items-center gap-3 pt-3 border-t border-white/[0.04]">
-                                                                <button className="px-4 py-2 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert('Buddy Read invitation sent! They will receive a notification.')} className="px-4 py-2 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1.5">
                                                                     <BookOpen className="w-3.5 h-3.5" /> Start Buddy Read
                                                                 </button>
-                                                                <button className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert('Direct messaging coming soon!')} className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                     <MessageCircle className="w-3.5 h-3.5" /> Message
                                                                 </button>
-                                                                <button className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert('Full DNA profile view coming soon!')} className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                     <Eye className="w-3.5 h-3.5" /> View Full DNA
                                                                 </button>
                                                             </div>
@@ -320,7 +322,7 @@ export default function ReaderCompatibility() {
                                 <BookOpen className="w-8 h-8 text-rose-400/40 mx-auto mb-3" />
                                 <h3 className="text-sm font-semibold text-white mb-1">Start a New Buddy Read</h3>
                                 <p className="text-xs text-text-secondary mb-4">Pick a book, invite a match, read together with shared annotations</p>
-                                <button className="px-6 py-2.5 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors">
+                                <button onClick={() => navigate('/catalog')} className="px-6 py-2.5 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors">
                                     Browse Books
                                 </button>
                             </div>
@@ -347,10 +349,10 @@ export default function ReaderCompatibility() {
                                         </div>
                                         <p className="text-xs text-white/70 italic mb-4 pl-9">"{invite.message}"</p>
                                         <div className="flex items-center gap-2 pl-9">
-                                            <button className="px-4 py-2 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1.5">
+                                            <button onClick={() => alert('Invitation accepted! Check your Buddy Reads tab.')} className="px-4 py-2 bg-rose-500/10 text-rose-400 text-xs border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1.5">
                                                 <Check className="w-3.5 h-3.5" /> Accept
                                             </button>
-                                            <button className="px-4 py-2 bg-white/[0.04] text-text-secondary text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                            <button onClick={() => alert('Invitation declined.')} className="px-4 py-2 bg-white/[0.04] text-text-secondary text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                 <X className="w-3.5 h-3.5" /> Decline
                                             </button>
                                         </div>

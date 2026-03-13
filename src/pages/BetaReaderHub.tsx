@@ -264,6 +264,7 @@ export default function BetaReaderHub() {
                                                                             const Icon = ft.icon;
                                                                             return (
                                                                                 <button key={ft.id}
+                                                                                    onClick={() => alert(`Opening ${ft.label} feedback form for this manuscript...`)}
                                                                                     className="flex flex-col items-center gap-1 p-2 bg-white/[0.02] border border-white/[0.06] rounded hover:border-amber-400/20 transition-colors">
                                                                                     <Icon className="w-3.5 h-3.5" style={{ color: ft.color }} />
                                                                                     <span className="text-[9px] text-text-secondary">{ft.label}</span>
@@ -276,13 +277,13 @@ export default function BetaReaderHub() {
 
                                                             {/* Actions */}
                                                             <div className="flex items-center gap-3 pt-3 border-t border-white/[0.04]">
-                                                                <button className="px-4 py-2 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert(`Continue reading ${ms.title} - Chapter ${ms.chaptersRead + 1}`)} className="px-4 py-2 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
                                                                     <BookOpen className="w-3.5 h-3.5" /> Continue Reading
                                                                 </button>
-                                                                <button className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert('Direct author messaging coming soon!')} className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                     <MessageCircle className="w-3.5 h-3.5" /> Message Author
                                                                 </button>
-                                                                <button className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                                <button onClick={() => alert('Beta reading guidelines: Read at your own pace, provide honest feedback on each chapter, focus on character, pacing, and plot.')} className="px-4 py-2 bg-white/[0.04] text-white text-xs border border-white/[0.1] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                     <Eye className="w-3.5 h-3.5" /> View Guidelines
                                                                 </button>
                                                             </div>

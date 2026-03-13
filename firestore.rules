@@ -1498,6 +1498,20 @@ service cloud.firestore {
       allow create, update, delete: if isOwner(userId);
     }
 
+    // User stats (reading streak, etc.)
+    match /users/{userId}/stats/{statId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    // User preferences (notification settings, etc.)
+    match /users/{userId}/preferences/{prefId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // READER-FACING DATA (authenticated read, admin write)
     // ═══════════════════════════════════════════════════════════════

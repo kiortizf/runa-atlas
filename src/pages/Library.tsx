@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Download, Heart, Clock, Settings, LogOut, Search, Filter } from 'lucide-react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Download, Heart, Clock, Settings, LogOut, Search, Filter, ShoppingCart } from 'lucide-react';
+import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface LibraryBook {
   id: string;
@@ -30,6 +31,7 @@ export default function Library() {
   const [activeTab, setActiveTab] = useState('library');
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const auth = getAuth();
@@ -98,7 +100,7 @@ export default function Library() {
         </nav>
 
         <div className="p-4 border-t border-border">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-sm font-ui text-sm text-text-muted hover:text-forge-red transition-colors">
+          <button onClick={() => { signOut(getAuth()); navigate('/'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-sm font-ui text-sm text-text-muted hover:text-forge-red transition-colors">
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
         </div>
@@ -137,10 +139,10 @@ export default function Library() {
                     
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-void-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 gap-3 backdrop-blur-sm">
-                      <button className="w-full py-2 bg-aurora-teal text-void-black font-ui text-xs uppercase tracking-wider font-semibold rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2">
+                      <button onClick={() => navigate(`/read/${book.id}/1`)} className="w-full py-2 bg-aurora-teal text-void-black font-ui text-xs uppercase tracking-wider font-semibold rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2">
                         <BookOpen className="w-4 h-4" /> Read Now
                       </button>
-                      <button className="w-full py-2 border border-border text-text-primary font-ui text-xs uppercase tracking-wider rounded-sm hover:border-aurora-teal hover:text-aurora-teal transition-colors flex items-center justify-center gap-2">
+                      <button onClick={() => alert('EPUB downloads coming soon!')} className="w-full py-2 border border-border text-text-primary font-ui text-xs uppercase tracking-wider rounded-sm hover:border-aurora-teal hover:text-aurora-teal transition-colors flex items-center justify-center gap-2">
                         <Download className="w-4 h-4" /> Download EPUB
                       </button>
                     </div>
@@ -186,10 +188,22 @@ export default function Library() {
                       
                       {/* Hover Overlay */}
                       <div className="absolute inset-0 bg-void-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 gap-3 backdrop-blur-sm">
-                        <button className="w-full py-2 bg-aurora-teal text-void-black font-ui text-xs uppercase tracking-wider font-semibold rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2">
-                          Add to Cart
+                        <button onClick={async () => {
+                          const auth = getAuth();
+                          if (!auth.currentUser) return;
+                          try {
+                            await addDoc(collection(db, 'user_carts'), {
+                              userId: auth.currentUser.uid, title: book.title, author: book.author,
+                              cover: book.cover, format: book.format, price: parseFloat(String(book.price).replace('$', '')),
+                              quantity: 1, editionType: book.editionType, addedAt: Timestamp.now(),
+                            });
+                          } catch (e) { console.error('Add to cart failed', e); }
+                        }} className="w-full py-2 bg-aurora-teal text-void-black font-ui text-xs uppercase tracking-wider font-semibold rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2">
+                          <ShoppingCart className="w-4 h-4" /> Add to Cart
                         </button>
-                        <button className="w-full py-2 border border-border text-forge-red font-ui text-xs uppercase tracking-wider rounded-sm hover:border-forge-red transition-colors flex items-center justify-center gap-2">
+                        <button onClick={async () => {
+                          try { await deleteDoc(doc(db, 'user_wishlists', book.id)); } catch (e) { console.error('Remove failed', e); }
+                        }} className="w-full py-2 border border-border text-forge-red font-ui text-xs uppercase tracking-wider rounded-sm hover:border-forge-red transition-colors flex items-center justify-center gap-2">
                           Remove
                         </button>
                       </div>

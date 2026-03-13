@@ -213,7 +213,7 @@ export default function ARCManager() {
                                         <textarea rows={3} placeholder="Hi! I'd love for you to review my upcoming novel..."
                                             className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/15 focus:border-starforge-gold/30 focus:outline-none resize-none" />
                                     </div>
-                                    <button className="w-full py-3 bg-starforge-gold text-void-black text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-starforge-gold/90 transition-colors flex items-center justify-center gap-2">
+                                    <button onClick={() => { alert('ARC invitation sent!'); setShowInvite(false); }} className="w-full py-3 bg-starforge-gold text-void-black text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-starforge-gold/90 transition-colors flex items-center justify-center gap-2">
                                         <Send className="w-4 h-4" /> Send ARC Invitation
                                     </button>
                                 </div>

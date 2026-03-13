@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Trash2, ArrowRight, CreditCard, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { Link, useNavigate } from 'react-router-dom';
+import { collection, onSnapshot, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
@@ -19,6 +19,7 @@ interface CartItem {
 
 export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const auth = getAuth();
@@ -36,13 +37,15 @@ export default function Cart() {
     return () => unsubAuth();
   }, []);
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  const updateQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     setItems(items.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+    try { await updateDoc(doc(db, 'user_carts', id), { quantity: newQuantity }); } catch (e) { console.error('Update quantity failed', e); }
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = async (id: string) => {
     setItems(items.filter(item => item.id !== id));
+    try { await deleteDoc(doc(db, 'user_carts', id)); } catch (e) { console.error('Remove item failed', e); }
   };
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -154,7 +157,7 @@ export default function Cart() {
                   </div>
                 </div>
                 
-                <button className="w-full py-4 bg-starforge-gold text-void-black font-ui font-semibold uppercase tracking-wider rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2 mb-4">
+                <button onClick={() => navigate('/checkout')} className="w-full py-4 bg-starforge-gold text-void-black font-ui font-semibold uppercase tracking-wider rounded-sm hover:bg-white transition-colors flex items-center justify-center gap-2 mb-4">
                   <Lock className="w-4 h-4" /> Secure Checkout
                 </button>
                 

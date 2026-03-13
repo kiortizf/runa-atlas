@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot, orderBy, addDoc, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { ArrowLeft, ShoppingCart, Star, Sparkles, ArrowRight, BookOpen } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
+import { ArrowLeft, ShoppingCart, Star, Sparkles, ArrowRight, BookOpen, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BookReviews from '../components/BookReviews';
 import BookshelfButton from '../components/BookshelfButton';
@@ -57,6 +58,8 @@ export default function BookDetail() {
   const [constellation, setConstellation] = useState<Constellation | null>(null);
   const [connectedBooks, setConnectedBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -217,8 +220,29 @@ export default function BookDetail() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <button className="flex-1 flex items-center justify-center gap-2 bg-starforge-gold text-void-black px-8 py-4 font-ui text-sm uppercase tracking-widest rounded-sm hover:bg-yellow-500 transition-colors">
-                <ShoppingCart className="w-5 h-5" /> Add to Cart
+              <button
+                onClick={async () => {
+                  const auth = getAuth();
+                  if (!auth.currentUser || !book) return;
+                  setAddingToCart(true);
+                  try {
+                    await addDoc(collection(db, 'user_carts'), {
+                      userId: auth.currentUser.uid,
+                      title: book.title, author: book.author, cover: book.cover,
+                      format: book.format, price: book.price, quantity: 1,
+                      editionType: book.editionType, bookId: id,
+                      addedAt: Timestamp.now(),
+                    });
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 2000);
+                  } catch (e) { console.error('Add to cart failed', e); }
+                  setAddingToCart(false);
+                }}
+                disabled={addingToCart}
+                className="flex-1 flex items-center justify-center gap-2 bg-starforge-gold text-void-black px-8 py-4 font-ui text-sm uppercase tracking-widest rounded-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
+              >
+                {addingToCart ? <Loader2 className="w-5 h-5 animate-spin" /> : addedToCart ? <Check className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                {addedToCart ? 'Added!' : 'Add to Cart'}
               </button>
               <Link to={`/read/${id}/1`} className="flex-1 flex items-center justify-center gap-2 border-2 border-starforge-gold text-starforge-gold px-8 py-4 font-ui text-sm uppercase tracking-widest rounded-sm hover:bg-starforge-gold hover:text-void-black transition-colors">
                 <BookOpen className="w-5 h-5" /> Read Now

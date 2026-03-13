@@ -277,10 +277,14 @@ function SlidePersonality({ onNext, onPrev }: SlideProps) {
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
                 className="mt-10 flex items-center gap-3">
-                <button className="px-6 py-3 bg-starforge-gold/10 text-starforge-gold text-sm border border-starforge-gold/20 rounded-sm hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
+                <button onClick={async () => {
+                    if (navigator.share) {
+                        try { await navigator.share({ title: 'My Reading Wrapped 2025', text: `I read ${WRAPPED_DATA.totalBooks} books this year! My personality: ${WRAPPED_DATA.readingPersonality}`, url: window.location.href }); } catch { }
+                    } else { navigator.clipboard.writeText(`I read ${WRAPPED_DATA.totalBooks} books this year on Runa Atlas! My reading personality: ${WRAPPED_DATA.readingPersonality}`); alert('Copied to clipboard!'); }
+                }} className="px-6 py-3 bg-starforge-gold/10 text-starforge-gold text-sm border border-starforge-gold/20 rounded-sm hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
                     <Share2 className="w-4 h-4" /> Share Your Wrapped
                 </button>
-                <button className="px-6 py-3 bg-white/[0.04] text-white text-sm border border-white/[0.1] rounded-sm hover:bg-white/[0.08] transition-colors flex items-center gap-2">
+                <button onClick={() => alert('Wrapped card download coming soon!')} className="px-6 py-3 bg-white/[0.04] text-white text-sm border border-white/[0.1] rounded-sm hover:bg-white/[0.08] transition-colors flex items-center gap-2">
                     <Download className="w-4 h-4" /> Download Card
                 </button>
             </motion.div>
