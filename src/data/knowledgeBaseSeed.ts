@@ -29,6 +29,18 @@ import { DOC_READER_CIRCLES } from './kb/reader-circles';
 import { DOC_PUBLISHERS_MARKETPLACE } from './kb/publishers-marketplace';
 import { DOC_INDUSTRY_ASSOCIATIONS } from './kb/industry-associations';
 import { DOC_MILESTONE_PAYOUTS } from './kb/milestone-payouts';
+import { DOC_BRAND_IDENTITY } from './kb/brand-identity';
+import { DOC_CONTRACT_TEMPLATES } from './kb/contract-templates';
+import { DOC_FREELANCER_MANAGEMENT } from './kb/freelancer-management';
+import { DOC_FINANCIAL_REPORTING } from './kb/financial-reporting';
+import { DOC_BACKLIST_MANAGEMENT } from './kb/backlist-management';
+import { DOC_RIGHTS_LICENSING } from './kb/rights-licensing';
+import { DOC_AUTHOR_PLATFORM } from './kb/author-platform';
+import { DOC_AWARDS_STRATEGY } from './kb/awards-strategy';
+import { DOC_SOCIAL_MEDIA_CONTENT } from './kb/social-media-content';
+import { DOC_PRINT_PLANNING } from './kb/print-planning';
+import { DOC_REVIEW_MANAGEMENT } from './kb/review-management';
+import { DOC_CONTENT_CALENDAR } from './kb/content-calendar';
 
 export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'publishing-standards', title: 'Publishing Standards & Quality Guidelines', category: 'Publishing', icon: '📏', lastUpdated: '2026-03-12', content: DOC_PUBLISHING_STANDARDS },
@@ -49,4 +61,16 @@ export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'publishers-marketplace', title: "Publisher's Marketplace Guide", category: 'Operations', icon: '💼', lastUpdated: '2026-03-12', content: DOC_PUBLISHERS_MARKETPLACE },
   { id: 'industry-associations', title: 'Industry Associations (IBPA & More)', category: 'Operations', icon: '🏛️', lastUpdated: '2026-03-12', content: DOC_INDUSTRY_ASSOCIATIONS },
   { id: 'milestone-payouts', title: 'Milestone-Based Payout Structure', category: 'Operations', icon: '💰', lastUpdated: '2026-03-12', content: DOC_MILESTONE_PAYOUTS },
+  { id: 'brand-identity', title: 'Brand Identity & Style Guide', category: 'Publishing', icon: '🎨', lastUpdated: '2026-03-13', content: DOC_BRAND_IDENTITY },
+  { id: 'contract-templates', title: 'Contract Templates & Legal Standards', category: 'Operations', icon: '📋', lastUpdated: '2026-03-13', content: DOC_CONTRACT_TEMPLATES },
+  { id: 'freelancer-management', title: 'Freelancer Management', category: 'Operations', icon: '👥', lastUpdated: '2026-03-13', content: DOC_FREELANCER_MANAGEMENT },
+  { id: 'financial-reporting', title: 'Financial Reporting & Accounting', category: 'Operations', icon: '📊', lastUpdated: '2026-03-13', content: DOC_FINANCIAL_REPORTING },
+  { id: 'backlist-management', title: 'Backlist Management', category: 'Publishing', icon: '📚', lastUpdated: '2026-03-13', content: DOC_BACKLIST_MANAGEMENT },
+  { id: 'rights-licensing', title: 'Rights & Licensing Playbook', category: 'Operations', icon: '⚖️', lastUpdated: '2026-03-13', content: DOC_RIGHTS_LICENSING },
+  { id: 'author-platform', title: 'Author Platform Building Guide', category: 'Marketing', icon: '🚀', lastUpdated: '2026-03-13', content: DOC_AUTHOR_PLATFORM },
+  { id: 'awards-strategy', title: 'Awards Strategy Calendar', category: 'Marketing', icon: '🏆', lastUpdated: '2026-03-13', content: DOC_AWARDS_STRATEGY },
+  { id: 'social-media-content', title: 'Social Media Content Guidelines', category: 'Marketing', icon: '📲', lastUpdated: '2026-03-13', content: DOC_SOCIAL_MEDIA_CONTENT },
+  { id: 'print-planning', title: 'Print Run Planning', category: 'Publishing', icon: '🖨️', lastUpdated: '2026-03-13', content: DOC_PRINT_PLANNING },
+  { id: 'review-management', title: 'Review Management', category: 'Marketing', icon: '⭐', lastUpdated: '2026-03-13', content: DOC_REVIEW_MANAGEMENT },
+  { id: 'content-calendar', title: 'Content Calendar Template', category: 'Marketing', icon: '📅', lastUpdated: '2026-03-13', content: DOC_CONTENT_CALENDAR },
 ];
