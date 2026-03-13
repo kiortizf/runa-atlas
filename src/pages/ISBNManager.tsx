@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Hash, Plus, Search, Edit3, Trash2, BookOpen, Copy,
     Check, X, Filter, ChevronDown, ExternalLink, AlertCircle, Loader2
 } from 'lucide-react';
 import { useISBNs, ISBNEntry } from '../hooks/useDemoData';
+import { db } from '../firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const STATUS_COLORS: Record<string, string> = {
     active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -17,11 +19,22 @@ const FORMAT_LABELS: Record<string, string> = {
     ebook: 'eBook', paperback: 'Paperback', hardcover: 'Hardcover', audiobook: 'Audiobook',
 };
 
+interface ISBNFormData {
+    isbn: string; title: string; format: string; imprint: string; status: string;
+}
+
+const EMPTY_FORM: ISBNFormData = { isbn: '', title: '', format: 'ebook', imprint: '', status: 'reserved' };
+
 export default function ISBNManager() {
     const { data: isbns, loading } = useISBNs();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [copiedISBN, setCopiedISBN] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [form, setForm] = useState<ISBNFormData>(EMPTY_FORM);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState<string | null>(null);
 
     if (loading) {
         return <div className="min-h-screen bg-void-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-violet-400 animate-spin" /></div>;
@@ -46,6 +59,40 @@ export default function ISBNManager() {
         setTimeout(() => setCopiedISBN(null), 2000);
     };
 
+    const openAdd = () => { setForm(EMPTY_FORM); setEditingId(null); setShowModal(true); };
+    const openEdit = (entry: ISBNEntry) => {
+        setForm({ isbn: entry.isbn, title: entry.title, format: entry.format, imprint: entry.imprint, status: entry.status });
+        setEditingId(entry.id);
+        setShowModal(true);
+    };
+
+    const handleSave = async () => {
+        if (!form.isbn.trim()) return;
+        setSaving(true);
+        try {
+            if (editingId) {
+                await updateDoc(doc(db, 'isbns', editingId), {
+                    isbn: form.isbn, title: form.title, format: form.format,
+                    imprint: form.imprint, status: form.status,
+                });
+            } else {
+                await addDoc(collection(db, 'isbns'), {
+                    isbn: form.isbn, title: form.title, format: form.format,
+                    imprint: form.imprint, status: form.status,
+                    assignedDate: new Date().toISOString().split('T')[0],
+                });
+            }
+            setShowModal(false);
+        } catch (e) { console.error('ISBN save failed:', e); }
+        setSaving(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        setDeleting(id);
+        try { await deleteDoc(doc(db, 'isbns', id)); } catch (e) { console.error('ISBN delete failed:', e); }
+        setDeleting(null);
+    };
+
     return (
         <div className="min-h-screen bg-void-black text-white">
             <div className="max-w-6xl mx-auto px-6 py-8">
@@ -54,7 +101,8 @@ export default function ISBNManager() {
                         <h1 className="font-display text-3xl tracking-wide uppercase">ISBN <span className="text-violet-400">Manager</span></h1>
                         <p className="text-sm text-text-secondary mt-1">Track and manage ISBNs across titles and formats</p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
+                    <button onClick={openAdd}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
                         <Plus className="w-4 h-4" /> Add ISBN
                     </button>
                 </div>
@@ -123,8 +171,10 @@ export default function ISBNManager() {
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="text-white/20 hover:text-white/50"><Edit3 className="w-3.5 h-3.5" /></button>
-                                            <button className="text-white/20 hover:text-forge-red"><Trash2 className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => openEdit(entry)} className="text-white/20 hover:text-white/50 transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => handleDelete(entry.id)} className="text-white/20 hover:text-forge-red transition-colors">
+                                                {deleting === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -134,6 +184,68 @@ export default function ISBNManager() {
                     {filtered.length === 0 && <div className="text-center py-12 text-white/30 text-sm">No ISBNs found.</div>}
                 </div>
             </div>
+
+            {/* Add/Edit Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowModal(false)}>
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-surface border border-border/30 rounded-xl w-full max-w-lg p-6"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-display text-white">{editingId ? 'Edit ISBN' : 'Add New ISBN'}</h3>
+                                <button onClick={() => setShowModal(false)} className="text-white/30 hover:text-white"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-white/40 font-semibold block mb-1">ISBN</label>
+                                    <input value={form.isbn} onChange={e => setForm({ ...form, isbn: e.target.value })}
+                                        placeholder="978-0-000-00000-0"
+                                        className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-violet-400/40 focus:outline-none font-mono" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-white/40 font-semibold block mb-1">Title</label>
+                                    <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+                                        placeholder="Book title (optional)"
+                                        className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-violet-400/40 focus:outline-none" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-semibold block mb-1">Format</label>
+                                        <select value={form.format} onChange={e => setForm({ ...form, format: e.target.value })}
+                                            className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-sm text-white focus:border-violet-400/40 focus:outline-none">
+                                            {Object.entries(FORMAT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-semibold block mb-1">Status</label>
+                                        <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                                            className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-sm text-white focus:border-violet-400/40 focus:outline-none">
+                                            {['active', 'assigned', 'reserved', 'retired'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-white/40 font-semibold block mb-1">Imprint</label>
+                                    <input value={form.imprint} onChange={e => setForm({ ...form, imprint: e.target.value })}
+                                        placeholder="e.g., Rüna Atlas Press"
+                                        className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-violet-400/40 focus:outline-none" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-white/50 hover:text-white transition-colors">Cancel</button>
+                                <button onClick={handleSave} disabled={saving || !form.isbn.trim()}
+                                    className="flex items-center gap-2 px-5 py-2 bg-starforge-gold text-void-black text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50">
+                                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                    {editingId ? 'Save Changes' : 'Add ISBN'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

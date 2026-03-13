@@ -4,9 +4,11 @@ import {
     Calendar, Star, Check, Loader2
 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../hooks/useDemoData';
 
 export default function Wishlist() {
+    const navigate = useNavigate();
     const { items, toggleNotify, togglePreorder, removeItem, loading } = useWishlist();
     const [tab, setTab] = useState<'upcoming' | 'released'>('upcoming');
 
@@ -77,7 +79,8 @@ export default function Wishlist() {
                                             </>
                                         )}
                                         {item.released && (
-                                            <button className="px-3 py-2 rounded-lg text-xs font-medium bg-aurora-teal text-void-black hover:bg-aurora-teal/90">
+                                            <button onClick={() => navigate(`/reader?book=${encodeURIComponent(item.title)}`)}
+                                                className="px-3 py-2 rounded-lg text-xs font-medium bg-aurora-teal text-void-black hover:bg-aurora-teal/90">
                                                 <Eye className="w-3 h-3 inline mr-1" /> Read Now
                                             </button>
                                         )}

@@ -4,13 +4,22 @@ import {
   FileSearch, Star, Users, TrendingUp, DollarSign, AlertTriangle, CheckCircle,
   BookOpen, Info, BarChart3, Target, Award, Shield, Zap, ChevronDown,
   Flame, Globe, FileText, Sparkles, Layers, Eye, Scale, PenTool, Brain,
-  Heart, MessageCircle, Search, Map, Compass, Crown, Share2, Activity, PieChart
+  Heart, MessageCircle, Search, Map, Compass, Crown, Share2, Activity, PieChart,
+  GitBranch, Network, Calendar, Radar, Swords, Printer
 } from 'lucide-react';
 import MSMarketIntel from './MSMarketIntel';
 import MSAcquisitionMemo from './MSAcquisitionMemo';
 import MSNarrativeGenome from './MSNarrativeGenome';
 import MSPortfolioTheory from './MSPortfolioTheory';
 import MSReaderGenome from './MSReaderGenome';
+import MSDecisionGenome from './MSDecisionGenome';
+import MSCatalogSynergy from './MSCatalogSynergy';
+import MSCulturalResonance from './MSCulturalResonance';
+import MSAuthorTrajectory from './MSAuthorTrajectory';
+import MSSynthesisEngine from './MSSynthesisEngine';
+import MSNarrativeAI from './MSNarrativeAI';
+import MSWarRoom from './MSWarRoom';
+import MSReportGenerator from './MSReportGenerator';
 
 /* ═══════════════════════════════════════════════════════════════
    MANUSCRIPT SCORING DASHBOARD
@@ -188,7 +197,7 @@ export default function ManuscriptScoring() {
   // Expanded categories
   const [expandedCat, setExpandedCat] = useState<string>('Literary Merit');
   const [showSubDimensions, setShowSubDimensions] = useState<string>('');
-  const [activeView, setActiveView] = useState<'rubric' | 'market' | 'offer' | 'memo' | 'genome' | 'portfolio' | 'reader'>('rubric');
+  const [activeView, setActiveView] = useState<'rubric' | 'market' | 'offer' | 'memo' | 'genome' | 'portfolio' | 'reader' | 'decision' | 'synergy' | 'zeitgeist' | 'trajectory' | 'synthesis' | 'ai' | 'warroom' | 'report'>('rubric');
 
   const updateScore = (id: string, value: number) => setScores(prev => ({ ...prev, [id]: value }));
 
@@ -299,23 +308,55 @@ export default function ManuscriptScoring() {
         </div>
       </div>
 
-      {/* 7-Tab Navigation */}
-      <div className="flex gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1 overflow-x-auto">
-        {[
-          { id: 'rubric' as const, label: 'Rubric', icon: Star, desc: '30 criteria' },
-          { id: 'genome' as const, label: 'Narrative Genome', icon: Activity, desc: 'Story DNA' },
-          { id: 'market' as const, label: 'Market Intel', icon: TrendingUp, desc: 'Comps' },
-          { id: 'portfolio' as const, label: 'Portfolio Theory', icon: PieChart, desc: 'MPT' },
-          { id: 'reader' as const, label: 'Reader Genome', icon: Share2, desc: 'Funnel' },
-          { id: 'offer' as const, label: 'Offer', icon: DollarSign, desc: 'P&L' },
-          { id: 'memo' as const, label: 'Acq. Memo', icon: FileText, desc: 'Deal' },
-        ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveView(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-ui transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
-            <tab.icon className="w-4 h-4" /> <span className="hidden lg:inline">{tab.label}</span>
-            <span className="text-[9px] text-text-muted hidden xl:inline">({tab.desc})</span>
-          </button>
-        ))}
+      {/* 11-Tab Navigation — Core + Advanced Intelligence */}
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-1 space-y-1">
+        {/* Row 1: Core */}
+        <div className="flex gap-1 overflow-x-auto">
+          {[
+            { id: 'rubric' as const, label: 'Rubric', icon: Star, desc: '30 criteria' },
+            { id: 'genome' as const, label: 'Narrative Genome', icon: Activity, desc: 'Story DNA' },
+            { id: 'market' as const, label: 'Market Intel', icon: TrendingUp, desc: 'Comps' },
+            { id: 'portfolio' as const, label: 'Portfolio Theory', icon: PieChart, desc: 'MPT' },
+            { id: 'reader' as const, label: 'Reader Genome', icon: Share2, desc: 'Funnel' },
+            { id: 'offer' as const, label: 'Offer', icon: DollarSign, desc: 'P&L' },
+            { id: 'memo' as const, label: 'Acq. Memo', icon: FileText, desc: 'Deal' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveView(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-ui transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
+              <tab.icon className="w-3.5 h-3.5" /> <span className="hidden md:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Row 2: Advanced Intelligence */}
+        <div className="flex gap-1 overflow-x-auto border-t border-white/[0.04] pt-1">
+          <span className="text-[7px] text-text-muted font-ui uppercase self-center px-1 whitespace-nowrap">ADV</span>
+          {[
+            { id: 'decision' as const, label: 'Decision Genome', icon: GitBranch, desc: 'Cascade' },
+            { id: 'synergy' as const, label: 'Catalog Synergy', icon: Network, desc: 'Network' },
+            { id: 'zeitgeist' as const, label: 'Zeitgeist', icon: Globe, desc: 'Culture' },
+            { id: 'trajectory' as const, label: 'Author Arc', icon: Calendar, desc: 'Career' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveView(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-ui transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-purple-500/10 text-purple-400' : 'text-text-muted hover:text-white'}`}>
+              <tab.icon className="w-3.5 h-3.5" /> <span className="hidden md:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Row 3: Intelligence Suite */}
+        <div className="flex gap-1 overflow-x-auto border-t border-white/[0.04] pt-1">
+          <span className="text-[7px] text-text-muted font-ui uppercase self-center px-1 whitespace-nowrap">INTEL</span>
+          {[
+            { id: 'synthesis' as const, label: 'Synthesis', icon: Radar, desc: 'Mission Ctrl' },
+            { id: 'ai' as const, label: 'AI Analysis', icon: Brain, desc: 'Gemini' },
+            { id: 'warroom' as const, label: 'War Room', icon: Swords, desc: 'Compare' },
+            { id: 'report' as const, label: 'Report', icon: Printer, desc: 'Export' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveView(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-ui transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-emerald-500/10 text-emerald-400' : 'text-text-muted hover:text-white'}`}>
+              <tab.icon className="w-3.5 h-3.5" /> <span className="hidden md:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ═══ Composite Score Banner ═══ */}
@@ -542,6 +583,30 @@ export default function ManuscriptScoring() {
 
       {/* ═══ READER GENOME VIEW ═══ */}
       {activeView === 'reader' && <MSReaderGenome />}
+
+      {/* ═══ DECISION GENOME VIEW ═══ */}
+      {activeView === 'decision' && <MSDecisionGenome />}
+
+      {/* ═══ CATALOG SYNERGY VIEW ═══ */}
+      {activeView === 'synergy' && <MSCatalogSynergy />}
+
+      {/* ═══ CULTURAL ZEITGEIST VIEW ═══ */}
+      {activeView === 'zeitgeist' && <MSCulturalResonance />}
+
+      {/* ═══ AUTHOR TRAJECTORY VIEW ═══ */}
+      {activeView === 'trajectory' && <MSAuthorTrajectory />}
+
+      {/* ═══ SYNTHESIS ENGINE VIEW ═══ */}
+      {activeView === 'synthesis' && <MSSynthesisEngine />}
+
+      {/* ═══ AI NARRATIVE ANALYSIS VIEW ═══ */}
+      {activeView === 'ai' && <MSNarrativeAI />}
+
+      {/* ═══ WAR ROOM VIEW ═══ */}
+      {activeView === 'warroom' && <MSWarRoom />}
+
+      {/* ═══ REPORT GENERATOR VIEW ═══ */}
+      {activeView === 'report' && <MSReportGenerator />}
 
       {/* ═══ ACQUISITION MEMO VIEW ═══ */}
       {activeView === 'memo' && (

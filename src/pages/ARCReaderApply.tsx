@@ -408,15 +408,16 @@ export default function ARCReaderApply() {
             </div>
 
             {/* NDA Signing Modal */}
-            <NDASigningModal
-                isOpen={showNDAModal}
-                onClose={() => setShowNDAModal(false)}
-                templateId="arc_reader"
-                onSigned={(record) => {
-                    setNdaSignatureRecord(record);
-                    setShowNDAModal(false);
-                }}
-            />
+            {showNDAModal && (
+                <NDASigningModal
+                    ndaType="beta_reader"
+                    onCancel={() => setShowNDAModal(false)}
+                    onSigned={(record) => {
+                        setNdaSignatureRecord(record);
+                        setShowNDAModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 }

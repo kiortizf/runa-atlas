@@ -1,19 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Trophy, Flame, Calendar, Users, CheckCircle, Crown, Loader2
 } from 'lucide-react';
 import { useChallenges } from '../hooks/useDemoData';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 export default function ReadingChallenges() {
     const { challenges, leaderboard, loading } = useChallenges();
+    const { user } = useAuth();
     const [tab, setTab] = useState<'active' | 'completed' | 'upcoming'>('active');
+    const [joining, setJoining] = useState<string | null>(null);
+    const [streak, setStreak] = useState<number>(0);
+    const [streakLoading, setStreakLoading] = useState(true);
+
+    // Load dynamic streak from Firestore
+    useEffect(() => {
+        if (!user?.uid) { setStreakLoading(false); return; }
+        const fetchStreak = async () => {
+            try {
+                const streakDoc = await getDoc(doc(db, `users/${user.uid}/stats/reading_streak`));
+                if (streakDoc.exists()) {
+                    setStreak(streakDoc.data().days || 0);
+                } else {
+                    // Initialize streak doc
+                    await setDoc(doc(db, `users/${user.uid}/stats/reading_streak`), { days: 0, lastRead: null });
+                    setStreak(0);
+                }
+            } catch (e) { console.error('Streak fetch failed:', e); }
+            setStreakLoading(false);
+        };
+        fetchStreak();
+    }, [user?.uid]);
 
     if (loading) {
         return <div className="min-h-screen bg-void-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-starforge-gold animate-spin" /></div>;
     }
 
     const filtered = challenges.filter(c => c.status === tab);
+
+    const handleJoin = async (challengeId: string) => {
+        if (!user?.uid) return;
+        setJoining(challengeId);
+        try {
+            // Create user progress entry
+            await setDoc(doc(db, `users/${user.uid}/challenge_progress`, challengeId), { progress: 0 });
+            // Update participant count on the challenge
+            const challenge = challenges.find(c => c.id === challengeId);
+            if (challenge) {
+                await updateDoc(doc(db, 'challenges', challengeId), {
+                    participants: (challenge.participants || 0) + 1,
+                    status: 'active',
+                });
+            }
+        } catch (e) { console.error('Join challenge failed:', e); }
+        setJoining(null);
+    };
 
     return (
         <div className="min-h-screen bg-void-black text-white">
@@ -26,7 +70,9 @@ export default function ReadingChallenges() {
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 px-3 py-2 bg-starforge-gold/10 rounded-lg border border-starforge-gold/20">
                             <Flame className="w-4 h-4 text-starforge-gold" />
-                            <span className="text-sm font-semibold text-starforge-gold">12-day streak</span>
+                            <span className="text-sm font-semibold text-starforge-gold">
+                                {streakLoading ? '...' : `${streak}-day streak`}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -75,7 +121,12 @@ export default function ReadingChallenges() {
                                             <span><Calendar className="w-3 h-3 inline mr-1" />Ends {challenge.endDate}</span>
                                         </div>
                                         {challenge.status === 'upcoming' && (
-                                            <button className="px-3 py-1.5 text-xs bg-starforge-gold text-void-black rounded-lg font-semibold hover:bg-yellow-400">Join</button>
+                                            <button onClick={() => handleJoin(challenge.id)}
+                                                disabled={joining === challenge.id}
+                                                className="px-3 py-1.5 text-xs bg-starforge-gold text-void-black rounded-lg font-semibold hover:bg-yellow-400 transition-colors disabled:opacity-50 flex items-center gap-1">
+                                                {joining === challenge.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                                                Join
+                                            </button>
                                         )}
                                     </div>
                                 </motion.div>

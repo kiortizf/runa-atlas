@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Newspaper, Calendar, ArrowRight } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -19,6 +20,7 @@ type Post = {
 export default function Posts() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'posts'), (snapshot) => {
@@ -91,7 +93,8 @@ export default function Posts() {
                 </p>
                 
                 <div className="pt-6 border-t border-border/50 mt-auto">
-                  <button className="font-ui text-sm text-starforge-gold hover:text-white transition-colors flex items-center gap-2">
+                  <button onClick={() => navigate(`/posts/${post.slug || post.id}`)}
+                    className="font-ui text-sm text-starforge-gold hover:text-white transition-colors flex items-center gap-2">
                     Read More <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

@@ -65,6 +65,7 @@ import { DOC_METADATA_DISCOVERABILITY } from './kb/metadata-discoverability';
 import { DOC_SALES_MERCHANDISING } from './kb/sales-merchandising';
 import { DOC_EDITORIAL_RUBRIC } from './kb/editorial-standards-rubric';
 import { DOC_PUBLISHING_ANALYTICS } from './kb/publishing-analytics-kpis';
+import { DOC_MANUSCRIPT_SCORING_GUIDE } from './kb/manuscript-scoring-guide';
 
 export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'publishing-standards', title: 'Publishing Standards & Quality Guidelines', category: 'Publishing', icon: '📏', lastUpdated: '2026-03-12', content: DOC_PUBLISHING_STANDARDS },
@@ -121,4 +122,5 @@ export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'sales-merchandising', title: 'Sales & Merchandising Guide', category: 'Marketing', icon: '🏷️', lastUpdated: '2026-03-13', content: DOC_SALES_MERCHANDISING },
   { id: 'editorial-standards-rubric', title: 'Editorial Standards & Rubric', category: 'Publishing', icon: '✏️', lastUpdated: '2026-03-13', content: DOC_EDITORIAL_RUBRIC },
   { id: 'publishing-analytics-kpis', title: 'Publishing Analytics & KPIs', category: 'Operations', icon: '📈', lastUpdated: '2026-03-13', content: DOC_PUBLISHING_ANALYTICS },
+  { id: 'manuscript-scoring-guide', title: 'Manuscript Scoring Intelligence Dashboard Guide', category: 'Publishing', icon: '🧠', lastUpdated: '2026-03-13', content: DOC_MANUSCRIPT_SCORING_GUIDE },
 ];
