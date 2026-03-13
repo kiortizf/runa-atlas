@@ -45,6 +45,7 @@ import AdminProduction from '../components/admin/AdminProduction';
 import AdminReviewTracker from '../components/admin/AdminReviewTracker';
 import AdminNDA from '../components/admin/AdminNDA';
 import AdminArchive from '../components/admin/AdminArchive';
+import AdminKnowledgeBase from '../components/admin/AdminKnowledgeBase';
 import React from 'react';
 
 // ── Tab Error Boundary ──────────────────────────
@@ -85,7 +86,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   onboarding: AdminOnboarding, imprints: AdminImprints, sops: AdminSOPs,
   distribution: AdminDistribution, awards: AdminAwards, contacts: AdminContacts,
   production: AdminProduction, reviews: AdminReviewTracker, nda: AdminNDA,
-  archive: AdminArchive,
+  archive: AdminArchive, 'knowledge-base': AdminKnowledgeBase,
   settings: AdminSettings, activity: AdminActivity,
 };
 
@@ -120,6 +121,7 @@ const NAV_GROUPS = [
       { id: 'production', label: 'Production', icon: Printer },
       { id: 'distribution', label: 'Distribution', icon: Truck },
       { id: 'sops', label: 'SOPs', icon: ClipboardList },
+      { id: 'knowledge-base', label: 'Knowledge Base', icon: BookOpen },
     ],
   },
   {
