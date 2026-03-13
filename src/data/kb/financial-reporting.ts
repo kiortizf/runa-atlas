@@ -130,6 +130,87 @@ Recommended: **QuickBooks Self-Employed or Small Business**
 - Connect to business bank account for automatic categorization
 - Export data for CPA at tax time
 
+**Alternative options:**
+- Wave (free, good for micro-businesses)
+- FreshBooks (freelancer-friendly)
+- Xero (scales well as company grows)
+
+## Supplementary Revenue: Grants & Crowdfunding
+
+### Grants
+
+See the full [Grant & Funding Strategy] knowledge base document for comprehensive details. Key grants relevant to financial planning:
+
+- **NEA Grants for Arts Projects**: $10K-$100K (applies to reading series, community programs)
+- **State Arts Council Grants**: $2K-$25K (operating and project support)
+- **Foundation Grants**: Ford Foundation, Mellon Foundation, Knight Foundation
+
+**Financial treatment**: Grant income is revenue. Track separately from sales revenue. Use for designated purposes only. Report per grant requirements.
+
+### Crowdfunding
+
+Crowdfunding can fund specific projects (special editions, anthologies, new formats):
+
+| Platform | Best For | Fee |
+|----------|----------|-----|
+| Kickstarter | Special editions, anthologies | 5% + payment processing |
+| Indiegogo | Flexible funding options | 5% + payment processing |
+| Patreon | Ongoing community support | 5-12% |
+| Ko-fi | Tips and memberships | 0-5% |
+| BackerKit | Fulfillment + pre-launch | Varies |
+
+**Best practices:**
+- Budget for 20-30% of funds going to fulfillment and fees
+- Factor in shipping costs (especially international)
+- Set realistic goals — better to exceed a modest goal than fail a big one
+- Offer digital-only tiers (highest margin)
+- Use crowdfunding to validate demand before committing to production
+
+## Insurance
+
+### Business Insurance Needs
+
+| Type | Why | Estimated Cost |
+|------|-----|---------------|
+| General Liability | Protects against claims of harm | $300-$600/year |
+| Professional Liability (E&O) | Protects against content-related claims | $500-$1,500/year |
+| Media Liability | Defamation, copyright infringement | Often bundled with E&O |
+| Cyber Insurance | Data breach coverage | $200-$500/year |
+
+**Action**: Get insurance before publishing first title. Many carriers offer publisher-specific policies.
+
+## Cash Flow Management
+
+### Cash Flow Rules
+
+1. **Maintain 3-month operating reserve at all times**
+2. **Never spend advances before they're earned out**
+3. **Stagger title investments** — don't invest in 4 titles simultaneously in Year 1
+4. **Invoice quickly and follow up** — net 30 on all invoices
+5. **Negotiate payment terms** — request 50% upfront from freelancers, pay remainder on delivery
+
+### Cash Flow Calendar
+
+| Month | Major Cash Outflows | Major Cash Inflows |
+|-------|-------------------|-------------------|
+| Jan | 1099s, tax payment, Q1 freelancer commits | Holiday backlist tail, membership renewals |
+| Feb-Mar | Conference expenses (AWP), editing costs | Continuing sales, pre-orders for spring title |
+| Apr-Jun | Production costs (spring title), marketing spend | Spring launch revenue, BookBub feature income |
+| Jul-Sep | Conference expenses (WorldCon), audio production | Summer sales, backlist momentum |
+| Oct-Dec | Fall marketing push, author advances | Holiday sales spike, gift purchases, membership |
+
+### Profitability Benchmarks (Startup Publisher)
+
+| Metric | Year 1 Target | Year 3 Target |
+|--------|--------------|--------------|
+| Gross revenue | $10K-$25K | $75K-$150K |
+| COGS (editing, design, production) | 40-50% | 30-40% |
+| Marketing spend | 20-30% | 15-25% |
+| Overhead | 20-30% | 15-20% |
+| Net margin | 0-10% (invest in growth) | 15-25% |
+| Break-even per title (units) | 2,000-5,000 | 1,500-3,000 |
+| Months to title break-even | 18-24 | 12-18 |
+
 ## Key Financial Rules
 
 1. **Never mix personal and business finances**
@@ -138,4 +219,8 @@ Recommended: **QuickBooks Self-Employed or Small Business**
 4. **Maintain 3 months of operating expenses as cash reserve**
 5. **Track every expense, even small ones**
 6. **Review P&L monthly — don't wait for year-end surprises**
+7. **Know your break-even per title before committing**
+8. **Diversify revenue streams — don't depend on one retailer**
+9. **Treat grant money like sacred funds — spend only on designated purposes**
+10. **Reinvest profits in Year 1-3; take distributions only after sustainable profitability**
 `;

@@ -57,6 +57,45 @@ Prioritize stores that:
 - Event co-promotion (joint social media, shared costs)
 - Exclusive signed editions for partner stores
 - Co-op advertising consideration
+- First look at new covers and upcoming titles
+
+### Buyer Outreach Email Template
+
+> Subject: New diverse SFF from Rüna Atlas Press — available via Ingram
+>
+> Dear [Buyer Name],
+>
+> I'm reaching out from Rüna Atlas Press, an indie publisher specializing in speculative fiction by BIPOC, LGBTQ+, and other marginalized authors.
+>
+> Our [Season] [Year] catalog includes [Title] by [Author] — [one-sentence pitch]. [Any notable blurbs, awards, or comparison titles.]
+>
+> All of our titles are available through IngramSpark at standard trade terms (55% discount, returnable). I've attached our current catalog and a sell sheet for [Title].
+>
+> We'd love to partner with [Store Name] for readings, signings, or special displays. Let me know if you'd like review copies or have questions.
+>
+> Best,
+> [Name], Publisher
+> Rüna Atlas Press
+
+### Bookshop.org Strategy
+
+Bookshop.org is the #1 platform for indie bookstore advocacy online:
+
+- **Affiliate storefront**: Create curated lists (by genre, theme, identity)
+- **Link in marketing**: Use Bookshop.org affiliate links in newsletters, social, and website
+- **Commission**: Bookshop.org shares up to 10% with your affiliate account
+- **Benefit**: Supports indie bookstores AND generates publisher revenue
+- **Action**: Update storefront quarterly with new releases and seasonal picks
+
+### Libro.fm Partnership
+
+Libro.fm is the indie bookstore alternative to Audible:
+
+- **Benefits**: Supports indie bookstores, monthly audiobook subscription
+- **Action**: Ensure all Rüna Atlas audiobooks are available on Libro.fm
+- **Cross-promotion**: Feature Libro.fm links alongside Audible in marketing
+- **Indie alignment**: Libro.fm's mission aligns perfectly with Rüna Atlas values
+- **Partner stores**: Listeners choose a local indie bookstore to support
 
 ## Library Strategy
 
@@ -66,6 +105,7 @@ Prioritize stores that:
 - Library patrons are heavy readers who also buy books
 - Library presence drives discovery and backlist longevity
 - Many marginalized readers rely primarily on libraries
+- Library reviews (Kirkus, Library Journal, Booklist) drive institutional purchasing
 
 ### Distribution Channels
 
@@ -76,6 +116,8 @@ Prioritize stores that:
 | OverDrive/Libby | eBook/audiobook lending | Submit through aggregator |
 | Hoopla | Digital lending | Submit through aggregator |
 | LibraryThing | Early Reviewer Program | Submit ARCs for library community |
+| Bibliotheca cloudLibrary | Digital lending | Submit through aggregator |
+| Palace Project (DPLA) | Open-source library platform | Investigate availability |
 
 ### Library Marketing
 
@@ -83,13 +125,36 @@ Prioritize stores that:
 - Target 100 urban public library systems
 - Send review copies to collection development librarians
 - Attend ALA (American Library Association) conference
-- Submit to library review journals (Library Journal, Booklist)
+- Submit to library review journals (Library Journal, Booklist, Kirkus)
+- Submit to School Library Journal for YA crossover titles
+
+**Review Journal Strategy**
+
+| Journal | Lead Time | Submission | Priority |
+|---------|----------|------------|----------|
+| Library Journal | 3-4 months pre-pub | Galley + cover letter | High |
+| Booklist | 3-4 months pre-pub | Galley | High |
+| Kirkus Reviews | 3-4 months pre-pub | Galley, fee-based option | Medium |
+| Publishers Weekly | 3-4 months pre-pub | Galley | High |
+| Shelf Awareness | 2-3 months pre-pub | Galley | Medium |
+| Foreword Reviews | 3-4 months pre-pub | Galley, fee-based | Medium |
 
 **Digital Presence**
 - Ensure MARC records available for all titles
 - CIP (Cataloging in Publication) data in copyright page
 - Correct BISAC codes for accurate shelving
 - Strong metadata in WorldCat
+- Author Authority records in LC Name Authority File
+
+### Grant-Funded Library Outreach
+
+Some library outreach can be funded by grants:
+
+- NEA Big Read (community-wide reading programs around a single book)
+- State library association grants
+- ALA Diversity in Action grants
+- Library Foundation community engagement grants
+- **Action**: Apply annually for relevant library-focused grants
 
 ### School & Academic Libraries
 
@@ -97,6 +162,18 @@ Prioritize stores that:
 - Submit to YALSA reading lists
 - Target university SFF collections
 - Connect with diverse book list curators (We Need Diverse Books, etc.)
+- Submit to YALSA's Quick Picks, Best Fiction, and Amazing Audiobooks lists
+- Present at state school library conferences
+
+### Library Event Programming
+
+Libraries are excellent event venues:
+
+- Author readings and Q&A sessions
+- SFF book club facilitation
+- Writing workshops led by Rüna Atlas authors
+- Genre displays and curated reading lists
+- **Benefit**: Libraries provide venues for free; events drive checkouts and purchases
 
 ## Tracking & Metrics
 
@@ -108,4 +185,6 @@ Track per store/library:
 - Reorders frequency
 - Relationship status (new, active, lapsed)
 - Contact name and last touch date
+- Review journal submissions and outcomes
+- Bookshop.org affiliate revenue
 `;
