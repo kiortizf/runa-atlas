@@ -38,6 +38,12 @@ import { DOC_RIGHTS_LICENSING } from './kb/rights-licensing';
 import { DOC_AUTHOR_PLATFORM } from './kb/author-platform';
 import { DOC_AWARDS_STRATEGY } from './kb/awards-strategy';
 import { DOC_SOCIAL_MEDIA_CONTENT } from './kb/social-media-content';
+import { DOC_ACCESSIBILITY } from './kb/accessibility-policy';
+import { DOC_DEI_POLICY } from './kb/dei-policy';
+import { DOC_DATA_PRIVACY } from './kb/data-privacy';
+import { DOC_CRISIS_COMMS } from './kb/crisis-comms';
+import { DOC_GRANT_STRATEGY } from './kb/grant-strategy';
+import { DOC_AUTHOR_ONBOARDING } from './kb/author-onboarding';
 import { DOC_PRINT_PLANNING } from './kb/print-planning';
 import { DOC_REVIEW_MANAGEMENT } from './kb/review-management';
 import { DOC_CONTENT_CALENDAR } from './kb/content-calendar';
@@ -73,4 +79,10 @@ export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'print-planning', title: 'Print Run Planning', category: 'Publishing', icon: '🖨️', lastUpdated: '2026-03-13', content: DOC_PRINT_PLANNING },
   { id: 'review-management', title: 'Review Management', category: 'Marketing', icon: '⭐', lastUpdated: '2026-03-13', content: DOC_REVIEW_MANAGEMENT },
   { id: 'content-calendar', title: 'Content Calendar Template', category: 'Marketing', icon: '📅', lastUpdated: '2026-03-13', content: DOC_CONTENT_CALENDAR },
+  { id: 'accessibility-policy', title: 'Accessibility & Inclusion Policy', category: 'Operations', icon: '♿', lastUpdated: '2026-03-13', content: DOC_ACCESSIBILITY },
+  { id: 'dei-policy', title: 'Diversity, Equity & Inclusion Policy', category: 'Operations', icon: '🌈', lastUpdated: '2026-03-13', content: DOC_DEI_POLICY },
+  { id: 'data-privacy', title: 'Data Privacy & Author Data Policy', category: 'Operations', icon: '🔒', lastUpdated: '2026-03-13', content: DOC_DATA_PRIVACY },
+  { id: 'crisis-comms', title: 'Crisis Communications Playbook', category: 'Operations', icon: '🚨', lastUpdated: '2026-03-13', content: DOC_CRISIS_COMMS },
+  { id: 'grant-strategy', title: 'Grant & Funding Strategy', category: 'Operations', icon: '💵', lastUpdated: '2026-03-13', content: DOC_GRANT_STRATEGY },
+  { id: 'author-onboarding', title: 'Onboarding Guide for New Authors', category: 'Publishing', icon: '🤝', lastUpdated: '2026-03-13', content: DOC_AUTHOR_ONBOARDING },
 ];
