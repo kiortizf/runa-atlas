@@ -6,7 +6,7 @@ import {
     ChevronDown, Check, GitBranch, Eye, Target, Mic, Quote,
     TrendingUp, Award, Globe, Layers, Brain, Feather, Crown,
     Flame, Calendar, Send, DollarSign, UserCircle, Rocket,
-    Trophy, Archive
+    Trophy, Archive, GitMerge, Scissors, Megaphone
 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -34,6 +34,9 @@ import authorProfileImg from '../assets/features/author-profile.webp';
 import onboardingWizardImg from '../assets/features/onboarding-wizard.webp';
 import championsImg from '../assets/features/champions.webp';
 import archiveImg from '../assets/features/runeweave-archive.webp';
+import editorBridgeImg from '../assets/features/editor-bridge.webp';
+import editorBetaManagerImg from '../assets/features/editor-beta-manager.webp';
+import betaCampaignImg from '../assets/features/beta-campaign.webp';
 
 // ═══════════════════════════════════════════
 // FOR AUTHORS — SaaS-style feature showcase
@@ -211,7 +214,7 @@ export default function ForAuthors() {
             <FeatureShowcase
                 badge="Real-Time Collaboration"
                 title={<>Work With Editors<br /><span className="text-aurora-teal">Like Never Before</span></>}
-                description="Inline comments with threaded replies, suggestion mode with accept/reject tracking, real-time presence indicators showing who's editing — it's like Google Docs meets Scrivener, purpose-built for the author-editor relationship."
+                description="Our editorial tools are designed around one principle: the author-editor relationship should feel collaborative, never adversarial. Inline comments with threaded replies, suggestion mode with transparent accept/reject tracking, and real-time presence indicators — all built to reduce friction and keep both sides in sync."
                 image={collaborationImg}
                 features={[
                     'Inline comments anchored to specific text passages',
@@ -223,6 +226,45 @@ export default function ForAuthors() {
                 reverse={true}
                 accent="teal"
             />
+
+            {/* ═══════ EDITORIAL COLLABORATION GRID ═══════ */}
+            <section className="py-16 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                        className="text-center mb-16">
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-aurora-teal/70 font-ui block mb-4">Editorial Partnership</span>
+                        <h2 className="font-display text-3xl md:text-4xl text-white tracking-wide mb-4">
+                            NAVIGATING THE <span className="text-aurora-teal">EDITORIAL PROCESS</span>
+                        </h2>
+                        <p className="text-text-secondary max-w-2xl mx-auto text-sm leading-relaxed">
+                            Common friction points — conflicting feedback, unclear revision status, lost beta reader notes — become
+                            collaboration opportunities. These tools keep authors and editors aligned at every stage.
+                        </p>
+                    </motion.div>
+
+                    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <SubFeatureCard
+                            image={editorBridgeImg}
+                            title="Editor Feedback Bridge"
+                            description="Import beta reader consensus directly into your editorial workflow. See which issues readers agree on, flag conflicting opinions, and let your editor prioritize revisions based on real data — not guesswork."
+                            icon={GitMerge}
+                        />
+                        <SubFeatureCard
+                            image={editorBetaManagerImg}
+                            title="Co-Managed Beta Readers"
+                            description="Both you and your editor can invite, track, and nudge beta readers from one shared panel. Full transparency via activity logs — no more 'did you send them the latest draft?' confusion."
+                            icon={Users}
+                        />
+                        <SubFeatureCard
+                            image={betaCampaignImg}
+                            title="Beta Campaign Manager"
+                            description="Run structured beta campaigns with chapter-by-chapter release schedules, guided feedback questions, and aggregate consensus reports. Turn scattered opinions into actionable editorial intelligence."
+                            icon={Megaphone}
+                        />
+                    </motion.div>
+                </div>
+            </section>
 
             {/* ═══════ FEATURE 3: CREATOR STUDIO ═══════ */}
             <FeatureShowcase
@@ -449,6 +491,12 @@ export default function ForAuthors() {
                             title="Runeweave Archive"
                             description="Readers create glossaries, moodboards, playlists, and craft essays inspired by your worlds. A living gallery of community creativity that deepens engagement with your stories."
                             icon={Archive}
+                        />
+                        <SubFeatureCard
+                            image={editorBridgeImg}
+                            title="Deleted Scenes Vault"
+                            description="Editorial cuts don't have to die. Archive deleted scenes and publish them as bonus content for fans. Turn the friction of 'kill your darlings' into reader engagement and exclusive subscriber material."
+                            icon={Scissors}
                         />
                     </motion.div>
                 </div>
