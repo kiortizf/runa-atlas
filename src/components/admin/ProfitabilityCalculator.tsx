@@ -3,13 +3,16 @@ import { motion } from 'framer-motion';
 import {
   Calculator, DollarSign, BookOpen, TrendingUp, BarChart3,
   Printer, Package, Headphones, Smartphone, ChevronDown,
-  FileText, Layers, Ruler, Target, Megaphone, Users
+  FileText, Layers, Ruler, Target, Megaphone, Users, Dice6, ArrowLeftRight, Grid3X3
 } from 'lucide-react';
 import CalcPnL from './CalcPnL';
 import CalcAdvance from './CalcAdvance';
 import CalcPricing from './CalcPricing';
 import CalcMarketing from './CalcMarketing';
 import SpineCalculator from './SpineCalculator';
+import CalcMonteCarlo from './CalcMonteCarlo';
+import CalcSensitivity from './CalcSensitivity';
+import CalcScenarios from './CalcScenarios';
 
 // ─── IngramSpark Print Cost Estimation ────────────────
 // Based on IngramSpark 2025/2026 pricing: per-page cost + cover cost + market access fee
@@ -98,7 +101,7 @@ export default function ProfitabilityCalculator() {
   const [showAudio, setShowAudio] = useState(true);
 
   // Top-level view tab
-  const [viewTab, setViewTab] = useState<'unit' | 'pnl' | 'advance' | 'pricing' | 'marketing' | 'spine'>('unit');
+  const [viewTab, setViewTab] = useState<'unit' | 'pnl' | 'advance' | 'pricing' | 'marketing' | 'spine' | 'montecarlo' | 'sensitivity' | 'scenarios'>('unit');
 
   // P&L cost inputs
   const [editorialCost, setEditorialCost] = useState(5000);
@@ -205,6 +208,9 @@ export default function ProfitabilityCalculator() {
           { id: 'pricing' as const, label: 'Pricing', icon: Target },
           { id: 'marketing' as const, label: 'Marketing ROI', icon: Megaphone },
           { id: 'spine' as const, label: 'Spine Calc', icon: Ruler },
+          { id: 'montecarlo' as const, label: 'Monte Carlo', icon: Dice6 },
+          { id: 'sensitivity' as const, label: 'Sensitivity', icon: ArrowLeftRight },
+          { id: 'scenarios' as const, label: 'Scenarios', icon: Layers },
         ].map(tab => (
           <button key={tab.id} onClick={() => setViewTab(tab.id)}
             className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-ui transition-all ${
@@ -653,6 +659,15 @@ export default function ProfitabilityCalculator() {
 
       {/* ─── Spine Calculator Tab ─── */}
       {viewTab === 'spine' && <SpineCalculator />}
+
+      {/* ─── Monte Carlo Simulator Tab ─── */}
+      {viewTab === 'montecarlo' && <CalcMonteCarlo />}
+
+      {/* ─── Sensitivity Analysis Tab ─── */}
+      {viewTab === 'sensitivity' && <CalcSensitivity />}
+
+      {/* ─── Scenario Planner Tab ─── */}
+      {viewTab === 'scenarios' && <CalcScenarios />}
     </div>
   );
 }
