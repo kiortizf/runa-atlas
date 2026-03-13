@@ -635,4 +635,175 @@ export const SOP_TEMPLATES_SEED: SOPTemplate[] = [
       { id: 'fin-4', title: 'Tax & Budget Review', description: 'Estimate taxes and compare against budget.', role: 'Operations / Publisher', checklist: ['Quarterly tax estimate calculated', 'Tax payment made (federal + state)', '1099 obligations tracked', 'Budget vs actual comparison prepared', 'Variance analysis for major deviations', 'Cash reserve status checked (3-month target)', 'Next quarter budget adjustments recommended', 'Financial summary presented to Publisher'] },
     ],
   },
+
+  // ═══════════════════════════════════════════════════════
+  // BUSINESS & STRATEGY — BATCH 3 (3)
+  // ═══════════════════════════════════════════════════════
+  {
+    title: 'Annual Business Planning & Budget',
+    category: 'operations',
+    icon: '📈',
+    description: 'Annual strategic planning process — set goals, build the budget, plan the catalog, and align all departments.',
+    steps: [
+      { id: 'abp-1', title: 'Year-in-Review', description: 'Assess the previous year performance.', role: 'Publisher', checklist: ['Total revenue vs target', 'Per-title P&L reviewed', 'Marketing ROI assessed', 'Author satisfaction surveyed', 'Community growth metrics reviewed', 'Awards won/nominated compiled', 'Biggest wins and failures identified', 'Team feedback collected'] },
+      { id: 'abp-2', title: 'Strategic Goal Setting', description: 'Define goals for the coming year.', role: 'Publisher', checklist: ['Revenue target set', 'Number of titles to publish determined', 'Genre/imprint mix decided', 'Diversity targets confirmed', 'New market/format goals (audio, international, etc.)', 'Community growth targets set', 'Author acquisition goals set', 'Key hires or freelancer needs identified'] },
+      { id: 'abp-3', title: 'Budget Development', description: 'Build the annual operating budget.', role: 'Operations / Publisher', checklist: ['Revenue projections built (by title, format, channel)', 'Editorial budget allocated', 'Design & production budget allocated', 'Marketing budget allocated (per-title + brand)', 'Freelancer budget allocated', 'Technology/platform budget allocated', 'Awards submission budget allocated', 'Conference & event budget allocated', 'Contingency reserve set (10-15%)', 'Cash flow projections completed'] },
+      { id: 'abp-4', title: 'Department Alignment', description: 'Ensure all functions are aligned to the plan.', role: 'Publisher', checklist: ['Editorial calendar drafted', 'Marketing calendar drafted', 'Production schedule drafted', 'Rights & licensing goals set', 'Community programming planned', 'All calendars synced and conflicts resolved', 'Plan documented and shared with team'] },
+    ],
+  },
+  {
+    title: 'Ad Campaign Management',
+    category: 'marketing',
+    icon: '📣',
+    description: 'Setting up, running, and optimizing paid advertising campaigns across Amazon, BookBub, Facebook, Instagram, and TikTok.',
+    steps: [
+      { id: 'ad-1', title: 'Campaign Strategy', description: 'Define campaign objectives and parameters.', role: 'Marketing Manager', checklist: ['Campaign goal defined (launches, backlist, series read-through)', 'Target audience defined (genre readers, comp title readers, lookalikes)', 'Budget allocated (daily and total)', 'Platform(s) selected (Amazon Ads, BookBub Ads, Meta Ads, TikTok)', 'Campaign duration set', 'Success metrics defined (ACOS, CTR, impressions, sales)'] },
+      { id: 'ad-2', title: 'Creative Production', description: 'Create ad assets.', role: 'Marketing Manager / Designer', checklist: ['Ad copy written (3-5 variations for A/B testing)', 'Ad images/graphics created (per platform specs)', 'Video assets created (for TikTok/Reels if applicable)', 'Targeting keywords researched (Amazon: 100+ keywords)', 'Category targets identified', 'ASIN/product targets identified (Amazon)', 'Landing page / buy link confirmed'] },
+      { id: 'ad-3', title: 'Launch & Monitor', description: 'Launch campaigns and monitor performance.', role: 'Marketing Manager', checklist: ['Campaigns launched on all selected platforms', 'Daily monitoring for first 7 days', 'Unprofitable keywords/targets paused', 'Bids adjusted based on performance', 'Budget reallocated to winning ads', 'Weekly performance report generated'] },
+      { id: 'ad-4', title: 'Optimize & Scale', description: 'Optimize winning campaigns and scale.', role: 'Marketing Manager', checklist: ['Top-performing ads identified', 'Losing ads paused/killed', 'New keyword/target expansions tested', 'Budget increased on profitable campaigns', 'A/B test results documented', 'Monthly ROI report generated', 'Learnings documented for future campaigns'] },
+    ],
+  },
+  {
+    title: 'Email Marketing & Newsletter',
+    category: 'marketing',
+    icon: '📧',
+    description: 'Managing the Rüna Atlas email list — growth, segmentation, campaigns, and automation.',
+    steps: [
+      { id: 'email-1', title: 'List Management', description: 'Maintain and grow the email list.', role: 'Marketing Manager', checklist: ['Email platform configured (ConvertKit/Mailchimp/etc.)', 'Sign-up forms on website, socials, and landing pages', 'Lead magnets active (free short story, reading guide, etc.)', 'List segmented: readers by genre, authors, industry, press/media', 'Unengaged subscribers cleaned quarterly', 'Compliance verified (CAN-SPAM, GDPR)'] },
+      { id: 'email-2', title: 'Campaign Calendar', description: 'Plan email content for the month.', role: 'Marketing Manager', checklist: ['Monthly email calendar created', 'Weekly newsletter content planned', 'Launch campaign emails drafted (for upcoming releases)', 'Promotional emails scheduled (sales, deals)', 'Community updates planned (events, reading challenges)', 'Automated sequences reviewed (welcome, post-purchase, re-engagement)'] },
+      { id: 'email-3', title: 'Content & Design', description: 'Create email content.', role: 'Marketing Manager', checklist: ['Subject lines written (A/B test 2 variations)', 'Preheader text written', 'Email body copy drafted', 'Design template applied', 'Call-to-action clear and linked', 'Mobile preview checked', 'Personalization tokens verified'] },
+      { id: 'email-4', title: 'Send & Analyze', description: 'Send emails and track performance.', role: 'Marketing Manager', checklist: ['Test email sent and reviewed', 'Email scheduled or sent manually', 'Open rate tracked (target: 25%+)', 'Click rate tracked (target: 3%+)', 'Unsubscribe rate monitored (concern if >0.5%)', 'Revenue attributed (if promotional)', 'A/B test results documented', 'Insights applied to next campaign'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // LEGAL & COMPLIANCE — BATCH 3 (3)
+  // ═══════════════════════════════════════════════════════
+  {
+    title: 'Permissions & Clearances',
+    category: 'editorial',
+    icon: '⚖️',
+    description: 'Securing permissions for copyrighted material used in publications — epigraphs, lyrics, images, or quoted text.',
+    steps: [
+      { id: 'perm-1', title: 'Identify Needs', description: 'Identify all copyrighted material requiring permission.', role: 'Editor', checklist: ['All epigraphs flagged', 'All direct quotes over fair use flagged', 'Song lyrics identified (even partial lines)', 'Poem excerpts identified', 'Images/illustrations requiring license identified', 'Trademarks in text reviewed', 'Fair use assessment completed for borderline cases'] },
+      { id: 'perm-2', title: 'Request Permissions', description: 'Contact rights holders and request permissions.', role: 'Editor / Rights Manager', checklist: ['Rights holder identified for each item', 'Permission request letters sent', 'Fee quotes received (if applicable)', 'Usage terms confirmed (territory, format, edition, duration)', 'Fees budgeted and approved', 'Alternatives identified (in case permission denied)'] },
+      { id: 'perm-3', title: 'Documentation', description: 'Document all permissions and pay fees.', role: 'Operations', checklist: ['Written permission received for every item', 'Permission letters filed', 'Fees paid', 'Credit lines/attribution confirmed per terms', 'Permissions log updated', 'Copyright page acknowledgments drafted'] },
+    ],
+  },
+  {
+    title: 'Author Contract Renewal & Option',
+    category: 'operations',
+    icon: '📝',
+    description: 'Process for exercising option clauses, renewing contracts, and maintaining author relationships for multi-book deals.',
+    steps: [
+      { id: 'ren-1', title: 'Option Period Review', description: 'Review upcoming option clause deadlines.', role: 'Publisher', checklist: ['Contract option clause terms reviewed', 'Option period deadline noted (typically 30-60 days after last pub)', 'Author relationship health assessed', 'Sales performance of previous title(s) reviewed', 'Author next project assessed for fit', 'Market conditions evaluated'] },
+      { id: 'ren-2', title: 'Decision & Terms', description: 'Decide whether to exercise option and prepare terms.', role: 'Publisher', checklist: ['Decision made: Exercise / Decline / Renegotiate', 'If exercise: updated terms prepared (advance, royalties)', 'If declining: respectful communication drafted', 'P&L projection for next book prepared', 'Advance amount determined (informed by sales data)', 'Author goals and timeline discussed'] },
+      { id: 'ren-3', title: 'Negotiation & Execution', description: 'Negotiate and execute the new agreement.', role: 'Publisher / Legal', checklist: ['Offer presented to author/agent', 'Terms negotiated', 'New contract drafted', 'Contract reviewed by both parties', 'Contract signed', 'Contract filed in system', 'Author onboarding refreshed (timeline, editorial assignment)'] },
+    ],
+  },
+  {
+    title: 'ISBN & Copyright Registration',
+    category: 'operations',
+    icon: '🔢',
+    description: 'Process for purchasing/assigning ISBNs, registering copyrights, and obtaining CIP data for each title.',
+    steps: [
+      { id: 'isbn-1', title: 'ISBN Assignment', description: 'Assign ISBNs for all editions.', role: 'Operations', checklist: ['ISBN block purchased from Bowker (or use existing stock)', 'Unique ISBN assigned per format (paperback, hardcover, eBook, audiobook, large print)', 'ISBNs registered in Bowker system with full metadata', 'ISBN log updated internally', 'ISBNs provided to production team'] },
+      { id: 'isbn-2', title: 'Copyright Registration', description: 'Register copyright with US Copyright Office.', role: 'Operations', checklist: ['Electronic copyright registration filed via copyright.gov', 'Registration fee paid', 'Deposit copies sent (as required)', 'Registration confirmation received and filed', 'Copyright page text confirmed for the book'] },
+      { id: 'isbn-3', title: 'Library of Congress CIP', description: 'Apply for Cataloging in Publication data.', role: 'Operations', checklist: ['CIP application submitted to Library of Congress (8+ weeks before pub)', 'Galley/proof provided with application', 'CIP data received', 'CIP block incorporated into copyright page', 'MARC record created and distributed'] },
+      { id: 'isbn-4', title: 'LCCN & PCN', description: 'Obtain Library of Congress Control Number.', role: 'Operations', checklist: ['Preassigned Control Number (PCN) application filed', 'LCCN received', 'LCCN printed on copyright page', 'Complimentary copy sent to LC after publication'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PRODUCTION — BATCH 3 (3)
+  // ═══════════════════════════════════════════════════════
+  {
+    title: 'Reprint Decision & Execution',
+    category: 'production',
+    icon: '🔁',
+    description: 'Process for deciding when to reprint, how many copies, and managing the reprint cycle.',
+    steps: [
+      { id: 'rep-1', title: 'Reprint Trigger Assessment', description: 'Determine if a reprint is warranted.', role: 'Operations', checklist: ['Current inventory level checked', 'Weeks of supply calculated (inventory ÷ weekly sales rate)', 'Reorder trigger hit? (typically <8 weeks supply)', 'Demand forecast reviewed (seasonal, awards buzz, media)', 'Format still selling? (print vs shifting to digital)', 'Backlist refresh recently done? (may boost demand)'] },
+      { id: 'rep-2', title: 'Quantity & Spec Decision', description: 'Determine reprint quantity and any changes.', role: 'Operations / Publisher', checklist: ['Reprint quantity calculated (cover 6-12 months demand)', 'POD vs offset decision made (break-even analysis)', 'Any corrections needed? (typos, updated blurbs, new cover)', 'Updated cover with award badges (if applicable)', 'Updated back matter (new titles, reviews)', 'Quote obtained from printer'] },
+      { id: 'rep-3', title: 'Reprint Execution', description: 'Execute the reprint.', role: 'Production Manager', checklist: ['Updated files sent to printer', 'Proof reviewed (if changes made)', 'Print order confirmed', 'Delivery date confirmed', 'Books received and inventoried', 'Retailer/distributor stock replenished', 'Inventory system updated'] },
+    ],
+  },
+  {
+    title: 'Accessibility Format Production',
+    category: 'production',
+    icon: '♿',
+    description: 'Producing accessible formats — large print, EPUB accessibility, and audio descriptions.',
+    steps: [
+      { id: 'acc-1', title: 'Large Print Edition', description: 'Produce a large print edition of the title.', role: 'Production Manager', checklist: ['Interior reformatted at 16pt minimum font size', 'Line spacing increased to 1.5', 'Margins widened for handling', 'Paper stock: cream/off-white (less glare)', 'Trim size adjusted (typically 6x9 or larger)', 'Separate ISBN assigned', 'Cover updated with "LARGE PRINT" designation', 'Proofed for line breaks and page flow', 'Uploaded to IngramSpark'] },
+      { id: 'acc-2', title: 'EPUB Accessibility Audit', description: 'Ensure EPUB meets accessibility standards.', role: 'QA Tester', checklist: ['EPUB passes ACE (Accessibility Checker for EPUB)', 'Logical reading order verified', 'All images have alt text', 'Navigation (TOC) fully functional', 'Language attribute set', 'Accessibility metadata included in OPF file', 'Tested with screen reader (VoiceOver, NVDA, or JAWS)', 'Conformance claim added to metadata'] },
+      { id: 'acc-3', title: 'Distribution', description: 'Distribute accessible formats.', role: 'Production Manager', checklist: ['Large print edition available on IngramSpark', 'Accessible EPUB distributed to all retailers', 'Title registered with Bookshare (if applicable)', 'Title submitted to NLS for Braille/audio (if applicable)', 'Accessibility features noted in retailer metadata'] },
+    ],
+  },
+  {
+    title: 'Series & Sequel Planning',
+    category: 'production',
+    icon: '📚',
+    description: 'Planning and coordinating multi-book series — continuity, branding, scheduling, and reader retention.',
+    steps: [
+      { id: 'ser-1', title: 'Series Architecture', description: 'Define the series structure and plan.', role: 'Editor / Publisher', checklist: ['Number of books in series determined (or open-ended plan)', 'Series arc outlined (if applicable)', 'Book-by-book synopsis reviewed', 'Publication cadence decided (6 months, 12 months between books)', 'Series bible created (characters, worldbuilding, timeline)', 'Continuity editor assigned'] },
+      { id: 'ser-2', title: 'Branding & Design', description: 'Create consistent series branding.', role: 'Art Director', checklist: ['Series name and logo finalized', 'Cover template designed (consistent look with variations)', 'Spine design consistent for shelf display', 'Series number placement standardized', 'Back cover cross-promotion to other books in series', 'Digital series page created on website'] },
+      { id: 'ser-3', title: 'Reader Retention Strategy', description: 'Plan how to keep readers engaged between releases.', role: 'Marketing Manager', checklist: ['Email automation: purchase of Book N triggers promo for Book N+1', 'Back matter includes excerpt from next book', 'BookBub series deal alert set up', 'Read-through rate tracked (Book 1 → Book 2 → Book 3)', 'Pricing strategy: Book 1 discounted or perma-free as funnel', 'Social media series countdown for each new release', 'Series box set planned (when 3+ books available)'] },
+      { id: 'ser-4', title: 'Continuity Management', description: 'Maintain continuity across books.', role: 'Editor', checklist: ['Series bible updated after each book', 'Continuity review added to editing workflow', 'Character name/detail consistency checked', 'World rules consistency checked', 'Timeline consistency verified', 'Reader-reported continuity errors addressed in reprints'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // DISTRIBUTION & SETUP — BATCH 3 (2)
+  // ═══════════════════════════════════════════════════════
+  {
+    title: 'Distributor & Retail Account Setup',
+    category: 'distribution',
+    icon: '🏪',
+    description: 'Setting up accounts with all distribution channels and retailers for a new or expanding publisher.',
+    steps: [
+      { id: 'dist-1', title: 'Primary Distribution', description: 'Set up primary print and digital distribution.', role: 'Operations', checklist: ['IngramSpark publisher account created and verified', 'Amazon KDP publisher account created', 'Draft2Digital account created (for wide digital distribution)', 'Apple Books publisher account created', 'Google Play Books partner account created', 'Kobo Writing Life account created', 'Publisher compensation details set on all platforms'] },
+      { id: 'dist-2', title: 'Specialty Distribution', description: 'Set up specialty and library distribution.', role: 'Operations', checklist: ['OverDrive/Libby account set up (library eBooks)', 'Hoopla distributor set up (library)', 'Baker & Taylor profile optimized', 'Bookshop.org affiliate set up', 'Libro.fm account created (indie audiobook)', 'Findaway Voices account (audio distribution)', 'NetGalley publisher account created (ARCs)'] },
+      { id: 'dist-3', title: 'Direct Sales', description: 'Set up direct-to-reader sales capability.', role: 'Operations / Technical', checklist: ['Shopify/WooCommerce store set up for direct eBook/print sales', 'Payment processing configured (Stripe)', 'Digital delivery system configured (BookFunnel or similar)', 'Tax collection configured (state sales tax)', 'Shipping rates configured (for print)', 'Author discount codes set up', 'Bundle deals created'] },
+    ],
+  },
+  {
+    title: 'Pre-Publication Master Checklist',
+    category: 'production',
+    icon: '✅',
+    description: 'The definitive checklist before any title goes live — ensures nothing is missed across all departments.',
+    steps: [
+      { id: 'pre-1', title: 'Editorial Complete', description: 'Confirm all editorial work is finalized.', role: 'Editor', checklist: ['Final manuscript approved by author', 'All editorial rounds completed', 'Sensitivity review completed (if applicable)', 'Content warnings finalized', 'Dedication and acknowledgment pages finalized', 'About the author page updated', 'Also-by page updated', 'Excerpt from next book included (if series)'] },
+      { id: 'pre-2', title: 'Production Complete', description: 'Confirm all production assets are final.', role: 'Production Manager', checklist: ['Print interior PDF final and uploaded', 'eBook EPUB final and uploaded (all platforms)', 'Cover final (front, back, spine) and uploaded', 'ISBNs assigned and registered for all formats', 'Copyright registration filed', 'CIP/LCCN obtained and on copyright page', 'Barcode on back cover verified', 'Price on back cover (if applicable)'] },
+      { id: 'pre-3', title: 'Distribution Ready', description: 'Confirm all distribution channels are set up.', role: 'Operations', checklist: ['Title live on Amazon KDP (or scheduled)', 'Title live on IngramSpark', 'Title live on all digital retailers', 'Metadata consistent across all platforms', 'BISAC codes correct', 'Categories optimized', 'Keywords optimized', 'Series metadata linked', 'Pre-order functioning correctly'] },
+      { id: 'pre-4', title: 'Marketing Ready', description: 'Confirm all marketing assets and campaigns are prepared.', role: 'Marketing Manager', checklist: ['Book page live on runaatlas.com', 'Social media announcement graphics ready', 'Newsletter launch email drafted and scheduled', 'ARCs distributed to reviewers', 'Launch event planned', 'Ad campaigns ready to activate', 'Author talking points prepared', 'Press release drafted (for significant titles)'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // OUTREACH & PUBLICITY — BATCH 3 (2)
+  // ═══════════════════════════════════════════════════════
+  {
+    title: 'Podcast & Media Outreach',
+    category: 'marketing',
+    icon: '🎙️',
+    description: 'Systematic outreach to podcasts, media outlets, and interview platforms for author promotion.',
+    steps: [
+      { id: 'pod-1', title: 'Target Research', description: 'Identify podcasts and media relevant to the book.', role: 'Marketing Manager', checklist: ['Genre-specific podcasts identified (20-50)', 'SFF/literary podcasts identified', 'Diversity/identity-focused podcasts identified', 'Book review podcasts identified', 'Local media identified (for local authors)', 'Industry media identified (Publishers Weekly, Locus, etc.)', 'Podcast audience size and engagement assessed', 'Contact information compiled'] },
+      { id: 'pod-2', title: 'Pitch Creation', description: 'Create tailored pitches.', role: 'Marketing Manager', checklist: ['Author talking points prepared', 'Custom pitch email drafted (personalized per podcast)', 'Press kit prepared (book summary, author bio, headshot, review quotes)', 'Unique angles identified per outlet (diversity angle, craft angle, genre angle)', 'Digital ARC or finished copy ready to send', 'Author availability confirmed'] },
+      { id: 'pod-3', title: 'Outreach Execution', description: 'Send pitches and follow up.', role: 'Marketing Manager', checklist: ['Pitch emails sent (stagger over 2-3 weeks)', 'Follow-up sent after 10-14 days (for non-responders)', 'Confirmed bookings calendared', 'Author prep call held before each interview', 'ARC/copy sent to confirmed hosts', 'Interview dates/times confirmed'] },
+      { id: 'pod-4', title: 'Amplification', description: 'Amplify interviews when they air.', role: 'Marketing Manager', checklist: ['Episode links shared on all social channels', 'Featured in newsletter', 'Added to author page on website', 'Quote pulls from interview for social content', 'Thank-you sent to host', 'Host added to database for future outreach'] },
+    ],
+  },
+  {
+    title: 'Author Event & Signing Coordination',
+    category: 'community',
+    icon: '🎤',
+    description: 'Planning and executing author events — virtual and in-person readings, signings, panels, and festival appearances.',
+    steps: [
+      { id: 'evt-1', title: 'Event Planning', description: 'Plan the event logistics.', role: 'Marketing Manager', checklist: ['Event type determined (signing, reading, panel, workshop, Q&A)', 'Virtual vs in-person decided', 'Venue/platform chosen', 'Date and time set (check for conflicts)', 'Partner bookstore/library/org contacted', 'Author availability confirmed', 'Moderator/host identified (if panel)', 'Budget allocated (travel, books, food, A/V)'] },
+      { id: 'evt-2', title: 'Promotion', description: 'Promote the event to drive attendance.', role: 'Marketing Manager', checklist: ['Event graphic designed', 'Event page created (Eventbrite, website, or social)', 'Social media promotion (2-3 weeks before)', 'Newsletter announcement sent', 'Cross-promotion with venue/partner', 'Reminder posts 1 week and 1 day before', 'Local media/community calendars notified'] },
+      { id: 'evt-3', title: 'Execution', description: 'Run the event smoothly.', role: 'Marketing Manager / Author', checklist: ['Books available for sale (online or at venue)', 'Signing supplies ready (pens, bookmarks, bookplates)', 'A/V equipment tested (if virtual or with projection)', 'Event captured (photos, video for social content)', 'Attendee email sign-ups collected', 'Author introduced properly', 'Q&A moderated', 'Books signed and personalized'] },
+      { id: 'evt-4', title: 'Follow-Up', description: 'Post-event follow-up and metrics.', role: 'Marketing Manager', checklist: ['Thank-you sent to venue/partner', 'Thank-you sent to attendees (with purchase link)', 'Event photos/video posted to social', 'Attendance metrics recorded', 'Books sold at event recorded', 'Email sign-ups added to list', 'Event recap for internal records', 'Lessons learned documented'] },
+    ],
+  },
 ];
