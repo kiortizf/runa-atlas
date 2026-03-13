@@ -76,7 +76,6 @@ export default function Layout() {
     { name: 'Catalog', path: '/catalog', icon: BookOpen, show: true },
     { name: 'Serials', path: '/journeys', icon: Scroll, show: true },
     { name: 'The Forge', path: '/forge', icon: Flame, show: true },
-    { name: 'Community', path: '/community', icon: Users, show: true },
   ].filter(l => l.show);
 
   // ── Footer sections ──
@@ -84,8 +83,8 @@ export default function Layout() {
     { name: 'Catalog', path: '/catalog' },
     { name: 'Serials', path: '/journeys' },
     { name: 'The Forge', path: '/forge' },
-    { name: 'Community', path: '/community' },
     { name: 'The Archive', path: '/archive' },
+    { name: 'Champions', path: '/champions' },
     { name: 'Events', path: '/events' },
     { name: 'News', path: '/posts' },
     { name: 'About Us', path: '/about' },

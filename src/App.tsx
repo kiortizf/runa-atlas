@@ -30,7 +30,7 @@ const ImprintVoidNoir = lazy(() => import('./pages/ImprintVoidNoir'));
 const Journeys = lazy(() => import('./pages/Journeys'));
 const JourneyDetail = lazy(() => import('./pages/JourneyDetail'));
 const EpisodeReader = lazy(() => import('./pages/EpisodeReader'));
-const Community = lazy(() => import('./pages/Community'));
+const CommunityChampions = lazy(() => import('./pages/CommunityChampions'));
 const Forge = lazy(() => import('./pages/Forge'));
 const AuthorConnect = lazy(() => import('./pages/AuthorConnect'));
 const Events = lazy(() => import('./pages/Events'));
@@ -196,7 +196,7 @@ export default function App() {
                 <EpisodeReader />
               </ProtectedRoute>
             } />
-            <Route path="community" element={<Community />} />
+            <Route path="champions" element={<CommunityChampions />} />
             <Route path="forge" element={<Forge />} />
             <Route path="connect" element={<AuthorConnect />} />
             <Route path="events" element={<Events />} />

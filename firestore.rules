@@ -708,6 +708,12 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    // Community badges (awarded by admin/system, public read)
+    match /users/{userId}/badges/{badgeId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /amas/{amaId} {
       allow read: if true;
       allow create: if isAdmin();
