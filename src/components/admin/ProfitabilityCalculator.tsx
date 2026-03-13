@@ -2,8 +2,10 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calculator, DollarSign, BookOpen, TrendingUp, BarChart3,
-  Printer, Package, Headphones, Smartphone, ChevronDown
+  Printer, Package, Headphones, Smartphone, ChevronDown,
+  FileText, Layers
 } from 'lucide-react';
+import CalcPnL from './CalcPnL';
 
 // ─── IngramSpark Print Cost Estimation ────────────────
 // Based on IngramSpark 2025/2026 pricing: per-page cost + cover cost + market access fee
@@ -90,6 +92,17 @@ export default function ProfitabilityCalculator() {
   // Format toggles
   const [showEbook, setShowEbook] = useState(true);
   const [showAudio, setShowAudio] = useState(true);
+
+  // Top-level view tab
+  const [viewTab, setViewTab] = useState<'unit' | 'pnl'>('unit');
+
+  // P&L cost inputs
+  const [editorialCost, setEditorialCost] = useState(5000);
+  const [designCost, setDesignCost] = useState(1500);
+  const [marketingBudget, setMarketingBudget] = useState(2500);
+  const [overheadAlloc, setOverheadAlloc] = useState(1000);
+  const [projectedPrintUnits, setProjectedPrintUnits] = useState(1000);
+  const [returnRate, setReturnRate] = useState(12);
   const [expandedSection, setExpandedSection] = useState<string | null>('print');
 
   // ── Calculations ──────────────────────────────
@@ -179,9 +192,25 @@ export default function ProfitabilityCalculator() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* ═══ LEFT: INPUTS ═══ */}
-        <div className="xl:col-span-1 space-y-4">
+      {/* ─── Top-Level Tab Bar ─── */}
+      <div className="flex gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1">
+        <button onClick={() => setViewTab('unit')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-ui transition-all ${
+            viewTab === 'unit' ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
+          <BarChart3 className="w-4 h-4" /> Per-Unit Analysis
+        </button>
+        <button onClick={() => setViewTab('pnl')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-ui transition-all ${
+            viewTab === 'pnl' ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
+          <FileText className="w-4 h-4" /> Full P&L & Financial Model
+        </button>
+      </div>
+
+      {/* ─── P&L Tab Content ─── */}
+      {viewTab === 'pnl' && (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-1 space-y-4">
 
           {/* Print Specs */}
           <SectionHeader id="print" icon={Printer} title="Print Specifications" subtitle={`${pageCount} pages · ${TRIM_SIZES.find(t => t.value === trimSize)?.label}`} />
@@ -313,11 +342,42 @@ export default function ProfitabilityCalculator() {
               </div>
             </motion.div>
           )}
+            </div>
+            <div className="xl:col-span-2">
+              <CalcPnL
+                listPrice={listPrice} wholesaleDiscount={wholesaleDiscount}
+                authorRoyaltyRate={authorRoyaltyRate} advance={advance}
+                printCost={calc.printCost} marketAccessFee={calc.marketAccessFee}
+                netToPublisher={calc.netToPublisher}
+                ebookPrice={ebookPrice} ebookRoyaltyRate={ebookRoyaltyRate}
+                ebookAmazonNet={calc.ebookAmazonNet}
+                audiobookPrice={audiobookPrice} audiobookRoyaltyRate={audiobookRoyaltyRate}
+                audiobookFindawayNet={calc.audiobookFindawayNet}
+                audiobookProductionCost={calc.audiobookProductionCost}
+                showEbook={showEbook} showAudio={showAudio}
+                editorialCost={editorialCost} designCost={designCost}
+                marketingBudget={marketingBudget} overheadAlloc={overheadAlloc}
+                projectedPrintUnits={projectedPrintUnits} returnRate={returnRate}
+                setEditorialCost={setEditorialCost} setDesignCost={setDesignCost}
+                setMarketingBudget={setMarketingBudget} setOverheadAlloc={setOverheadAlloc}
+                setProjectedPrintUnits={setProjectedPrintUnits} setReturnRate={setReturnRate}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {viewTab === 'unit' && (
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* ═══ LEFT: INPUTS (shared) ═══ */}
+        <div className="xl:col-span-1 space-y-4">
+          <SectionHeader id="print" icon={Printer} title="Print Specifications" subtitle={`${pageCount} pages · ${TRIM_SIZES.find(t => t.value === trimSize)?.label}`} />
+          <SectionHeader id="pricing" icon={DollarSign} title="Pricing & Terms" subtitle={`List ${fmt(listPrice)} · ${wholesaleDiscount}% discount · ${authorRoyaltyRate}% royalty`} />
+          <p className="text-[10px] text-text-muted text-center py-2">Expand sections in the P&L tab to adjust inputs</p>
         </div>
-
         {/* ═══ RIGHT: RESULTS ═══ */}
-        <div className="xl:col-span-2 space-y-6">
 
+        <div className="xl:col-span-2 space-y-6">
           {/* Per-Unit Breakdown Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* PRINT */}
@@ -572,6 +632,7 @@ export default function ProfitabilityCalculator() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

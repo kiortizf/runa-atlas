@@ -442,7 +442,7 @@ export default function AdminSOPs() {
                           );
                         })}
                         <div className="flex gap-2 pt-2">
-                          <button onClick={() => { setNewInstanceTemplate(tmpl.id); setShowNewInstance(true); }}
+                          <button onClick={(e) => { e.stopPropagation(); setNewInstanceTemplate(tmpl.id); setShowNewInstance(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             className="flex items-center gap-2 px-4 py-2 bg-starforge-gold/10 text-starforge-gold text-xs font-ui rounded-lg hover:bg-starforge-gold/20 transition-colors">
                             <PlayCircle className="w-3.5 h-3.5" /> Use This Template
                           </button>
