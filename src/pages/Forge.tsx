@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Flame, Vote, Globe, ArrowRight, ChevronDown, ChevronUp, Send, Users, Clock,
-  Trophy, Eye, Heart, MessageCircle, Sparkles, Plus, ThumbsUp, CheckCircle, LogIn,
-  X, Filter, Target, Calendar, BookOpen, Archive, Star, BarChart3, PenTool
+  Flame, Vote, ArrowRight, ChevronDown, ChevronUp, Send, Users, Clock,
+  Trophy, Heart, MessageCircle, Sparkles, Plus, ThumbsUp, CheckCircle, LogIn,
+  X, Target, Calendar, BookOpen, Archive, BarChart3
 } from 'lucide-react';
 import { collection, doc, getDoc, setDoc, addDoc, updateDoc, increment, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
@@ -19,10 +19,7 @@ type ForgeProject = {
   totalVotes: number; deadline: Timestamp; status: 'active' | 'closed' | 'upcoming';
   bookId?: string; createdAt?: any;
 };
-type WorldEntry = {
-  id: string; title: string; category: string; bookTitle: string; bookId: string;
-  content: string; contributors: string[]; lastEdited: any; approved: boolean;
-};
+
 type ReaderCircle = {
   id: string; name: string; focus: string; members: number; status: string;
   description: string; currentRead?: string; schedule?: string[];
@@ -31,11 +28,11 @@ type QASession = { id: string; title: string; author: string; date: Timestamp; l
 type QAQuestion = { id: string; text: string; author: string; upvotes: number; answer?: string; createdAt: any };
 type Discussion = { id: string; text: string; author: string; createdAt: any };
 
-type TabId = 'votes' | 'archive' | 'circles' | 'qa' | 'challenges' | 'worldbuilding';
+type TabId = 'votes' | 'archive' | 'circles' | 'qa' | 'challenges';
 
 // ─── Seed Data ──────────────────────────────────────
 const _seedProjects: ForgeProject[] = [];
-const _seedWorldEntries: WorldEntry[] = [];
+
 const hardcodedCircles: ReaderCircle[] = [
   { id: 'circle-1', name: 'The Obsidian Spire', focus: 'Dark Fantasy & Horror', members: 24, status: 'Accepting Applications',
     description: 'Dive into the darker side of speculative fiction — atmospheric horror, grimdark fantasy, and psychological thrillers.',
@@ -59,13 +56,7 @@ export default function Forge() {
   const [votedProjects, setVotedProjects] = useState<Record<string, string>>({});
   const [filterType, setFilterType] = useState('all');
 
-  // ─── Worldbuilding state ───
-  const [worldEntries, setWorldEntries] = useState<WorldEntry[]>([]);
-  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
-  const [showWorldForm, setShowWorldForm] = useState(false);
-  const [worldForm, setWorldForm] = useState({ title: '', category: '', bookTitle: '', content: '' });
-  const [worldSearchTerm, setWorldSearchTerm] = useState('');
-  const [worldFilterCat, setWorldFilterCat] = useState('all');
+
 
   // ─── Reader Circles state ───
   const [circles, setCircles] = useState<ReaderCircle[]>([]);
@@ -90,7 +81,7 @@ export default function Forge() {
   const [showGoalEditor, setShowGoalEditor] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const worldCategories = ['all', 'Magic', 'Setting', 'Character', 'Flora', 'History', 'Technology'];
+
 
   // ─── Load Data ───
   useEffect(() => {
@@ -99,7 +90,7 @@ export default function Forge() {
 
     const unsubs = [
       onSnapshot(collection(db, 'forgeProjects'), s => setProjects(s.docs.length > 0 ? s.docs.map(d => ({ id: d.id, ...d.data() } as ForgeProject)) : _seedProjects), () => setProjects(_seedProjects)),
-      onSnapshot(query(collection(db, 'worldbuilding'), orderBy('title')), s => setWorldEntries(s.docs.length > 0 ? s.docs.map(d => ({ id: d.id, ...d.data() } as WorldEntry)) : _seedWorldEntries), () => setWorldEntries(_seedWorldEntries)),
+
       onSnapshot(collection(db, 'readerCircles'), s => setCircles(s.docs.length > 0 ? s.docs.map(d => ({ id: d.id, ...d.data() } as ReaderCircle)) : hardcodedCircles), () => setCircles(hardcodedCircles)),
       onSnapshot(collection(db, 'qaSessions'), s => { setQaSessions(s.docs.length > 0 ? s.docs.map(d => ({ id: d.id, ...d.data() } as QASession)) : [hardcodedQA]); setLoading(false); }, () => { setQaSessions([hardcodedQA]); setLoading(false); }),
     ];
@@ -144,10 +135,7 @@ export default function Forge() {
     try { await setDoc(doc(db, 'users', user.uid, 'forgeVotes', 'all'), newVoted, { merge: true }); await updateDoc(doc(db, 'forgeProjects', projectId), { totalVotes: increment(1) }); } catch (e) { handleFirestoreError(e, OperationType.UPDATE, 'forgeProjects'); }
   };
 
-  const handleSubmitWorldEntry = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!user) { signIn(); return; }
-    try { await addDoc(collection(db, 'worldbuilding'), { ...worldForm, bookId: '', contributors: [user.displayName || 'Anonymous'], lastEdited: serverTimestamp(), approved: false }); setShowWorldForm(false); setWorldForm({ title: '', category: '', bookTitle: '', content: '' }); } catch (e) { handleFirestoreError(e, OperationType.CREATE, 'worldbuilding'); }
-  };
+
 
   const postDiscussion = async (circleId: string) => {
     if (!user || !newDiscPost.trim()) return;
@@ -194,7 +182,7 @@ export default function Forge() {
     { id: 'circles', label: 'Reader Circles', icon: Users },
     { id: 'qa', label: 'Author Q&A', icon: MessageCircle },
     { id: 'challenges', label: 'Challenges', icon: Target },
-    { id: 'worldbuilding', label: 'Worldbuilding', icon: Globe },
+
   ];
 
   if (loading) return <div className="min-h-screen bg-void-black flex items-center justify-center text-text-primary">Loading…</div>;
@@ -262,10 +250,34 @@ export default function Forge() {
                       </div>
                     </div>
                     <p className="font-body text-sm text-text-secondary mb-6 leading-relaxed">{project.description}</p>
-                    <div className="space-y-3">
+                    <div className={`${project.type === 'cover_reveal' ? 'grid grid-cols-1 md:grid-cols-3 gap-4' : 'space-y-3'}`}>
                       {project.options.map(option => {
                         const pct = project.totalVotes > 0 ? Math.round((option.votes / project.totalVotes) * 100) : 0;
                         const isWinning = option.votes === maxVotes; const isUserChoice = userChoice === option.id;
+
+                        if (project.type === 'cover_reveal') {
+                          return (
+                            <button key={option.id} onClick={() => handleVote(project.id, option.id)} disabled={hasVoted}
+                              className={`relative group rounded-sm overflow-hidden border transition-all ${isUserChoice ? 'border-starforge-gold ring-2 ring-starforge-gold/30' : 'border-border hover:border-starforge-gold/50'}`}>
+                              {option.imageUrl && <img src={option.imageUrl} alt={option.label} className="w-full aspect-[2/3] object-cover" referrerPolicy="no-referrer" />}
+                              <div className="absolute inset-0 bg-gradient-to-t from-void-black/90 via-transparent to-transparent flex flex-col justify-end p-4">
+                                <p className="font-heading text-sm text-text-primary">{option.label}</p>
+                                {option.description && <p className="font-ui text-[10px] text-text-muted mt-1">{option.description}</p>}
+                                <div className="mt-2 flex items-center justify-between">
+                                  <span className="font-display text-lg text-starforge-gold">{pct}%</span>
+                                  <span className="font-ui text-[10px] text-text-muted">{option.votes} votes</span>
+                                </div>
+                                {hasVoted && (
+                                  <div className="w-full bg-void-black/50 rounded-full h-1.5 mt-2">
+                                    <div className="h-full rounded-full bg-starforge-gold transition-all duration-700" style={{ width: `${pct}%` }} />
+                                  </div>
+                                )}
+                              </div>
+                              {isUserChoice && <div className="absolute top-2 right-2 bg-starforge-gold rounded-full p-1"><CheckCircle className="w-4 h-4 text-void-black" /></div>}
+                            </button>
+                          );
+                        }
+
                         return (
                           <button key={option.id} onClick={() => handleVote(project.id, option.id)} disabled={hasVoted}
                             className={`w-full text-left rounded-sm border p-4 transition-all relative overflow-hidden ${isUserChoice ? 'border-starforge-gold bg-starforge-gold/5' : hasVoted ? 'border-border bg-surface/50' : 'border-border hover:border-starforge-gold/50 bg-surface/50'}`}>
@@ -515,86 +527,6 @@ export default function Forge() {
           </motion.div>
         )}
 
-        {/* ═══ WORLDBUILDING TAB ═══ */}
-        {activeTab === 'worldbuilding' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <p className="font-body text-sm text-text-secondary">A living encyclopedia of every world in the Rüna Atlas catalog. Readers and authors build the lore together.</p>
-                <p className="font-ui text-[10px] text-text-muted mt-1">{worldEntries.length} entries across {new Set(worldEntries.map(e => e.bookTitle)).size} books</p>
-              </div>
-              <button onClick={() => user ? setShowWorldForm(true) : signIn()} className="flex items-center gap-2 px-4 py-2 bg-aurora-teal text-void-black font-ui text-sm uppercase tracking-wider rounded-sm hover:bg-white transition-colors shrink-0"><Plus className="w-4 h-4" /> Contribute</button>
-            </div>
-            <div className="space-y-3">
-              <div className="relative">
-                <input value={worldSearchTerm} onChange={e => setWorldSearchTerm(e.target.value)} placeholder="Search the encyclopedia…" className="w-full bg-surface border border-border rounded-sm px-4 py-3 pl-10 text-text-primary font-ui text-sm focus:border-aurora-teal outline-none" />
-                <Eye className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
-              <div className="flex gap-1.5 flex-wrap">
-                {worldCategories.map(cat => {
-                  const count = cat === 'all' ? worldEntries.length : worldEntries.filter(e => e.category === cat).length;
-                  return <button key={cat} onClick={() => setWorldFilterCat(cat)} className={`px-3 py-1.5 rounded-full font-ui text-xs transition-all flex items-center gap-1 ${worldFilterCat === cat ? 'bg-aurora-teal/20 text-aurora-teal border border-aurora-teal/30' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>{cat === 'all' ? 'All' : cat} <span className="text-[9px] opacity-60">{count}</span></button>;
-                })}
-              </div>
-            </div>
-            <AnimatePresence>
-              {showWorldForm && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                  <form onSubmit={handleSubmitWorldEntry} className="bg-surface border border-aurora-teal/30 rounded-sm p-6 space-y-4">
-                    <div className="flex justify-between items-center"><h3 className="font-heading text-lg text-text-primary">New World Entry</h3><button type="button" onClick={() => setShowWorldForm(false)} className="text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <input value={worldForm.title} onChange={e => setWorldForm({ ...worldForm, title: e.target.value })} placeholder="Entry title" required className="bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary font-ui text-sm focus:border-aurora-teal outline-none" />
-                      <select value={worldForm.category} onChange={e => setWorldForm({ ...worldForm, category: e.target.value })} required className="bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary font-ui text-sm focus:border-aurora-teal outline-none">
-                        <option value="">Category</option><option value="Magic">Magic Systems</option><option value="Setting">Settings</option><option value="Character">Characters</option><option value="Flora">Flora & Fauna</option><option value="History">History & Lore</option><option value="Technology">Technology</option>
-                      </select>
-                      <input value={worldForm.bookTitle} onChange={e => setWorldForm({ ...worldForm, bookTitle: e.target.value })} placeholder="Related book" required className="bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary font-ui text-sm focus:border-aurora-teal outline-none" />
-                    </div>
-                    <textarea value={worldForm.content} onChange={e => setWorldForm({ ...worldForm, content: e.target.value })} placeholder="Entry content (cite chapters where possible)" rows={6} required className="w-full bg-void-black border border-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:border-aurora-teal outline-none resize-none" />
-                    <div className="flex justify-between items-center">
-                      <p className="font-ui text-[10px] text-text-muted">Entries are reviewed by the editorial team</p>
-                      <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-aurora-teal text-void-black font-ui text-sm uppercase tracking-wider rounded-sm hover:bg-white transition-colors"><Send className="w-4 h-4" /> Submit</button>
-                    </div>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div className="space-y-3">
-              {worldEntries.filter(e => worldFilterCat === 'all' || e.category === worldFilterCat).filter(e => !worldSearchTerm || e.title.toLowerCase().includes(worldSearchTerm.toLowerCase()) || e.content.toLowerCase().includes(worldSearchTerm.toLowerCase())).map((entry, idx) => {
-                const catColors: Record<string, string> = { Magic: 'text-cosmic-purple bg-cosmic-purple/10 border-cosmic-purple/30', Setting: 'text-aurora-teal bg-aurora-teal/10 border-aurora-teal/30', Character: 'text-starforge-gold bg-starforge-gold/10 border-starforge-gold/30', Flora: 'text-green-400 bg-green-400/10 border-green-400/30', History: 'text-ember-orange bg-ember-orange/10 border-ember-orange/30', Technology: 'text-queer-pink bg-queer-pink/10 border-queer-pink/30' };
-                return (
-                  <motion.div key={entry.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="bg-surface border border-border rounded-sm overflow-hidden hover:border-aurora-teal/20 transition-colors">
-                    <button onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)} className="w-full text-left p-5 flex items-center justify-between hover:bg-surface-elevated/20 transition-colors">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-10 h-10 rounded-sm bg-aurora-teal/10 border border-aurora-teal/30 flex items-center justify-center shrink-0"><Globe className="w-5 h-5 text-aurora-teal" /></div>
-                        <div className="min-w-0">
-                          <h3 className="font-heading text-base text-text-primary truncate">{entry.title}</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border font-ui ${catColors[entry.category] || 'text-text-muted bg-surface border-border'}`}>{entry.category}</span>
-                            <span className="font-ui text-[10px] text-text-muted">{entry.bookTitle}</span>
-                          </div>
-                        </div>
-                      </div>
-                      {expandedEntry === entry.id ? <ChevronUp className="w-4 h-4 text-text-muted shrink-0" /> : <ChevronDown className="w-4 h-4 text-text-muted shrink-0" />}
-                    </button>
-                    <AnimatePresence>
-                      {expandedEntry === entry.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                          <div className="px-5 pb-5 border-t border-border pt-4">
-                            <p className="font-body text-sm text-text-secondary leading-relaxed whitespace-pre-line">{entry.content}</p>
-                            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                              <div className="flex items-center gap-2 flex-wrap"><Users className="w-3 h-3 text-text-muted shrink-0" />{entry.contributors.map((c, i) => <span key={i} className="font-ui text-[10px] px-2 py-0.5 bg-void-black border border-border rounded-full text-text-muted">{c}</span>)}</div>
-                              {entry.approved && <span className="font-ui text-[10px] text-aurora-teal flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Verified</span>}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
       </div>
 
       {/* ═══ Circle Application Modal ═══ */}
