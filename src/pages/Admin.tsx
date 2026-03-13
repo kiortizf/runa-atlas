@@ -4,7 +4,8 @@ import {
   Scissors, Shield, Image, Mail, Settings, Activity, LayoutDashboard, Flame,
   Globe, Crown, ShoppingCart, DollarSign, GitBranch, Eye, Sparkles, Scale,
   PenTool, Monitor, Compass, ClipboardList, Truck, Trophy, Contact, Printer,
-  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint, Archive, Calculator
+  MessageSquareText, ChevronDown, Search, Menu, X, Fingerprint, Archive, Calculator,
+  FileSearch
 } from 'lucide-react';
 // Import Admin Tab Components
 import AdminSubmissions from '../components/admin/AdminSubmissions';
@@ -47,6 +48,7 @@ import AdminNDA from '../components/admin/AdminNDA';
 import AdminArchive from '../components/admin/AdminArchive';
 import AdminKnowledgeBase from '../components/admin/AdminKnowledgeBase';
 import ProfitabilityCalculator from '../components/admin/ProfitabilityCalculator';
+import ManuscriptScoring from '../components/admin/ManuscriptScoring';
 import React from 'react';
 
 // ── Tab Error Boundary ──────────────────────────
@@ -89,6 +91,7 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
   production: AdminProduction, reviews: AdminReviewTracker, nda: AdminNDA,
   archive: AdminArchive, 'knowledge-base': AdminKnowledgeBase,
   calculator: ProfitabilityCalculator,
+  'manuscript-scoring': ManuscriptScoring,
   settings: AdminSettings, activity: AdminActivity,
 };
 
@@ -123,6 +126,7 @@ const NAV_GROUPS = [
       { id: 'production', label: 'Production', icon: Printer },
       { id: 'distribution', label: 'Distribution', icon: Truck },
       { id: 'sops', label: 'SOPs', icon: ClipboardList },
+      { id: 'manuscript-scoring', label: 'Manuscript Scoring', icon: FileSearch },
       { id: 'knowledge-base', label: 'Knowledge Base', icon: BookOpen },
     ],
   },

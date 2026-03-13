@@ -3,9 +3,13 @@ import { motion } from 'framer-motion';
 import {
   Calculator, DollarSign, BookOpen, TrendingUp, BarChart3,
   Printer, Package, Headphones, Smartphone, ChevronDown,
-  FileText, Layers
+  FileText, Layers, Ruler, Target, Megaphone, Users
 } from 'lucide-react';
 import CalcPnL from './CalcPnL';
+import CalcAdvance from './CalcAdvance';
+import CalcPricing from './CalcPricing';
+import CalcMarketing from './CalcMarketing';
+import SpineCalculator from './SpineCalculator';
 
 // ─── IngramSpark Print Cost Estimation ────────────────
 // Based on IngramSpark 2025/2026 pricing: per-page cost + cover cost + market access fee
@@ -94,7 +98,7 @@ export default function ProfitabilityCalculator() {
   const [showAudio, setShowAudio] = useState(true);
 
   // Top-level view tab
-  const [viewTab, setViewTab] = useState<'unit' | 'pnl'>('unit');
+  const [viewTab, setViewTab] = useState<'unit' | 'pnl' | 'advance' | 'pricing' | 'marketing' | 'spine'>('unit');
 
   // P&L cost inputs
   const [editorialCost, setEditorialCost] = useState(5000);
@@ -193,17 +197,21 @@ export default function ProfitabilityCalculator() {
       </div>
 
       {/* ─── Top-Level Tab Bar ─── */}
-      <div className="flex gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1">
-        <button onClick={() => setViewTab('unit')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-ui transition-all ${
-            viewTab === 'unit' ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
-          <BarChart3 className="w-4 h-4" /> Per-Unit Analysis
-        </button>
-        <button onClick={() => setViewTab('pnl')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-ui transition-all ${
-            viewTab === 'pnl' ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
-          <FileText className="w-4 h-4" /> Full P&L & Financial Model
-        </button>
+      <div className="flex flex-wrap gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1">
+        {[
+          { id: 'unit' as const, label: 'Per-Unit', icon: BarChart3 },
+          { id: 'pnl' as const, label: 'P&L Model', icon: FileText },
+          { id: 'advance' as const, label: 'Advance Sim', icon: Users },
+          { id: 'pricing' as const, label: 'Pricing', icon: Target },
+          { id: 'marketing' as const, label: 'Marketing ROI', icon: Megaphone },
+          { id: 'spine' as const, label: 'Spine Calc', icon: Ruler },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setViewTab(tab.id)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-ui transition-all ${
+              viewTab === tab.id ? 'bg-starforge-gold/10 text-starforge-gold' : 'text-text-muted hover:text-white'}`}>
+            <tab.icon className="w-3.5 h-3.5" /> {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* ─── P&L Tab Content ─── */}
@@ -633,6 +641,18 @@ export default function ProfitabilityCalculator() {
         </div>
       </div>
       )}
+
+      {/* ─── Advance Simulator Tab ─── */}
+      {viewTab === 'advance' && <CalcAdvance />}
+
+      {/* ─── Pricing Optimizer Tab ─── */}
+      {viewTab === 'pricing' && <CalcPricing />}
+
+      {/* ─── Marketing ROI Tab ─── */}
+      {viewTab === 'marketing' && <CalcMarketing />}
+
+      {/* ─── Spine Calculator Tab ─── */}
+      {viewTab === 'spine' && <SpineCalculator />}
     </div>
   );
 }
