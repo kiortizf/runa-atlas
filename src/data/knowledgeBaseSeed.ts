@@ -47,6 +47,18 @@ import { DOC_AUTHOR_ONBOARDING } from './kb/author-onboarding';
 import { DOC_PRINT_PLANNING } from './kb/print-planning';
 import { DOC_REVIEW_MANAGEMENT } from './kb/review-management';
 import { DOC_CONTENT_CALENDAR } from './kb/content-calendar';
+import { DOC_AUDIOBOOK_GUIDE } from './kb/audiobook-production-guide';
+import { DOC_EBOOK_STANDARDS } from './kb/ebook-standards';
+import { DOC_PRINT_SPECS } from './kb/print-production-specs';
+import { DOC_SENSITIVITY_READING } from './kb/sensitivity-reading-guide';
+import { DOC_INTERNATIONAL_RIGHTS } from './kb/international-rights-guide';
+import { DOC_SERIES_CONTINUITY } from './kb/series-continuity-bible';
+import { DOC_ADVERTISING_BENCHMARKS } from './kb/advertising-benchmarks';
+import { DOC_EMAIL_MARKETING } from './kb/email-marketing-playbook';
+import { DOC_BETA_READER_GUIDELINES } from './kb/beta-reader-guidelines';
+import { DOC_MEMBERSHIP_GUIDE } from './kb/membership-program-guide';
+import { DOC_DISTRIBUTION_CHANNELS } from './kb/distribution-channel-guide';
+import { DOC_ROYALTY_ACCOUNTING } from './kb/royalty-accounting-guide';
 
 export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'publishing-standards', title: 'Publishing Standards & Quality Guidelines', category: 'Publishing', icon: '📏', lastUpdated: '2026-03-12', content: DOC_PUBLISHING_STANDARDS },
@@ -85,4 +97,16 @@ export const KNOWLEDGE_BASE_DOCS: KBDocument[] = [
   { id: 'crisis-comms', title: 'Crisis Communications Playbook', category: 'Operations', icon: '🚨', lastUpdated: '2026-03-13', content: DOC_CRISIS_COMMS },
   { id: 'grant-strategy', title: 'Grant & Funding Strategy', category: 'Operations', icon: '💵', lastUpdated: '2026-03-13', content: DOC_GRANT_STRATEGY },
   { id: 'author-onboarding', title: 'Onboarding Guide for New Authors', category: 'Publishing', icon: '🤝', lastUpdated: '2026-03-13', content: DOC_AUTHOR_ONBOARDING },
+  { id: 'audiobook-production-guide', title: 'Audiobook Production Guide', category: 'Publishing', icon: '🎧', lastUpdated: '2026-03-13', content: DOC_AUDIOBOOK_GUIDE },
+  { id: 'ebook-standards', title: 'eBook Format Standards & QA', category: 'Publishing', icon: '📱', lastUpdated: '2026-03-13', content: DOC_EBOOK_STANDARDS },
+  { id: 'print-production-specs', title: 'Print Production Specifications', category: 'Publishing', icon: '🖨️', lastUpdated: '2026-03-13', content: DOC_PRINT_SPECS },
+  { id: 'sensitivity-reading-guide', title: 'Sensitivity Reading Guide', category: 'Operations', icon: '🌍', lastUpdated: '2026-03-13', content: DOC_SENSITIVITY_READING },
+  { id: 'international-rights-guide', title: 'International Rights & Translation', category: 'Operations', icon: '🌐', lastUpdated: '2026-03-13', content: DOC_INTERNATIONAL_RIGHTS },
+  { id: 'series-continuity-bible', title: 'Series Continuity Bible & Strategy', category: 'Publishing', icon: '📚', lastUpdated: '2026-03-13', content: DOC_SERIES_CONTINUITY },
+  { id: 'advertising-benchmarks', title: 'Advertising Benchmarks & Strategy', category: 'Marketing', icon: '📣', lastUpdated: '2026-03-13', content: DOC_ADVERTISING_BENCHMARKS },
+  { id: 'email-marketing-playbook', title: 'Email Marketing Playbook', category: 'Marketing', icon: '📧', lastUpdated: '2026-03-13', content: DOC_EMAIL_MARKETING },
+  { id: 'beta-reader-guidelines', title: 'Beta Reader Guidelines', category: 'Community', icon: '👥', lastUpdated: '2026-03-13', content: DOC_BETA_READER_GUIDELINES },
+  { id: 'membership-program-guide', title: 'Membership Program Guide', category: 'Community', icon: '👑', lastUpdated: '2026-03-13', content: DOC_MEMBERSHIP_GUIDE },
+  { id: 'distribution-channel-guide', title: 'Distribution Channel Guide', category: 'Partnerships', icon: '🏪', lastUpdated: '2026-03-13', content: DOC_DISTRIBUTION_CHANNELS },
+  { id: 'royalty-accounting-guide', title: 'Royalty Accounting Guide', category: 'Operations', icon: '💰', lastUpdated: '2026-03-13', content: DOC_ROYALTY_ACCOUNTING },
 ];
