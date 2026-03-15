@@ -121,7 +121,7 @@ export default function Library() {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input type="text" placeholder="Search library..." className="pl-9 pr-4 py-2 bg-surface border border-border rounded-sm font-ui text-sm text-text-primary focus:outline-none focus:border-aurora-teal" />
               </div>
-              <button className="p-2 border border-border rounded-sm text-text-secondary hover:text-aurora-teal transition-colors">
+              <button onClick={() => alert('Advanced filters coming soon!')} className="p-2 border border-border rounded-sm text-text-secondary hover:text-aurora-teal transition-colors">
                 <Filter className="w-4 h-4" />
               </button>
             </div>

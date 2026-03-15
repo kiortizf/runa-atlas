@@ -108,7 +108,7 @@ export default function BetaCampaign() {
                                 <p className="text-xs text-text-secondary">{campaign.startDate} — {campaign.deadline} · {campaign.chaptersReleased}/{campaign.totalChapters} chapters released</p>
                             </div>
                         </div>
-                        <button className="px-4 py-2 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
+                        <button onClick={() => alert('Beta reader invitation form coming soon!')} className="px-4 py-2 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
                             <Plus className="w-3.5 h-3.5" /> Invite Beta Readers
                         </button>
                     </div>
@@ -213,7 +213,7 @@ export default function BetaCampaign() {
                         <motion.div key="readers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-sm font-semibold text-white">Active Beta Readers</h3>
-                                <button className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
+                                <button onClick={() => alert('Browse readers sorted by Book DNA compatibility coming soon!')} className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
                                     <Search className="w-3 h-3" /> Browse by Book DNA Match
                                 </button>
                             </div>
@@ -241,10 +241,10 @@ export default function BetaCampaign() {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <button className="px-3 py-1.5 bg-white/[0.04] text-white/70 text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors">
+                                                <button onClick={() => alert(`Messaging ${r.name}...`)} className="px-3 py-1.5 bg-white/[0.04] text-white/70 text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors">
                                                     <MessageCircle className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button className="px-3 py-1.5 bg-white/[0.04] text-white/70 text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors">
+                                                <button onClick={() => alert(`Viewing ${r.name}'s feedback and reading stats...`)} className="px-3 py-1.5 bg-white/[0.04] text-white/70 text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors">
                                                     <Eye className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -260,7 +260,7 @@ export default function BetaCampaign() {
                         <motion.div key="chapters" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-sm font-semibold text-white">Chapter Release Schedule</h3>
-                                <button className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
+                                <button onClick={() => alert('Chapter release scheduler coming soon!')} className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 rounded hover:bg-amber-500/20 transition-colors flex items-center gap-1.5">
                                     <Plus className="w-3 h-3" /> Schedule Release
                                 </button>
                             </div>
@@ -303,10 +303,10 @@ export default function BetaCampaign() {
                                                             </div>
                                                         )}
                                                         <div className="flex items-center gap-3 pt-2">
-                                                            <button className="px-3 py-1.5 bg-white/[0.04] text-white text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                            <button onClick={() => alert('Question editor coming soon!')} className="px-3 py-1.5 bg-white/[0.04] text-white text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                 <Edit3 className="w-3 h-3" /> Edit Questions
                                                             </button>
-                                                            <button className="px-3 py-1.5 bg-white/[0.04] text-white text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
+                                                            <button onClick={() => { setActiveTab('feedback'); setExpandedChapter(null); }} className="px-3 py-1.5 bg-white/[0.04] text-white text-xs border border-white/[0.06] rounded hover:bg-white/[0.08] transition-colors flex items-center gap-1.5">
                                                                 <Eye className="w-3 h-3" /> View Feedback
                                                             </button>
                                                         </div>

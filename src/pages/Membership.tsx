@@ -252,7 +252,7 @@ export default function Membership() {
           <p className="font-body text-lg text-text-secondary leading-relaxed mb-8">
             Traditional publishing often leaves marginalized authors behind. By subscribing directly to Rüna Atlas, you bypass the algorithms and gatekeepers, ensuring that 70% of your membership fee goes directly to our authors and editorial staff. You are not just buying books; you are funding a movement.
           </p>
-          <button className="inline-flex items-center gap-2 font-ui text-sm text-starforge-gold hover:text-white transition-colors uppercase tracking-wider pb-1 border-b border-starforge-gold/50">
+          <button onClick={() => alert('Our transparency report is being compiled and will be published soon!')} className="inline-flex items-center gap-2 font-ui text-sm text-starforge-gold hover:text-white transition-colors uppercase tracking-wider pb-1 border-b border-starforge-gold/50">
             Read our Transparency Report <ArrowRight className="w-4 h-4" />
           </button>
         </div>

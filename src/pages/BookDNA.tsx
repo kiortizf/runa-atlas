@@ -244,7 +244,7 @@ export default function BookDNA() {
                             </div>
                         </div>
                     </div>
-                    <button className="px-4 py-2 bg-violet-500/10 text-violet-400 text-xs border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">
+                    <button onClick={() => { if (navigator.share) { navigator.share({ title: 'My Book DNA', text: `I'm a ${dnaProfile?.personality ?? 'reader'} on Rüna Atlas!`, url: window.location.href }); } else { navigator.clipboard.writeText(window.location.href); alert('Profile link copied to clipboard!'); } }} className="px-4 py-2 bg-violet-500/10 text-violet-400 text-xs border border-violet-500/20 rounded hover:bg-violet-500/20 transition-colors">
                         Share DNA
                     </button>
                 </motion.div>

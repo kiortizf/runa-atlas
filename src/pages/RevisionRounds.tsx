@@ -114,7 +114,7 @@ export default function RevisionRounds() {
                                             'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>{r.status.replace('_', ' ')}</span>
                             </button>
                         ))}
-                        <button className="px-3 py-2 bg-white/[0.02] text-text-secondary text-xs border border-dashed border-white/[0.1] rounded-lg hover:border-white/[0.15] transition-colors">
+                        <button onClick={() => alert('New revision round creation coming soon!')} className="px-3 py-2 bg-white/[0.02] text-text-secondary text-xs border border-dashed border-white/[0.1] rounded-lg hover:border-white/[0.15] transition-colors">
                             + New Round
                         </button>
                     </div>

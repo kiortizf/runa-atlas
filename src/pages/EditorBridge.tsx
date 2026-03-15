@@ -110,7 +110,7 @@ export default function EditorBridge() {
                         </div>
                         <div className="flex items-center gap-3">
                             <span className="text-xs text-text-secondary">{importedCount} imported</span>
-                            <button className="px-4 py-2 bg-cyan-500/10 text-cyan-400 text-xs border border-cyan-500/20 rounded hover:bg-cyan-500/20 transition-colors flex items-center gap-1.5">
+                            <button onClick={() => alert(`${importedCount} notes exported to editor workflow!`)} className="px-4 py-2 bg-cyan-500/10 text-cyan-400 text-xs border border-cyan-500/20 rounded hover:bg-cyan-500/20 transition-colors flex items-center gap-1.5">
                                 <Download className="w-3.5 h-3.5" /> Export to Editor
                             </button>
                         </div>

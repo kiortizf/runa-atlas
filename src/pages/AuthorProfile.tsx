@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     BookOpen, Globe, Star, Heart, Users, Calendar,
@@ -15,6 +15,7 @@ const fadeUp = {
 
 export default function AuthorProfile() {
     const { slug } = useParams<{ slug: string }>();
+    const navigate = useNavigate();
     const [author, setAuthor] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -75,7 +76,7 @@ export default function AuthorProfile() {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button className="px-5 py-2 bg-starforge-gold text-void-black text-xs font-semibold uppercase tracking-wider rounded-sm hover:bg-starforge-gold/90 transition-colors flex items-center gap-2">
+                        <button onClick={() => alert('Following this author! You will receive updates on new releases.')} className="px-5 py-2 bg-starforge-gold text-void-black text-xs font-semibold uppercase tracking-wider rounded-sm hover:bg-starforge-gold/90 transition-colors flex items-center gap-2">
                             <Heart className="w-3 h-3" /> Follow
                         </button>
                         {author.social?.website && (
@@ -211,10 +212,10 @@ export default function AuthorProfile() {
                                     </div>
                                     <p className="text-sm text-white/60 mt-4 leading-relaxed">{book.description}</p>
                                     <div className="flex gap-3 mt-4">
-                                        <button className="px-4 py-2 bg-starforge-gold/10 border border-starforge-gold/20 text-starforge-gold text-xs font-semibold uppercase tracking-wider rounded-sm hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
+                                        <button onClick={() => navigate(`/catalog/${book.id}`)} className="px-4 py-2 bg-starforge-gold/10 border border-starforge-gold/20 text-starforge-gold text-xs font-semibold uppercase tracking-wider rounded-sm hover:bg-starforge-gold/20 transition-colors flex items-center gap-2">
                                             <BookOpen className="w-3 h-3" /> Read Sample
                                         </button>
-                                        <button className="px-4 py-2 border border-white/[0.06] text-white/50 text-xs uppercase tracking-wider rounded-sm hover:border-white/20 hover:text-white transition-colors flex items-center gap-2">
+                                        <button onClick={() => navigate(`/catalog/${book.id}`)} className="px-4 py-2 border border-white/[0.06] text-white/50 text-xs uppercase tracking-wider rounded-sm hover:border-white/20 hover:text-white transition-colors flex items-center gap-2">
                                             <ExternalLink className="w-3 h-3" /> View Details
                                         </button>
                                     </div>

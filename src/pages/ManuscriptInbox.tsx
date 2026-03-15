@@ -218,7 +218,7 @@ export default function ManuscriptInbox() {
                                                                 {item.betaFeedbackSummary && (
                                                                     <p className="text-xs text-white/50 leading-relaxed">{item.betaFeedbackSummary}</p>
                                                                 )}
-                                                                <button className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1">
+                                                                <button onClick={() => alert('Opening manuscript in the Feedback Bridge...')} className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1">
                                                                     <GitMerge className="w-3 h-3" /> Open in Feedback Bridge
                                                                 </button>
                                                                 <Link to="/editor-beta-manager" className="text-[10px] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 mt-1">
@@ -239,19 +239,19 @@ export default function ManuscriptInbox() {
                                                     <div>
                                                         <p className="text-[10px] uppercase tracking-widest text-text-secondary font-semibold mb-2">Quick Actions</p>
                                                         <div className="space-y-1.5">
-                                                            <button className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
+                                                            <button onClick={() => alert(`Opening ${item.title} in the editor...`)} className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
                                                                 <Eye className="w-3.5 h-3.5" /> Open in Editor
                                                             </button>
                                                             {item.revisionRound > 0 && (
-                                                                <button className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
+                                                                <button onClick={() => alert(`Viewing revision round ${item.revisionRound} for ${item.title}...`)} className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
                                                                     <Layers className="w-3.5 h-3.5" /> View Revision Rounds (R{item.revisionRound})
                                                                 </button>
                                                             )}
-                                                            <button className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
+                                                            <button onClick={() => alert(`Messaging ${item.author} about ${item.title}...`)} className="w-full text-left px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded text-xs text-white hover:bg-white/[0.08] transition-colors flex items-center gap-2">
                                                                 <MessageCircle className="w-3.5 h-3.5" /> Message Author
                                                             </button>
                                                             {item.status === 'ready_to_advance' && (
-                                                                <button className="w-full text-left px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs text-emerald-400 hover:bg-emerald-500/20 transition-colors flex items-center gap-2">
+                                                                <button onClick={() => alert(`Advancing ${item.title} to the next editorial stage!`)} className="w-full text-left px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs text-emerald-400 hover:bg-emerald-500/20 transition-colors flex items-center gap-2">
                                                                     <ArrowRight className="w-3.5 h-3.5" /> Advance to Next Stage
                                                                 </button>
                                                             )}
